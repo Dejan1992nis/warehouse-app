@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vebza 2</title>
+    <link rel="stylesheet" href="style2.css">
+</head>
+<body>
+
+    <div class="app">
+
+        <header class="header">
+
+            <div class="header-text">
+                <div class="log">Warehouse  Masetr</div>
+                <div class="subtitle">Invenory made simple</div>
+            </div>
+
+            <div class="lange-btns">
+                <button data-lang="sr" class="sr"> SR</button>
+                <button data-lang="en" class="en">EN</button>
+            </div>
+
+        </header>
+
+        <div class="navigation">
+            <button class="tab active" data-tab="input" data-i18n="input">INPUT</button>
+            <button class="tab" data-tab="table"        data-i18n="table">TABLE</button>
+            <button class="tab" data-tab="admin"        data-i18n="admin">ADMIN</button>
+        </div>
+
+
+
+        <section id="input-view" class="view active-view">
+            <header class="header-view">
+                <h2 class="title">Search Input</h2>
+                <button class="edit-btn">Edit</button>
+            </header>
+
+
+            <div class="search">
+                <input type="text" id="input-search" placeholder="Enter name or code">
+                <button class="clear-btn">X</button>
+                <div class="results"></div>
+            </div>
+
+            <div class="item-card">
+                <p><strong>Name: </strong><span id="item-name">-</span></p>
+                <p><strong>Code: </strong><span id="item-code">-</span></p>
+                <p><strong>Location: </strong><span id="item-location">-</span></p>
+            </div>
+
+            <div class="quantity-control">
+                <button class="btn-minus">-</button>
+                <span class="quantity-value">0</span>
+                <button class="btn-plus">+</button>
+            </div>
+
+            <button class="save-btn">SAVE</button>
+
+            
+
+
+        </section>
+
+
+
+
+
+        <section id="table-view" class="view">
+
+            <div class="header-view">
+                <h2 class="title">Table section</h2>
+                <button class="addBtn">+Add</button>
+            </div>
+
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Code</th>
+                        <th>Location</th>
+                        <th>Quantity</th>
+                    </tr>
+                </thead>
+
+                <tbody class="table-body">
+                    <!-- JS puni  -->
+                </tbody>
+            </table>
+        </section>
+
+
+        <section id="admin-view" class="view">
+            <h2 class="title">Admin section</h2>
+        </section>
+
+        <footer class="footer"> Vesrion V1</footer>
+
+        <div class="modal-wrapper hidden">
+                
+
+                <div class="module-conatiner ">
+                    <h2>Add new Item</h2>
+                    <div class="form">
+                        <input type="text" id="addItem-nema" placeholder="Enter Item name">
+                        <input type="text" id="addItem-code" placeholder="Code">
+                        <input type="text" id="addItem-location" placeholder="Location">
+                        <input type="number" id="addItem-quantity" placeholder="Quantity">
+                    </div>
+                    <div class="form-but">
+                        <button class="addSave">SAVE</button>
+                        <button class="addCancel">CANCEL</button>
+                    </div>
+                </div>
+        </div>
+
+
+
+        <div class="notification"></div>
+
+
+
+    </div>
+   <script src="script2.js"></script> 
+</body>
+</html>

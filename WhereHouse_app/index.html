@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse App</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- ICON -->
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- SETTINGS -->
+    <meta name="theme-color" content="#3498db">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+</head>
+<body>
+
+
+
+<!-- LOG IN / REGISTARTION -->
+<div id="auth-screen" class="auth-screen">
+
+    <div class="auth-card">
+
+        <div class="auth-header">
+            <h2 id="auth-title" data-i18n="auth_title">Create Account</h2>
+
+            <div class="auth-lang-switch">
+                <button data-lang="sr" class="lang-btn active">SR</button>
+                <button data-lang="en" class="lang-btn">EN</button>
+            </div>
+        </div>
+
+        <p id="auth-subtitle" data-i18n="auth_subtitle">
+            Sign up to start using the app
+        </p>
+
+        <div class="input-group">
+            <label data-i18n="auth_email">Email</label>
+            <input type="email" id="auth-email" data-i18n-placeholder="auth_email_placeholder" placeholder="Enter your email">
+        </div>
+ 
+        <div class="input-group">
+            <label data-i18n="auth_password">Password</label>
+            <input type="password" id="auth-password" data-i18n-placeholder="auth_password_placeholder"placeholder="Enter your password">
+        </div>
+
+        <button id="auth-main-btn" data-i18n="auth_register">
+            Register
+        </button>
+
+        <p class="auth-switch-text">
+            <span id="auth-switch-label" data-i18n="auth_switch_text">
+                Already have an account?
+            </span>
+            <span id="switch-mode" class="switch-link" data-i18n="auth_login">
+                Login
+            </span>
+        </p>
+
+    </div>
+
+</div>
+
+
+
+
+    <div id="app" class="app hidden">
+
+        
+        <header class="header">
+
+            <div class="header-left">
+                <div class="logo-box">
+                    <div class="app-logo">
+                        <span class="logo-main">W</span>
+                        <span class="logo-divider"></span>
+                        <span class="logo-sub">Manager</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-actions">
+
+                <!-- LANGUAGE -->
+                <div class="lang-switch">
+                    <button data-lang="sr" class="lang-btn active">SR</button>
+                    <button data-lang="en" class="lang-btn">EN</button>
+                </div>
+
+<!-- USER MENU -->
+<div class="user-menu">
+    <button id="user-btn" class="user-btn">☰</button>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar" class="sidebar hidden">
+
+    <div class="sidebar-header">
+        <span>Menu</span>
+        <button id="close-sidebar" class="sidebar-close">✕</button>
+    </div>
+
+    <div class="sidebar-content">
+        <button>Profile</button>
+        <button>Settings</button>
+
+        <hr>
+
+        <button id="logout-btn" class="logout">Logout</button>
+    </div>
+
+</div>
+
+            </div>
+
+        </header>
+        
+        
+        
+        <!-- INPUT VIEW -->
+        <section id="input-view" class="view active-view">
+
+
+
+            <header class="view-actions">
+                <h2 class="title" data-i18n="searchTitle">Item search</h2>
+
+                <div class="header-actions">
+                    <button class="btn-edit headerBtn"  data-i18n="edit">Edit</button>
+                    <button class="btn-delete headerBtn danger" data-i18n="delete">Delete</button>
+                </div>
+            </header>            
+
+            <!-- search -->
+            <div class="search">
+                <input type="text" id="input-search" placeholder="Enter name or code..." data-i18n-placeholder="searchPlaceholder"/>
+                <!-- x -->
+                <button class="clear-btn">X</button>
+                <!-- results -->
+                <div class="results"></div>
+            </div> 
+
+            <!-- item csrd -->
+
+            <div class="item-card">
+
+                <p><strong data-i18n="itemName"     >Name:</strong> <span id="item-name">-</span></p>
+                <p><strong data-i18n="ItemCode"     >Code:</strong> <span id="item-code">-</span></p>
+                <p><strong data-i18n="ItemStatus"   >Status:</strong> <span id="item-status">-</span></p>
+                <p><strong data-i18n="ItemPrice"    >Price:</strong> <span id="item-price">-</span></p>
+                <p><strong data-i18n="ItemLocation" >Location:</strong> <span id="item-location">-</span></p>
+                <p><strong >Limit:</strong> <span id="item-limit">-</span></p>
+
+                <div class="history-wrapper hidden">
+                    <button class="btn-history" data-i18n="historyLog">History Log</button>
+                </div>
+                
+            </div>
+
+            <!-- quantity control -->
+            <div class="quantity-control">
+
+                <button class="btn-minus">-</button>
+                <span id="quantity-value">0</span>
+                <button class="btn-plus">+</button>
+            </div>
+
+            <!-- save -->
+            <button class="save-btn" data-i18n="save">SAVE</button>
+        </section>
+
+
+
+
+        <!-- TABLE VIEW -->
+        <section id="table-view" class="view">
+
+            <header class="view-actions">
+                <h2 class="title" data-i18n="tableTitle">Items Table</h2>
+                <button class="btn-add headerBtn" data-i18n="add">+Add</button>
+            </header>
+
+
+
+            <!-- Tabela -->
+            <div class="table-wrapper">
+
+                <table class="table">
+
+                    <thead>
+                        <tr>
+                            <th data-i18n="colName">NAME</th>
+                            <th data-i18n="colCode">CODE</th>
+                            <th data-i18n="colLocation">LOCATION</th>
+                            <th data-i18n="colQuantity">QUANTITY</th>
+                            <th data-i18n="colStatus">PRICE</th>
+                            <th data-i18n="colPrice">STATUS</th>
+                            <th>LIMIT</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="table-body">
+                        <!-- JS ubacuje -->
+                    </tbody>
+                </table>
+            </div>
+
+             <!-- Pagination -->
+            <div class="pagination">
+                <button class="prev-btn" data-i18n="prev">◀ Prev</button>
+                <span class="page-info"></span>
+                <button class="next-btn" data-i18n="next">Next ▶</button>
+            </div>
+
+
+
+
+
+        </section>
+
+
+
+
+
+
+
+        <!-- DASHBOARD VIEW -->
+        <section id="management-view" class="view">
+
+            <header class="view-actions">
+                <h2 class="title" data-i18n="MangTitle">Management Panel</h2>
+            </header>
+            
+
+<!-- DASHBOARD CARDS -->
+<div class="dashboard-cards">
+
+    <!-- CARD 1 -->
+    <div class="dashboard-card">
+
+        <div class="card-left">
+            <div class="card-icon">📦</div>
+
+            <div class="card-text">
+                <div class="card-label" data-i18n="TotalItems">Total Items</div>
+                <div class="card-value" id="total-items">0</div>
+            </div>
+        </div>
+
+        <div class="card-progress blue"></div>
+    </div>
+
+
+    <!-- CARD 2 -->
+    <div class="dashboard-card">
+
+        <div class="card-left">
+            <div class="card-icon">📊</div>
+
+            <div class="card-text">
+                <div class="card-label" data-i18n="TotalQuantity">Total Quantity</div>
+                <div class="card-value" id="total-quantity">0</div>
+            </div>
+        </div>
+
+        <div class="card-progress orange">75%</div>
+    </div>
+
+
+    <!-- CARD 3 -->
+    <div class="dashboard-card">
+
+        <div class="card-left">
+            <div class="card-icon">💰</div>
+
+            <div class="card-text">
+                <div class="card-label" data-i18n="TotalPrice">Total Price</div>
+                <div class="card-value" id="total-price">0</div>
+            </div>
+        </div>
+
+        <div class="card-progress green">70%</div>
+    </div>
+
+
+    <!-- CARD 4 -->
+    <div class="dashboard-card">
+
+        <div class="card-left">
+            <div class="card-icon">⚠️</div>
+
+            <div class="card-text">
+                <div class="card-label" data-i18n="LowStock">Low Stock</div>
+                <div class="card-value" id="low-stock-count">0</div>
+            </div>
+        </div>
+
+        <div class="card-progress orange">--</div>
+    </div>
+
+</div>
+
+            <!-- LOW STOCK TABLE -->
+            <div class="dashboard-section">
+                <header class="low-stock-header">
+                    <h3 data-i18n="LowStockItems">Low Stock Items</h3>
+                </header>
+
+
+                <div class="low-stock-wrappe">
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="colName">NAME</th>
+                                <th data-i18n="colCode">CODE</th>
+                                <th data-i18n="colLocation">LOCATION</th>
+                                <th data-i18n="colQuantity">QUANTITY</th>
+                                <th>LIMIT</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-body-dashboard">
+                            <!-- renderTable će ubaciti redove -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            
+
+        </section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            <!-- MODUEL Add / Edit -->
+            <div class="modal hidden">
+
+                <div class="modal__content">
+
+                    <h3 class="modal__title" data-i18n="addModulTitle">Add new Item</h3>
+
+                    <input type="text"   id="new-name"      placeholder="Naziv"         data-i18n-placeholder="addModuleName">
+                    <input type="text"   id="new-code"      placeholder="Šifra"         data-i18n-placeholder="addModuleCode">
+                    <input type="text"   id="new-status"    placeholder="Status"        data-i18n-placeholder="addModuleStatus">
+                    <input type="text"   id="new-location"  placeholder="Lokacija"      data-i18n-placeholder="addModuleLocation">
+                    <input type="number" id="new-price"     placeholder="Cena"          data-i18n-placeholder="addModulePrice">
+                    <input type="number" id="new-quantity"  placeholder="Količina"      data-i18n-placeholder="addModuleQuantity">
+                    <input type="number" id="new-limit"     placeholder="Limit"      >
+
+                    <div class="modal__actions">
+                        <button class="btn-save" data-i18n="save">Sačuvaj</button>
+                        <button class="btn-cancel" data-i18n="cancel">Otkaži</button>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- MODUEL HistoryLog -->
+            <div class="history-modal hidden">
+                
+                <div class="history-modal__content">
+                    
+                    <div class="history-modal__header">
+
+                        <div class="history-modal_title">
+                            <h3 data-i18n="historyLog">History Log</h3>
+                            <span class="history-modal_itemLog">Item nema</span>
+                        </div>
+
+                        <button class="history-close">✕</button>
+
+                    </div>
+
+                    <div class="history-modal__body">
+                            <!-- Ovde ce biti ubaceni logovi putem JS -->
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- MODUEL Delete -->
+            <div class="delete-modal hidden">
+
+                <div class="delete-modal_content">
+
+                    <h3 class="delete-modal_title" data-i18n="deleteTittle">Delete Item</h3>
+
+                    <p data-i18n="deleteMessage1">This will permanently delete the item and ALL its history.</p>
+                    <p data-i18n="deleteMessage2"> ⚠ This action cannot be undone.</p>
+
+                    <div class="delete-modal_actions">
+                        <button class="btn-confirm-delete" data-i18n="delete">Delete</button>
+                        <button class="btn-cancel-delete" data-i18n="cancel">Cancel</button>
+                    </div>
+
+                </div>
+
+</div>
+
+
+         <!-- NOTIFICATION -->
+         <div class="notification"></div>
+
+
+        
+        <!-- NAVIGATION -->
+        <nav class="navigation">
+            <button class="tab active" data-tab="input" data-i18n="input">INPUT</button>
+            <button class="tab" data-tab="table"        data-i18n="table">TABLE</button>
+            <button class="tab" data-tab="management"   data-i18n="management">MANAGEMNT</button>
+        </nav>
+
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
+<!--  ============================================================
+   APP PROGRESS SUMMARY
+============================================================ */
+
+/*
+1. NAVIGATION + STRUCTURE
+------------------------------------------------------------
+- Kreirana aplikacija sa 3 taba:
+  ✔ INPUT
+  ✔ TABLE
+  ✔ MANAGEMENT (Dashboard)
+
+- Navigacija:
+  ✔ Klik na tab
+  ✔ Swipe navigacija (50px threshold)
+
+
+2. INPUT TAB (CORE FUNCTIONALITY)
+------------------------------------------------------------
+- Search sistem za pronalazak item-a (name + code)
+- Prikaz selektovanog item-a u item card-u:
+  ✔ Name
+  ✔ Code
+  ✔ Location
+
+- Quantity kontrola:
+  ✔ povećavanje (+)
+  ✔ smanjivanje (-)
+
+- SAVE dugme:
+  ✔ update quantity u bazi
+  ✔ automatski log promene
+
+- EDIT funkcionalnost:
+  ✔ otvara modal
+  ✔ koristi istu formu kao Add
+  ✔ omogućava izmene svih polja
+  ✔ loguje svaku promenu (name, code, location, quantity)
+
+- DELETE Function
+  ✔ brisanje itema
+  ✔ preventivni confirmation modal
+
+- HISTORY LOG:
+  ✔ dugme aktivno samo kada je item selektovan
+  ✔ otvara modal sa istorijom promena
+  ✔ prikaz:
+      - quantity promene (green/red)
+      - edit promene
+      - created event
+      - timestamp
+
+
+3. TABLE TAB
+------------------------------------------------------------
+- Tabela sa svim item-ima (proširena verzija):
+  ✔ Name
+  ✔ Code
+  ✔ Location
+  ✔ Quantity
+  ✔ Status
+  ✔ Price
+  ✔ Limit
+
+- Pagination:
+  ✔ sledeća / prethodna stranica
+
+- Interakcija:
+  ✔ klik na row → prebacuje na INPUT tab
+  ✔ automatski selektuje item
+
+- ADD ITEM:
+  ✔ "+Add" dugme otvara modal
+  ✔ unos novog item-a
+  ✔ automatski kreira log (created)
+
+
+4. MANAGEMENT TAB (DASHBOARD)
+------------------------------------------------------------
+- Dashboard sekcija sa karticama:
+  ✔ Total Items
+  ✔ Total Quantity
+  ✔ Total Price
+  ✔ Total Low Stock
+
+- Low Stock tabela:
+  ✔ prikazuje sve iteme koji su ispod limita
+  ✔ uslov: quantity < limit
+  ✔ omogućava brzi uvid u kritične zalihe
+
+
+5. LOG SYSTEM (AUDIT TRAIL)
+------------------------------------------------------------
+- Supabase tabela: item_logs
+
+- Loguje:
+  ✔ quantity promene
+  ✔ edit promene (field-by-field)
+  ✔ creation događaj
+
+- Struktura:
+  ✔ item_id
+  ✔ field
+  ✔ old_value
+  ✔ new_value
+  ✔ created_at
+
+- UI prikaz:
+  ✔ sortirano po datumu (najnovije prvo)
+  ✔ vizuelni indikator ( zeleno (+) / crveno (-) )
+
+
+6. LANGUAGE SYSTEM (i18n)
+------------------------------------------------------------
+- Podržani jezici:
+  ✔ SR
+  ✔ EN
+
+- Funkcionalnosti:
+  ✔ promena jezika klikom
+  ✔ čuva izbor u localStorage
+  ✔ dynamic text update
+
+
+7. UX / UI FEATURES
+------------------------------------------------------------
+- Notification system (success/error)
+- Modal sistem (Add/Edit + History)
+- Responsive dizajn (mobile-first)
+- Clean UI (card layout, spacing, colors)
+- Selektovani item workflow
+
+
+8. PWA (PROGRESSIVE WEB APP)
+------------------------------------------------------------
+- App može da se instalira na telefon sa browsera
+- Ima:
+  ✔ custom icon
+  ✔ standalone mode (bez browser UI)
+  ✔ theme color
+
+- Deploy:
+  ✔ hostovano (Netlify)
+
+
+------------------------------------------------------------
+STATUS:
+👉 Functional inventory app (CRUD + logs + dashboard + mobile UX)
+
+------------------------------------------------------------ -->
