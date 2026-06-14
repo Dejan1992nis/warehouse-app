@@ -8,6 +8,7 @@ const SUPABASE_KEY = 'sb_publishable_G7GepZscofTzQmzyoMmo0Q_0bD6zH0c';
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 
+
 //  items BASE
 const items = [];
 
@@ -16,6 +17,8 @@ let authLoading = false;
 let isLoginMode = false;
 
 async function fetchItems() {
+
+    if (!currentUser) return;
 
     const { data, error } = await supabaseClient
         .from('items')
@@ -37,6 +40,8 @@ async function fetchItems() {
 //  uzima sve logove za jedan item
 //  sortira ih (najnoviji prvi)
 async function fetchLogs(itemId) {
+    
+    if (!currentUser) return [];
 
     const { data, error } = await supabaseClient
         .from('item_logs')
@@ -59,6 +64,24 @@ async function register(email, password) {
 
     if (authLoading) return;
 
+    // 1. prazna polja
+    if (!email || !password) {
+        showNotification(t("auth_fill_fields"), 'error');
+        return;
+    }
+
+    // 2. email format
+    if (!isValidEmail(email)) {
+        showNotification(t("auth_invalid_email"), 'error');
+        return;
+    }
+
+    // 3. password length
+    if (password.length < 6) {
+        showNotification(t('auth_password_short'), 'error');
+        return;
+    }
+
     authLoading = true;
 
     const { data, error } = await supabaseClient.auth.signUp({
@@ -66,30 +89,42 @@ async function register(email, password) {
         password: password
     });
 
-    console.log("REGISTER RESULT:", data, error);
+   
 
     if (error) {
-
-        // ✅ OVDE IDE
-        if (error?.message.includes('rate limit')) {
-            showNotification('Too many attempts. Try again later.', 'error');
+        if (error.message.includes('User already registered')) {
+            showNotification(t("auth_user_exists"), 'error');
+        } else if (error.message.includes('rate limit')) {
+            showNotification(t("auth_too_many"), 'error');
         } else {
-            showNotification(error.message, 'error');
+            showNotification(error.message, 'error'); // može ostati raw
         }
 
         authLoading = false;
         return;
     }
 
-    showNotification('Account created!', 'success');
-
+    showNotification(t("auth_registered"), 'success');
     authLoading = false;
+}
+
+
+// provera validnosti Mail-a
+function isValidEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
 }
 
 // LOGIN
 async function login(email, password) {
 
     if (authLoading) return;
+
+    //  1. prazna polja
+    if (!email || !password) {
+        showNotification(t('auth_login_fill'), 'error');
+        return;
+    }
 
     authLoading = true;
 
@@ -98,11 +133,11 @@ async function login(email, password) {
         password: password
     });
 
-    console.log("LOGIN RESULT:", data, error);
-
+    // error iz Supabase
     if (error) {
-        if (error?.message.includes('Invalid login credentials')) {
-            showNotification('Wrong email or password', 'error');
+        if (error.message.includes('Invalid login credentials')) {
+
+            showNotification(t('auth_wrong_credentials'), 'error');
         } else {
             showNotification(error.message, 'error');
         }
@@ -111,14 +146,24 @@ async function login(email, password) {
         return;
     }
 
-    showNotification('Logged in!', 'success');
+    // KLJUČNO — dodatna provera
+    if (!data || !data.user) {
+        showNotification(t('auth_wrong_credentials'), 'error');
+        authLoading = false;
+        return;
+    }
 
-    // KLJUČNA LINIJA
-    currentUser = data.user;
+    showNotification(t('auth_logged_in'), 'success');
+
+    currentUser = data?.user || null;
+
+    await loadUserLanguage();
+    await loadUserTrends();
     startApp();
 
     authLoading = false;
 }
+
 
 // LOGOUT
 async function logout() {
@@ -131,25 +176,101 @@ logoutBtn.addEventListener('click', logout);
 
 async function initUser() {
     const { data } = await supabaseClient.auth.getUser();
-    currentUser = data.user;
+    currentUser = data?.user || null;
 
     if (!currentUser) {
         showAuthScreen();
+     
         return;
     }
 
+    await loadUserLanguage(); // pozivamo jezik
+    await loadUserTrends(); // pozivamo trend
+    
     startApp();
+
+   
 }
 
-// ====================================== OTAVRANJE Side Menija ============================
+// Ucitaj Jezik
+async function loadUserLanguage() {
+    const savedLang = await loadUserSetting('language');
+
+    if (savedLang) {
+        currentLang = savedLang;
+    }
+
+    applyTranslations();
+    updateActiveLang();
+}
+
+//Ucitaj Trend
+async function loadUserTrends() {
+
+    const data = await loadUserSetting('trendUI');
+
+    savedTrends = data || {};
+
+    // ✅ odmah primeni na UI
+    Object.keys(savedTrends).forEach(key => {
+
+        const el = document.getElementById(key + "-trend");
+        if (!el) return;
+
+        const arrow = el.querySelector(".trend-arrow");
+        const value = el.querySelector(".trend-value");
+
+        const trend = savedTrends[key];
+
+        el.className = trend.className;
+        arrow.textContent = trend.arrow;
+        value.textContent = trend.value;
+    });
+}
+// ========================================= USER SETTING ==================================
+
+async function saveUserSetting(key, value) {
+    if (!currentUser) return;
+
+    await supabaseClient
+        .from('user_settings')
+        .upsert({
+            user_id: currentUser.id,
+            key: key,
+            value: value
+        }, {
+            onConflict: 'user_id,key'
+        });
+}
+
+async function loadUserSetting(key) {
+    if (!currentUser) return null;
+
+    const { data, error } = await supabaseClient
+        .from('user_settings')
+        .select('value')
+        .eq('key', key)
+        .eq('user_id', currentUser.id) // Kvazno da se snima i po korsniku
+        .maybeSingle();
+
+    if (error) {
+        console.error("loadUserSetting error:", error);
+        return null;
+    }
+
+    return data ? data.value : null;
+}
+// ====================================== SIDE MENI ============================
 const Burgerbtn = document.getElementById("user-btn");
 const sidebar   = document.getElementById("sidebar");
 const closeBtn  = document.getElementById("close-sidebar");
 
+//Otvaranje
 Burgerbtn.addEventListener("click", () => {
     sidebar.classList.remove("hidden");
 });
 
+//X
 closeBtn.addEventListener("click", () => {
     sidebar.classList.add("hidden");
 });
@@ -169,11 +290,13 @@ function showAuthScreen() {
     authScreen.style.display = 'flex';
     appWrapper.classList.add('hidden');
 }
-function startApp() {
+async function startApp() {
     authScreen.style.display = 'none';
     appWrapper.classList.remove('hidden');
 
-    fetchItems();
+    showUserInfo(); 
+
+    await fetchItems();
 }
 
 //za Log (prilikom promen samo Kolicni pa odmah Save)
@@ -201,7 +324,7 @@ function updateAuthUI() {
 
         authCard.classList.add('login-mode');
 
-        // ✅ menjamo KLJUČ
+        //  menjamo KLJUČ
         authTitle.setAttribute('data-i18n', 'auth_login_title');
         authSubtitle.setAttribute('data-i18n', 'auth_login_subtitle');
 
@@ -223,7 +346,7 @@ function updateAuthUI() {
         switchMode.setAttribute('data-i18n', 'auth_login');
     }
 
-    // ✅ NAJBITNIJE — refresh prevoda
+    //  NAJBITNIJE — refresh prevoda
     applyTranslations();
 }
 
@@ -233,23 +356,14 @@ authMainBtn.addEventListener('click', () => {
     const email = emailInput.value.trim();
     const password = passwordInput.value.trim();
 
-    // basic validation
-    if (!email || !password) {
-        showNotification('Enter email and password', 'error');
-        return;
-    }
-
-    if (password.length < 6) {
-        showNotification('Password minimum 6 characters', 'error');
-        return;
-    }
-
     if (isLoginMode) {
         login(email, password);
     } else {
         register(email, password);
     }
 });
+
+
 switchMode.addEventListener('click', () => {
     isLoginMode = !isLoginMode;
     updateAuthUI();
@@ -425,7 +539,7 @@ saveBtn.addEventListener('click', async function () {
         );
     }
 
-    // ✅ 4. UPDATE U BAZI
+    //  4. UPDATE U BAZI
     const { error } = await supabaseClient
         .from('items')
         .update({ quantity: newQuantity })
@@ -460,11 +574,35 @@ saveBtn.addEventListener('click', async function () {
 
 
 // NEW ITEM FORM
-//Opne
+
+
+const toggleMoreBtn = document.getElementById('toggle-more');
+const optionalFields = document.getElementById('optional-fields');
+
+//Toggle btn More/Hide
+toggleMoreBtn.addEventListener('click', function () {
+    optionalFields.classList.toggle('open');
+
+    if (optionalFields.classList.contains('open')) {
+        toggleMoreBtn.textContent = t('toggleHide');
+    } else {
+        toggleMoreBtn.textContent = t('toggleMore');
+    }
+});
+
+// Otvaranje Modula
 addOpenBtn.addEventListener('click', function(){
+
+    // OVO JE KLJUČ
+    editMode = false;
+    editItem = null;
+
+    modalTitle.textContent = t('addModulTitle');
+
     modal.classList.remove('hidden');
     newName.focus();
-});
+})
+
 
 //addCancel
 addCancel.addEventListener('click', function(){
@@ -501,11 +639,10 @@ addSave.addEventListener('click', async function(){
 
 
     //  VALIDACIJA
-    if (!name || !code || !status || !location || quantityRaw === ''|| isNaN(quantity)|| priceRow === ''|| isNaN(price) ) {
+    if (!name || quantityRaw === '' || isNaN(quantity) || priceRow === '' || isNaN(price) || limitRow === '' || isNaN(limit)) {
         showNotification(`❌ ${t('errorFill')}`, 'error');
         return;
     }
-
 
     // ============================================================
     //  EDIT MODE
@@ -539,7 +676,7 @@ addSave.addEventListener('click', async function(){
         }
 
 
-        // ✅ UPDATE ITEM
+        //  UPDATE ITEM
         const { error } = await supabaseClient
             .from('items')
             .update({
@@ -843,7 +980,7 @@ function renderResults(results) {
         const div = document.createElement('div');
 
         div.classList.add('result-item');
-        div.textContent = `${item.name} (${item.code})`;
+        div.textContent = `${item.name} (${item.code}) - ${item.status} `;
 
         div.addEventListener('click', function () {
             selectItem(item);
@@ -993,7 +1130,7 @@ function renderLogs(logs) {
         let text = '';
         let date = new Date(log.created_at).toLocaleString('sr-RS');
 
-        // ✅ FORMATIRANJE PO TIPU
+        //  FORMATIRANJE PO TIPU
         if (log.field === 'quantity') {
             text = `${t('ItemQuantity')} ${log.old_value} → ${log.new_value}`;
                 //da vrendosti budu brojevi a ne text
@@ -1060,7 +1197,17 @@ setTimeout(() => {
 }, 3000);
 
 }
+
 function activateTab(tabElement) {
+
+    // prvo uzmi tabName
+    const tabName = tabElement.dataset.tab;
+
+    // Ako se izadje iz INPUT taba resetuj odabtani item
+    if (tabName !== 'input') {
+        selectedItem = null;
+        resetDisplay();
+    }
 
     // ACTIVE TAB
     nav.querySelectorAll('.tab').forEach(btn =>
@@ -1070,8 +1217,6 @@ function activateTab(tabElement) {
     tabElement.classList.add('active');
 
     // VIEW SWITCH
-    const tabName = tabElement.dataset.tab;
-
     document.querySelectorAll('.view').forEach(view => {
         view.classList.remove('active-view');
     });
@@ -1101,7 +1246,6 @@ async function addLog(itemId, field, oldVal, newVal) {
     if (error) {
         console.error('LOG ERROR:', error);
     }
-    console.log('LOG:', itemId, field, oldVal, newVal);
 }
 
 /* ============================================================
@@ -1109,8 +1253,8 @@ async function addLog(itemId, field, oldVal, newVal) {
 ============================================================ */
 
 
-// Uzimamo jezik iz localStorage ili default "sr"
-let currentLang = localStorage.getItem('lang') || 'sr';
+// Defultni jezik app je SR
+let currentLang = 'en'; // default
 
 
 // Dugmad za izbor jezika (SR / EN)
@@ -1169,21 +1313,21 @@ const translations = {
 
         addModulTitle: "Dodaj novi artikal",
 
-        addModuleName: "Naziv",
+        addModuleName: "Naziv *",
         addModuleCode: "Šifra",
         addModuleLocation: "Lokacija",
-        addModuleQuantity: "Količina",
+        addModuleQuantity: "Količina *",
         addModuleStatus:"Status",
-        addModulePrice: 'Cena',
+        addModulePrice: 'Cena *',
         historyLog: "Istorija Dela",
         noHistoryYet:"Bez izmena...",
 
         created: "Kreirano: ",
 
-        TotalItems:"Ukupno Stavki: ",
-        TotalQuantity:"Ukupna Kolicina: ",
-        TotalPrice:"Ukupno Novca: ",
-        LowStock: "Male Zalihe: ",
+        TotalItems:"Ukupno Artikla ",
+        TotalQuantity:"Ukupna Kolicina ",
+        TotalPrice:"Ukupno Novca ",
+        LowStock: "Male Zalihe ",
 
         LowStockItems: "Stavke sa malim zalihama",
 
@@ -1207,7 +1351,38 @@ const translations = {
         auth_login_subtitle: "Unesi svoje podatke",
 
         auth_no_account: "Nemaš nalog?",
-        auth_have_account: "Već imaš nalog?"
+        auth_have_account: "Već imaš nalog?",
+
+        // AUTH NOTIFICATIONS
+        auth_fill_fields: "Popuni sva polja",
+        auth_invalid_email: "Neispravan format email-a",
+        auth_password_short: "Lozinka mora imati najmanje 6 karaktera",
+
+        auth_user_exists: "Korisnik već postoji",
+        auth_too_many: "Previše pokušaja. Pokušaj kasnije",
+
+        auth_registered: "Nalog uspešno kreiran",
+        auth_login_fill: "Unesi email i lozinku",
+        auth_wrong_credentials: "Pogrešan email ili lozinka",
+        auth_logged_in: "Uspešna prijava",
+
+        // SIDEBAR
+        sidebar_menu: "Meni",
+        sidebar_profile: "Profil",
+        sidebar_settings: "Podešavanja",
+        sidebar_logout: "Odjava",
+
+        //SECTION TITLE
+        selectedItem: "Izabrani artikal",
+        adjustQuantity: "Izmena količine",
+        lowStockItems: "Artikli sa malim zalihama",
+
+        //ToggleBTN
+        toggleMore: "+ Vise",
+        toggleHide: "- Sakri",
+
+        NoLowStockItems: "Bez kritičnih artikala"
+
 
 
     },
@@ -1262,21 +1437,21 @@ const translations = {
 
         addModulTitle: "Add new item",
 
-        addModuleName: "Name",
+        addModuleName: "Name *",
         addModuleCode: "Code",
         addModuleLocation: "Location",
-        addModuleQuantity: "Quantity",
+        addModuleQuantity: "Quantity *",
         addModuleStatus:"Status",
-        addModulePrice: 'Price',
+        addModulePrice: 'Price *',
         historyLog: "History Log",
         noHistoryYet:"No History jet...",
 
         created: "Created: ",
 
-        TotalItems:"Total Items: ",
-        TotalQuantity:"Total Quantity: ",
-        TotalPrice:"Total Price: ",
-        LowStock: "Low Stock: ",
+        TotalItems:"Total Items ",
+        TotalQuantity:"Total Quantity ",
+        TotalPrice:"Total Price ",
+        LowStock: "Low Stock ",
 
         LowStockItems: "Low Stock Items",
 
@@ -1301,7 +1476,38 @@ const translations = {
         auth_login_subtitle: "Enter your credentials",
 
         auth_no_account: "Don't have an account?",
-        auth_have_account: "Already have an account?"
+        auth_have_account: "Already have an account?",
+
+        // AUTH NOTIFICATIONS
+        auth_fill_fields: "Fill all fields",
+        auth_invalid_email: "Invalid email format",
+        auth_password_short: "Password must be at least 6 characters",
+
+        auth_user_exists: "User already exists",
+        auth_too_many: "Too many attempts. Try later",
+
+        auth_registered: "Account created successfully",
+        auth_login_fill: "Enter email and password",
+        auth_wrong_credentials: "Wrong email or password",
+        auth_logged_in: "Logged in successfully",
+
+        // SIDEBAR
+        sidebar_menu: "Menu",
+        sidebar_profile: "Profile",
+        sidebar_settings: "Settings",
+        sidebar_logout: "Logout",
+
+        //SECTION TITLE
+        selectedItem: "Selected Item",
+        adjustQuantity: "Adjust Quantity",
+        lowStockItems: "Low Stock Items",
+
+        //ToggleBTN
+        toggleMore: "+ More",
+        toggleHide: "- Hide",
+
+        NoLowStockItems: "No Low Stock items"
+
 
 
       
@@ -1345,13 +1551,14 @@ function applyTranslations(){
 
 
 // Menja jezik + pamti + refresh UI
-function setLang(lang){
+async function setLang(lang){
 
     currentLang = lang;
-    
-    localStorage.setItem('lang', lang); // zapamti izbor
-    applyTranslations(); // primeni prevod
-    updateActiveLang(); // update active dugme
+
+    await saveUserSetting('language', lang);
+
+    applyTranslations();
+    updateActiveLang();
 }
 
 // EVENTS (klik na dugmad)
@@ -1389,27 +1596,111 @@ const totalPriceEl      = document.getElementById('total-price');
 
 const tableBodyDash     = document.querySelector('.table-body-dashboard');
 const lowStockCard      = document.getElementById('low-stock-count');
-// ============= CARDS =============
+
+let previousTotals = {
+    items: null,
+    quantity: null,
+    price: null,
+    lowstock: null
+};
+
+//  load poslednjeg prikazanog trenda
+let savedTrends = {};
+
+
+// ==================================== Management panel (CARDS) ============================
+
+// === ISCRAVANJE TRENDA ====
+function updateTrend(elementId, currentValue, key) {
+
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    const arrow = el.querySelector(".trend-arrow");
+    const value = el.querySelector(".trend-value");
+
+    const prev = previousTotals[key];
+
+    if (prev === null || prev === 0) {
+        previousTotals[key] = currentValue;
+        return;
+    }
+
+    const diff = currentValue - prev;
+    const percent = ((diff / prev) * 100).toFixed(1);
+
+    const isNegativeMetric = (key === "lowstock");
+
+    let className, arrowText, valueText;
+
+    if (diff > 0) {
+        className = isNegativeMetric ? "card-trend down" : "card-trend up";
+        arrowText = "▲";
+        valueText = `+${diff} (${percent}%)`;
+
+    } else if (diff < 0) {
+        className = isNegativeMetric ? "card-trend up" : "card-trend down";
+        arrowText = "▼";
+        valueText = `${diff} (${percent}%)`;
+
+    } else {
+        return;
+    }
+
+    el.className = className;
+    arrow.textContent = arrowText;
+    value.textContent = valueText;
+
+    savedTrends[key] = {
+        className,
+        arrow: arrowText,
+        value: valueText
+    };
+
+    saveUserSetting('trendUI', savedTrends);
+
+    previousTotals[key] = currentValue;
+}
+// ===== GLVAN F za UPISVANJE inf u KARTICE
 function updateDashboardCards() {
 
     // TOTAL ITEMS
-    totalItemsEl.textContent = items.length;
+    const totalItems = items.length;
+    totalItemsEl.textContent = totalItems;
 
-    // TOTAL QUANTITY
+
+    //Broj  TOTAL QUANTITY
     const totalQuantity = items.reduce((sum, item) => {
         return sum + Number(item.quantity);
     }, 0);
 
     totalQuantityEl.textContent = totalQuantity;
 
-    //  TOTAL PRICE (SABIRANJE, NE MNOŽENJE)
+
+    //Broj  TOTAL PRICE
     const totalPrice = items.reduce((sum, item) => {
         return sum + Number(item.price);
     }, 0);
 
     totalPriceEl.textContent = totalPrice.toLocaleString();
+
+
+    // Broj LOW STOCK Itema
+    const lowStock = items.filter(item => {
+        return Number(item.quantity) < Number(item.limit);
+    });
+
+    const lowStockCount = lowStock.length;
+    lowStockCard.textContent = lowStockCount;
+
+
+    // TREND UPDATE (BEZ SIDE EFFECTA)
+    updateTrend("items-trend", totalItems, "items");
+    updateTrend("quantity-trend", totalQuantity, "quantity");
+    updateTrend("price-trend", totalPrice, "price");
+    updateTrend("lowstock-trend", lowStockCount, "lowstock");
 }
-// ============ RENDER LOW STOCK ==========
+// ============ RENDER LOW STOCK TABELE ==========
 function renderLowStockTable() {
 
     // koristimo LIMIT PO ITEMU
@@ -1424,7 +1715,7 @@ function renderLowStockTable() {
 
     if (lowStock.length === 0) {
         tableBodyDash.innerHTML =
-            '<tr><td colspan="4">No low stock</td></tr>';
+            `<tr><td colspan="4">${t('NoLowStockItems')}</td></tr>`;
         return;
     }
 
@@ -1451,18 +1742,22 @@ function renderLowStockTable() {
 
 
 
+// ================================================== CURRENT USER ====================================================
 
+function showUserInfo() {
 
+    const el = document.querySelector('.user-email');
+    if (!el || !currentUser) return;
+
+    // uzmi deo pre @
+    const email = currentUser.email;
+
+    el.textContent = email;
+}
 
 /* ============================================================
    11. INIT (pokretanje aplikacije)
 ============================================================ */
-
-// Postavi active dugme posle reload-a
-updateActiveLang();
-
-// Primeni prevode odmah
-applyTranslations();
 
 // PAGINATION INIT
 setupPagination();
