@@ -1,4 +1,5 @@
 
+
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 const SUPABASE_URL = 'https://ndnljnalwqpnsdnnjoql.supabase.co';
@@ -173,26 +174,36 @@ async function logout() {
 const logoutBtn = document.getElementById('logout-btn');
 logoutBtn.addEventListener('click', logout);
 
-
+// PROVERA KORISNIKA
 async function initUser() {
     const { data } = await supabaseClient.auth.getUser();
     currentUser = data?.user || null;
 
-    if (!currentUser) {
+    if (currentUser) {
+        startApp(); // odmah
+    } else {
         showAuthScreen();
-     
-        return;
     }
-
-    await loadUserLanguage(); // pozivamo jezik
-    await loadUserTrends(); // pozivamo trend
-    
-    startApp();
-
-   
 }
 
-// Ucitaj Jezik
+// PRIKAZ AUTH EKRANA
+function showAuthScreen() {
+    authScreen.style.display = 'flex';
+    appWrapper.classList.add('hidden');
+}
+
+// STARTOVANJE APP
+async function startApp() {
+    authScreen.style.display = 'none';
+    appWrapper.classList.remove('hidden');
+
+    showUserInfo();
+
+    loadUserLanguage();
+    loadUserTrends();
+    fetchItems();
+}
+// UCITAVAMO JEZIK
 async function loadUserLanguage() {
     const savedLang = await loadUserSetting('language');
 
@@ -204,7 +215,7 @@ async function loadUserLanguage() {
     updateActiveLang();
 }
 
-//Ucitaj Trend
+//UCITAVANJE TREBDA
 async function loadUserTrends() {
 
     const data = await loadUserSetting('trendUI');
@@ -286,18 +297,7 @@ document.addEventListener("click", (e) => {
 
 
 
-function showAuthScreen() {
-    authScreen.style.display = 'flex';
-    appWrapper.classList.add('hidden');
-}
-async function startApp() {
-    authScreen.style.display = 'none';
-    appWrapper.classList.remove('hidden');
 
-    showUserInfo(); 
-
-    await fetchItems();
-}
 
 //za Log (prilikom promen samo Kolicni pa odmah Save)
 let originalQuantity = null;
@@ -874,7 +874,7 @@ function closeDeleteModal() {
 
 swipeArea.addEventListener('touchstart', function(e){
 
-if (e.target.closest('.table-wrapper') || e.target.closest('.low-stock-wrappe')) {
+if (e.target.closest('.table-wrapper') || e.target.closest('.low-stock-wrapper')) {
     isScrollingTable = true;
     return;
 }
@@ -1762,7 +1762,7 @@ function showUserInfo() {
 // PAGINATION INIT
 setupPagination();
 
-//  UMESTO fetchItems
-initUser();
-
 updateAuthUI();
+
+//UMESTO fetchItems
+initUser();

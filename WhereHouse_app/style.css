@@ -24,6 +24,7 @@ body {
     padding: 16px;
     background: transparent;
 }
+
 /* ================= HEADER ================= */
 
 .header {
@@ -1041,18 +1042,6 @@ body {
     transform: scale(0.97);
 }
 
-/* ================= ANIMATION ================= */
-
-@keyframes fadeModal {
-    from {
-        opacity: 0;
-        transform: translateY(12px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 
 /* ================= HIDDEN ================= */
 
@@ -1281,18 +1270,6 @@ body {
     border-radius: 4px;
 }
 
-/* ================= ANIMATION ================= */
-
-@keyframes fadeModal {
-    from {
-        opacity: 0;
-        transform: translateY(12px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 /* ========================================== DELETE MODAL ========================================== */
 
 .delete-modal {
@@ -1554,11 +1531,18 @@ body {
 /* TREND UMESTO KRUGA */
 .card-trend {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items:flex-end;
     gap: 4px;
 
     font-size: 13px;
     font-weight: 600;
+}
+
+.trend-main {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 /* ZELENO (rast) */
@@ -1575,7 +1559,12 @@ body {
 .card-trend.neutral {
     color: #94a3b8;
 }
-
+.trend-date {
+    font-size: 11px;
+    color: #64748b;
+    margin-left: 4px;
+    margin-top: 2px;
+}
 /* ================= SECTION ================= */
 
 .dashboard-section {
@@ -1600,7 +1589,7 @@ body {
 
 /* ========================================= LOW STOCK TABLE ================================== */
 
-.low-stock-wrappe {
+.low-stock-wrapper {
     max-height: 250px;
     overflow-y: auto;
 
@@ -1846,12 +1835,14 @@ body {
     color: #60a5fa;
 }
 
-/* ================= ANIMATION ================= */
+
 
 .auth-card {
     animation: fadeIn 0.4s ease;
 }
 
+
+/* ================= ANIMATION ================= */
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -1862,6 +1853,7 @@ body {
         transform: translateY(0);
     }
 }
+
 
 
 
