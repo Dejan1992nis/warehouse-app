@@ -125,6 +125,7 @@
 
                         <button data-i18n="sidebar_profile">Profile</button>
                         <button data-i18n="sidebar_settings">Settings</button>
+                        <button class="archive-btn" data-i18n="sidebar_archive">Archive</button>
 
                         <hr>
  
@@ -378,6 +379,83 @@
         </section>
 
 
+        <!-- TRANSACTIONS VIEW -->
+        <section id="transactions-view" class="view">
+
+            <header class="view-actions">
+                <h2 class="title">Transactions</h2>
+            </header>
+
+            <!-- ACTION BUTTONS -->
+            <div class="transactions-actions">
+
+                <button id="btn-receive" class="headerBtn">+ Receive</button>
+                <button id="btn-issue" class="headerBtn danger">- Issue</button>
+
+            </div>
+
+            <!-- TABELA TRANSAKCIJA (kasnije punimo) -->
+            <div class="table-wrapper">
+
+                <table class="table">
+
+                    <thead>
+                        <tr>
+                            <th>TYPE</th>
+                            <th>DATE</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="transactions-body">
+                        <!-- JS -->
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+
+<!--  VIEWs FROM SIDEBAR-->
+
+
+        <!-- ARCHIVE VIEW -->
+        <section id="archive-view" class="view">
+
+            <header class="view-actions">
+                <h2 class="title">Archived Items</h2>
+            </header>
+
+            <div class="table-wrapper">
+
+                <table class="table">
+
+                    <thead>
+                        <tr>
+                            <th>NAME</th>
+                            <th>CODE</th>
+                            <th>LOCATION</th>
+                            <th>QUANTITY</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="archive-body">
+                        <!-- JS ubacuje -->
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <!-- EMPTY STATE -->
+            <div class="empty-state archive-empty hidden">
+                <p>No archived items</p>
+            </div>
+
+        </section>
 
 
 
@@ -397,45 +475,43 @@
 
 
 
+            <!-- MODAL Add / Edit -->
+            <div class="modal hidden">
+            <div class="modal__content">
+                <h3 class="modal__title" data-i18n="addModulTitle">Add new Item</h3>
+
+                <!-- REQUIRED FIELDS -->
+                <input type="text" id="new-name" placeholder="Naziv *" data-i18n-placeholder="addModuleName">
+                <input type="number" id="new-quantity" class="hidden" placeholder="Količina *" data-i18n-placeholder="addModuleQuantity">
+                <input type="number" id="new-price" placeholder="Cena *" data-i18n-placeholder="addModulePrice">
+                <input type="number" id="new-limit" placeholder="Limit *">
 
 
-<!-- MODAL Add / Edit -->
-<div class="modal hidden">
-  <div class="modal__content">
-    <h3 class="modal__title" data-i18n="addModulTitle">Add new Item</h3>
-
-    <!-- REQUIRED FIELDS -->
-    <input type="text" id="new-name" placeholder="Naziv *" data-i18n-placeholder="addModuleName">
-    <input type="number" id="new-quantity" placeholder="Količina *" data-i18n-placeholder="addModuleQuantity">
-    <input type="number" id="new-price" placeholder="Cena *" data-i18n-placeholder="addModulePrice">
-    <input type="number" id="new-limit" placeholder="Limit *">
+                <!-- TOGGLE BUTTON -->
+                <button type="button" id="toggle-more" class="btn-more" data-i18n="toggleMore">
+                + More
+                </button>
 
 
-    <!-- TOGGLE BUTTON -->
-    <button type="button" id="toggle-more" class="btn-more" data-i18n="toggleMore">
-      + More
-    </button>
+                <!-- OPTIONAL FIELDS -->
+                <div id="optional-fields">
+
+                <input type="text" id="new-code" placeholder="Šifra" data-i18n-placeholder="addModuleCode">
+                <input type="text" id="new-status" placeholder="Status" data-i18n-placeholder="addModuleStatus">
+                <input type="text" id="new-location" placeholder="Lokacija" data-i18n-placeholder="addModuleLocation">
+
+                </div>
 
 
-    <!-- OPTIONAL FIELDS -->
-    <div id="optional-fields">
+                <!-- ACTIONS -->
+                <div class="modal__actions">
+                <button class="btn-save" data-i18n="save">Sačuvaj</button>
+                <button class="btn-cancel" data-i18n="cancel">Otkaži</button>
+                </div>
 
-      <input type="text" id="new-code" placeholder="Šifra" data-i18n-placeholder="addModuleCode">
-      <input type="text" id="new-status" placeholder="Status" data-i18n-placeholder="addModuleStatus">
-      <input type="text" id="new-location" placeholder="Lokacija" data-i18n-placeholder="addModuleLocation">
+            </div>
 
-    </div>
-
-
-    <!-- ACTIONS -->
-    <div class="modal__actions">
-      <button class="btn-save" data-i18n="save">Sačuvaj</button>
-      <button class="btn-cancel" data-i18n="cancel">Otkaži</button>
-    </div>
-
-  </div>
-
-</div>
+            </div>
 
             <!-- MODUEL HistoryLog -->
             <div class="history-modal hidden">
@@ -478,10 +554,48 @@
 
                 </div>
 
-</div>
+            </div>
 
+        <!-- MODAL TRANSACTION -->
+        <div class="modal transaction-modal hidden">
 
+            <div class="modal__content transaction-container">
 
+                <!-- HEADER -->
+                <div class="transaction-header">
+                    <h3 id="transaction-title">New Transaction</h3>
+                </div>
+
+                <!-- SEARCH -->
+                <div class="search transaction-search">
+                    <input type="text" id="transaction-search" placeholder="Search item..." />
+                    <div class="results transaction-results"></div>
+                </div>
+
+                <!-- LIST HEADER -->
+                <p class="transaction-subtitle section-title" >Selected items</p>
+
+                <!-- LIST -->
+                <div class="transaction-list"></div>
+
+                <!-- PDF OPTION -->
+                <div class="pdf-option">
+                    <label class="switch">
+                        <input type="checkbox" id="pdf-toggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span>Generate PDF</span>
+                </div>
+
+                <!-- ACTIONS -->
+                <div class="modal__actions">
+                    <button id="transaction-confirm" class="btn-save">Confirm</button>
+                    <button id="transaction-cancel" class="btn-cancel">Cancel</button>
+                </div>
+
+            </div>
+
+        </div>
 
 
         
@@ -490,6 +604,7 @@
             <button class="tab active" data-tab="input" data-i18n="input">INPUT</button>
             <button class="tab" data-tab="table"        data-i18n="table">TABLE</button>
             <button class="tab" data-tab="management"   data-i18n="management">MANAGEMNT</button>
+            <button class="tab" data-tab="transactions">TRANSACTIONS</button>
         </nav>
 
 

@@ -460,6 +460,65 @@ body {
     z-index: 1000;
 }
 
+/* ================= NO RESULTS STATE ================= */
+
+.no-results {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    padding: 16px;
+
+    text-align: center;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+/* tekst */
+.no-results p {
+    margin: 0;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+/* dugme */
+.add-new-btn {
+    align-self: center;
+
+    padding: 8px 14px;
+
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+
+    background: rgba(59,130,246,0.15);
+    color: #60a5fa;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: all 0.2s ease;
+}
+
+/* hover */
+.add-new-btn:hover {
+    background: rgba(59,130,246,0.25);
+    border-color: rgba(96,165,250,0.4);
+    transform: translateY(-1px);
+}
+
+/* active klik */
+.add-new-btn:active {
+    transform: scale(0.97);
+}
+
+/* focus (accessibility) */
+.add-new-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(96,165,250,0.35);
+}
+
 /* hide kad nema rezultata */
 .results:empty {
     display: none;
@@ -898,6 +957,15 @@ body {
     z-index: 1000;
 }
 
+/* transaction = parent */
+.transaction-modal {
+    z-index: 1100;
+}
+
+/* add/edit = child */
+.modal.child-modal {
+    z-index: 1200;
+}
 
 
 
@@ -908,7 +976,7 @@ body {
     color: #e2e8f0;
 
     padding: 20px;
-    border-radius: 16px;
+    border-radius: 6px;
 
     width: 90%;
     max-width: 360px;
@@ -1857,3 +1925,200 @@ body {
 
 
 
+
+/* ======================================================= TRANSACTION ========================================================= */
+
+.transaction-container {
+    background: #1c2433;
+    border-radius: 18px;
+    padding: 16px;
+    
+}
+
+/* HEADER */
+.transaction-header {
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+}
+
+.transaction-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* SEARCH */
+.transaction-search input {
+    margin-bottom: 10px;
+}
+
+/* SUBTITLE */
+.transaction-subtitle {
+    font-size: 12px;
+    color: #8fa1c7;
+    margin: 10px 0 6px;
+}
+
+/* LIST CONTAINER */
+.transaction-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+/* ITEM ROW */
+.transaction-item {
+    display: grid;
+    grid-template-columns: 1fr 70px 40px; 
+    align-items: center;
+
+    padding: 10px 12px;
+    border-radius: 10px;
+    margin-bottom: 6px;
+
+    background: rgba(255,255,255,0.02);
+    transition: all 0.2s ease;
+}
+.transaction-item:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+/* LEFT SIDE */
+.ti-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ti-name {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.ti-stock {
+    font-size: 11px;
+    color: #6f7fa3;
+}
+
+/* INPUT (MIDDLE) */
+.ti-middle {
+    width: 60px;
+}
+
+.ti-input {
+    width: 100%;
+    padding: 6px;
+
+    border-radius: 8px;
+    border: none;
+
+    background: #111827;
+    color: #fff;
+    text-align: center;
+
+    outline: none;
+}
+
+/* DELETE ICON */
+.ti-right {
+    display: flex;
+    align-items: center;
+}
+
+.ti-delete {
+    background: transparent;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #ff6b6b;
+    transition: 0.2s;
+}
+
+.ti-delete:hover {
+    color: #ff0000;
+    transform: scale(1.1);
+}
+
+/* PDF OPTION */
+.pdf-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #bbb;
+}
+
+/* SWITCH */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+}
+
+.switch input {
+    display: none;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    background-color: #444;
+    border-radius: 20px;
+    inset: 0;
+    transition: 0.3s;
+}
+
+.slider::before {
+    content: "";
+    position: absolute;
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    top: 2px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+input:checked + .slider {
+    background: #4caf50;
+}
+
+input:checked + .slider::before {
+    transform: translateX(16px);
+}
+
+
+
+
+/* ======================================================= ARCHIVE ========================================================= */
+/* RESTOR btn */
+.btn-restore {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+
+    background-color: #2ecc71; /* green */
+    color: white;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition: all 0.15s ease;
+}
+
+
+/* HOVER (desktop) */
+.btn-restore:hover {
+    background-color: #27ae60;
+}
+
+
+/* PRESS EFFECT (mobile feel) */
+.btn-restore:active {
+    transform: scale(0.95);
+}

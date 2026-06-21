@@ -25,8 +25,13 @@ async function fetchItems() {
         return;
     }
 
+    // filtriramo samo aktivne iteme
+    const activeItems = data.filter(function(item) {
+        return item.is_active !== false;  // vrati Iteme koji NEMAJu status "false" ovok ce se vartiti i null item 
+    });
+
     items.length = 0;
-    items.push(...data);
+    items.push(...activeItems);
 
     updateDashboardCards();
     renderTable();
@@ -370,18 +375,47 @@ function handleSearch() {
         String(item.code).includes(inputValue)
     );
 
-    renderResults(filtered);
+    renderResults(filtered, 'receipt'); 
 }
 
-function renderResults(results) {
+function renderResults(results, mode) {
 
     clearResults();
 
+    if (results.length === 0) {
+
+        const div = document.createElement('div');
+        div.classList.add('no-results');
+
+        const text = document.createElement('p');
+        text.textContent = 'No results found';
+
+        div.appendChild(text);
+
+        // samo za RECEIVE!
+        if (mode === 'receipt') {
+
+            const button = document.createElement('button');
+            button.classList.add('add-new-btn');
+            button.textContent = '+ Add New Item';
+
+            button.addEventListener('click', () => {
+                modal.classList.remove('hidden');
+                newName.focus();
+            });
+
+            div.appendChild(button);
+        }
+
+        resultsContainer.appendChild(div);
+        return;
+    }
+
     results.forEach(item => {
         const div = document.createElement('div');
-
         div.classList.add('result-item');
-        div.textContent = `${item.name} (${item.code}) - ${item.status} `;
+
+        div.textContent = `${item.name} (${item.code}) - ${item.status}`;
 
         div.addEventListener('click', function () {
             selectItem(item);
@@ -637,6 +671,7 @@ historyClose.addEventListener('click', function () {
 });
 
 // -------------------- FEATURE: ADD / EDIT --------------------
+
 //1.  SELECTORS ===
 const modal             = document.querySelector('.modal');
 const addOpenBtn        = document.querySelector('.btn-add');
@@ -652,12 +687,14 @@ const newStatus         = document.getElementById('new-status');
 const newLocation       = document.getElementById('new-location');
 const newPrice          = document.getElementById('new-price');
 const newLimit          = document.getElementById('new-limit');
-
 const newQuantity       = document.getElementById('new-quantity');
 
+
 //2.  STATE ===
-let editMode        = false;
-let editItem        = null;
+let editMode = false;
+let editItem = null;
+let fromTransaction = false; 
+
 
 //3.  FUNCTIONS ===
 function resetForm(){
@@ -668,186 +705,328 @@ function resetForm(){
     newQuantity.value = '';
     newPrice.value = '';
     newLimit.value = '';
+
+    //Prikazujemo Qty input
+    newQuantity.classList.remove('hidden');
 }
 
+
 //4.  EVENTS ===
-// Otvaranje Modula
+
+//  OTVARANJE MODALA NORMALNO (Add iz TABLE)
 addOpenBtn.addEventListener('click', function(){
 
-    // OVO JE KLJUČ
+    newQuantity.classList.remove('hidden');
+    
     editMode = false;
     editItem = null;
+    fromTransaction = false; 
+    
 
     modalTitle.textContent = t('addModulTitle');
 
     modal.classList.remove('hidden');
+    modal.classList.remove('child-modal'); 
+
     newName.focus();
-})
-//addCancel
+});
+
+
+//  CANCEL
 addCancel.addEventListener('click', function(){
+
     modal.classList.add('hidden');
-    
+    modal.classList.remove('child-modal'); 
+
     editMode = false;
     editItem = null;
+    fromTransaction = false; 
 
-    newName.value = '';
-    newCode.value = '';
-    newStatus.value = '';
-    newLocation.value = '';
-    newPrice.value = '';
-    newLimit.value = '';
-    newQuantity.value = '';
+    resetForm();
 
     modalTitle.textContent = t('addModulTitle');
 });
-//SaveBtn
-addSave.addEventListener('click', async function(){
 
+
+//  SAVE
+// addSave.addEventListener('click', async function(){
+
+//     const name      = newName.value.trim();
+//     const code      = newCode.value.trim();
+//     const status    = newStatus.value.trim();
+//     const location  = newLocation.value.trim();
+
+//     const quantityRaw = newQuantity.value.trim();
+//     const quantity    = Number(quantityRaw);
+
+//     const priceRow    = newPrice.value.trim();
+//     const price       = Number(priceRow);
+
+//     const limitRow    = newLimit.value.trim();
+//     const limit       = Number(limitRow);
+
+//     // VALIDACIJA
+//     if (!name || priceRow === '' || isNaN(price) || limitRow === '' || isNaN(limit)) {
+//         showNotification(`❌ ${t('errorFill')}`, 'error');
+//         return;
+//     }
+
+//     // Posebna validacija samo kadje je ADD item
+//     if (!editMode) {
+//     if (quantityRaw === '' || isNaN(quantity)) {
+//         showNotification(`❌ ${t('errorFill')}`, 'error');
+//         return;
+//     }
+// }
+
+//     // ============================================================
+//     //  EDIT MODE (OSTAJE ISTO)
+//     // ============================================================
+//     if (editMode) {
+
+//         if (editItem.name !== name) await addLog(editItem.id, 'name', editItem.name, name);
+//         if (editItem.code !== code) await addLog(editItem.id, 'code', editItem.code, code);
+//         if (editItem.location !== location) await addLog(editItem.id, 'location', editItem.location, location);
+//         if (editItem.status !== status) await addLog(editItem.id, 'status', editItem.status, status);
+//         if (editItem.quantity !== quantity) await addLog(editItem.id, 'quantity', editItem.quantity, quantity);
+//         if (editItem.price !== price) await addLog(editItem.id, 'price', editItem.price, price);
+//         if (editItem.limit !== limit) await addLog(editItem.id, 'limit', editItem.limit, limit);
+
+//         const { error } = await supabaseClient
+//             .from('items')
+//             .update({
+//                 name,
+//                 code,
+//                 status,
+//                 location,
+//                 quantity,
+//                 price,
+//                 limit
+//             })
+//             .eq('id', Number(editItem.id));
+
+//         if (error) {
+//             showNotification(`❌ ${error.message}`, 'error');
+//             return;
+//         }
+
+//         showNotification(`✔ ${name} ${t('updated')}`, 'success');
+
+//         await fetchItems();
+
+//         selectedItem = items.find(item => item.id === editItem.id);
+//         if (selectedItem) selectItem(selectedItem);
+
+//         modal.classList.add('hidden');
+//         resetForm();
+
+//         return;
+//     }
+
+//     // ============================================================
+//     //  ADD MODE (JEDINI FLOW SAD)
+//     // ============================================================
+//  newQuantity. classList.remove('hidden')
+//     const { data, error } = await supabaseClient
+//         .from('items')
+//         .insert([{
+//             name,
+//             code,
+//             status,
+//             location,
+//             quantity: 0, // ALWAYS START FROM 0
+//             price,
+//             limit,
+//             user_id: currentUser.id
+//         }])
+//         .select()
+//         .single();
+
+//     if (error || !data) {
+//         showNotification('❌ Error saving item', 'error');
+//         return;
+//     }
+
+//     await addLog(data.id, 'created', '', name);
+
+//     //  ODMAH REFRESH
+//     await fetchItems();
+
+//     // NAĐI GA IZ ITEMS (SADA POSTOJI SIGURNO)
+//     const newItem = items.find(i => i.id === data.id);
+
+//     if (newItem) {
+//         addToTransaction({
+//             ...newItem,
+//             qty: quantity   // količina iz forme ide direktno u transaction
+//         });
+//     }
+
+//     showNotification(`✔ ${name} added`, 'success');
+
+//     modal.classList.add('hidden');
+//     modal.classList.remove('child-modal');
+
+//     resetForm();
+//     editMode = false;
+//     editItem = null;
+// });
+// ============================================================
+// SAVE ITEM
+// ------------------------------------------------------------
+// Funkcija radi 2 stvari:
+// 1. EDIT MODE → menja postojeći item (bez quantity)
+// 2. ADD MODE → kreira novi item i dodaje ga u transaction
+// ============================================================
+
+addSave.addEventListener('click', async function () {
+
+    // 1. CITANJE INPUT PODATAKA
     const name      = newName.value.trim();
     const code      = newCode.value.trim();
     const status    = newStatus.value.trim();
     const location  = newLocation.value.trim();
-    
+
     const quantityRaw = newQuantity.value.trim();
     const quantity    = Number(quantityRaw);
-    const priceRow    = newPrice.value.trim()
-    const price       = Number(priceRow)
-    const limitRow    = newLimit.value.trim();
-    const limit       = Number(limitRow)
+
+    const priceRaw  = newPrice.value.trim();
+    const price     = Number(priceRaw);
+
+    const limitRaw  = newLimit.value.trim();
+    const limit     = Number(limitRaw);
 
 
-    //  VALIDACIJA
-    if (!name || quantityRaw === '' || isNaN(quantity) || priceRow === '' || isNaN(price) || limitRow === '' || isNaN(limit)) {
+
+    // 2. OSNOVNA VALIDACIJA (VAŽI ZA ADD + EDIT)
+    if (!name || priceRaw === '' || isNaN(price) || limitRaw === '' || isNaN(limit)) {
         showNotification(`❌ ${t('errorFill')}`, 'error');
         return;
     }
 
-    // ============================================================
-    //  EDIT MODE
-    // ============================================================
+  
+    // 3. VALIDACIJA SAMO ZA ADD MODE (quantity)
+    if (!editMode && (quantityRaw === '' || isNaN(quantity))) {
+        showNotification(`❌ ${t('errorFill')}`, 'error');
+        return;
+    }
+
+
+    // 4. EDIT MODE → UPDATE ITEM (bez quantity)
     if (editMode) {
 
-        //  LOG CHANGES (pre update-a)
-        if (editItem.name !== name) {
-            await addLog(editItem.id, 'name', editItem.name, name);
-        }
-
-        if (editItem.code !== code) {
-            await addLog(editItem.id, 'code', editItem.code, code);
-        }
-
-        if (editItem.location !== location) {
-            await addLog(editItem.id, 'location', editItem.location, location);
-        }
-        if (editItem.status !== status) {
-            await addLog(editItem.id, 'status', editItem.status, status);
-        }
-
-        if (editItem.quantity !== quantity) {
-            await addLog(editItem.id, 'quantity', editItem.quantity, quantity);
-        }
-        if (editItem.price !== price) {
-            await addLog(editItem.id, 'price', editItem.price, price);
-        }
-        if (editItem.limit !== limit) {
-            await addLog(editItem.id, 'limit', editItem.limit, limit);
-        }
+        // LOGOVI PROMENA (samo metadata)
+        if (editItem.name !== name)         await addLog(editItem.id, 'name', editItem.name, name);
+        if (editItem.code !== code)         await addLog(editItem.id, 'code', editItem.code, code);
+        if (editItem.location !== location) await addLog(editItem.id, 'location', editItem.location, location);
+        if (editItem.status !== status)     await addLog(editItem.id, 'status', editItem.status, status);
+        if (editItem.price !== price)       await addLog(editItem.id, 'price', editItem.price, price);
+        if (editItem.limit !== limit)       await addLog(editItem.id, 'limit', editItem.limit, limit);
 
 
-        //  UPDATE ITEM
+        // UPDATE (bez quantity!)
         const { error } = await supabaseClient
             .from('items')
             .update({
-                name: name,
-                code: code,
-                status:status,
-                location: location,
-                quantity: quantity,
-                price: price,
-                limit: limit
+                name,
+                code,
+                status,
+                location,
+                price,
+                limit,
             })
             .eq('id', Number(editItem.id));
 
         if (error) {
-            console.error(error);
             showNotification(`❌ ${error.message}`, 'error');
             return;
         }
 
+        showNotification(`✔ ${name} updated`, 'success');
 
-        //  SUCCESS
-        showNotification(`✔ ${name} ${t('updated')}`, 'success');
-
+        // REFRESH PODATAKA
         await fetchItems();
 
-        //  vrati selektovan item
-        const currentId = editItem.id;
-        selectedItem = items.find(item => item.id === currentId);
+        // RE-SELEKCIJA EDITOVANOG ITEMA
+        selectedItem = items.find(function(item) {
+            return item.id === editItem.id;
+        });
 
         if (selectedItem) {
             selectItem(selectedItem);
         }
 
+        // ZATVARANJE MODALA
         modal.classList.add('hidden');
         resetForm();
 
         return;
     }
-        // ======== ADD MODE ================
-    else {
 
-        //  INSERT ITEM + VRATI ID
-        const { data, error } = await supabaseClient
-            .from('items')
-            .insert([
-                {   name, 
-                    code, 
-                    status,
-                    location, 
-                    quantity, 
-                    price, 
-                    limit, 
-                    user_id: currentUser.id }
-            ])
-            .select();
+    // 5. ADD MODE → CREATE ITEM + ADD TO TRANSACTION
 
-        if (error || !data || data.length === 0) {
-            console.error(error);
-            showNotification('❌ Error saving item', 'error');
-            return;
-        }
+    // kreiraj item (uvijek quantity = 0 u bazi)
+    const { data, error } = await supabaseClient
+        .from('items')
+        .insert([{
+            name,
+            code,
+            status,
+            location,
+            quantity: 0,
+            price,
+            limit,
+            user_id: currentUser.id,
+            is_active: true
+        }])
+        .select()
+        .single();
 
-        const newId = data[0].id;
-
-        //  LOG CREATE
-        await addLog(newId, 'created', '', name);
-
-
-        //  REFRESH UI
-        await fetchItems();
-
-        showNotification(`✔ ${name} ${t('added')}`, 'success');
+    if (error || !data) {
+        showNotification('❌ Error saving item', 'error');
+        return;
     }
 
+    // log kreiranja
+    await addLog(data.id, 'created', '', name);
 
-    // ============================================================
-    // CLEANUP
-    // ============================================================
-    renderTable();
+    //  refresh items
+    await fetchItems();
+
+    // pronađi novo kreirani item u listi ako postoji
+    const newItem = items.find(function(i) {
+        return i.id === data.id;
+    });
+
+    // dodaj u transaction sa qty iz forme
+    if (newItem) {
+        addToTransaction({
+            ...newItem,
+            qty: quantity
+        });
+    }
+
+    showNotification(`✔ ${name} added`, 'success');
+
+    // zatvaranje modala
     modal.classList.add('hidden');
+    modal.classList.remove('child-modal');
 
     resetForm();
-
     editMode = false;
     editItem = null;
 });
-//Klik izvan forme - zatvaranje forme
+
+//  KLIK IZVAN MODALA
 modal.addEventListener('click', function(e){
     if(e.target === modal){
         modal.classList.add('hidden');
+        modal.classList.remove('child-modal'); 
     }
 });
-// EDIT btn
+
+
+//  EDIT BTN
 editBtn.addEventListener('click', function(){
 
     if(!selectedItem){
@@ -855,11 +1034,10 @@ editBtn.addEventListener('click', function(){
         return;
     }
 
-    // uključi edit mode
     editMode = true;
     editItem = selectedItem;
+    fromTransaction = false; 
 
-    // popuni formu
     newName.value       = selectedItem.name;
     newCode.value       = selectedItem.code;
     newStatus.value     = selectedItem.status;
@@ -868,11 +1046,9 @@ editBtn.addEventListener('click', function(){
     newPrice.value      = selectedItem.price;
     newLimit.value      = selectedItem.limit;
 
-    // promeni naslov modala
     modalTitle.textContent = t('editTitle');
-
-    // otvori modal
-    modal.classList.remove('hidden');
+    modal.classList.remove('hidden'); //Prikzaujemo Modul
+    newQuantity.classList.add('hidden'); // Uklanjamo Qty polje
 });
 
 // -------------------- FEATURE: DELETE --------------------
@@ -910,17 +1086,10 @@ confirmDeleteBtn.addEventListener('click', async function () {
 
     const itemId = selectedItem.id;
 
-    // 1. obriši logove
-    await supabaseClient
-        .from('item_logs')
-        .delete()
-        .eq('item_id', itemId)
-        .eq('user_id', currentUser.id);
-
-    // 2. obriši item
+    // 1. ARCHIVE ITEM (umesto potpunog brisna sada Arhiviramo)
     const { error } = await supabaseClient
         .from('items')
-        .delete()
+        .update({ is_active: false })
         .eq('id', itemId);
 
     if (error) {
@@ -994,8 +1163,8 @@ function renderTable() {
                 <td>${item.code}</td>
                 <td>${item.location}</td>
                 <td>${item.quantity} pcs</td>
+                 <td>${item.price} RSD</td>
                 <td>${item.status}</td>
-                <td>${item.price} RSD</td>
                 <td>${item.limit} </td>
             `;
 
@@ -1231,7 +1400,7 @@ function renderLowStockTable() {
 
     if (lowStock.length === 0) {
         tableBodyDash.innerHTML =
-            `<tr><td colspan="4">${t('NoLowStockItems')}</td></tr>`;
+            `<tr><td colspan="4" data-i18n="NoLowStockItems">${t('NoArchivetems')}</td></tr>`;
         return;
     }
 
@@ -1255,6 +1424,589 @@ function renderLowStockTable() {
         tableBodyDash.appendChild(tr);
     });
 }
+
+
+
+
+
+
+
+
+// ========================================================== TRANSACTION ==========================================================
+// -------------------- FEATURE: TRANSACTIONS --------------------
+
+// BUTTONS
+const btnReceive        = document.getElementById('btn-receive');
+const btnIssue          = document.getElementById('btn-issue');
+
+// MODAL
+const transactionModal  = document.querySelector('.transaction-modal');
+const transactionTitle  = document.getElementById('transaction-title');
+const transactionCancel = document.getElementById('transaction-cancel');
+const transactionConfirm= document.getElementById('transaction-confirm');
+
+// SEARCH
+const transactionSearch  = document.getElementById('transaction-search');
+const transactionResults= document.querySelector('.transaction-results');
+
+// LISTA
+const transactionList   = document.querySelector('.transaction-list');
+
+
+//STATE
+let transactionMode = null;
+let transactionItems = []; 
+
+//OTVARANJE MODULA
+btnReceive.addEventListener('click', () => {
+    transactionMode = 'receipt';
+    transactionTitle.textContent = 'New Receipt';
+    openTransactionModal();
+});
+
+btnIssue.addEventListener('click', () => {
+    transactionMode = 'issue';
+    transactionTitle.textContent = 'New Issue';
+    openTransactionModal();
+});
+
+function openTransactionModal() {
+    transactionItems = [];
+    transactionList.innerHTML = '';
+    transactionSearch.value = '';
+    transactionResults.innerHTML = '';
+    
+
+    transactionModal.classList.remove('hidden');
+    transactionSearch.focus();
+}
+
+// ZATVARANJE MOUDLA
+transactionCancel.addEventListener('click', () => {
+    transactionModal.classList.add('hidden');
+});
+
+// SEARCH 
+transactionSearch.addEventListener('input', function () {
+
+    const value = this.value.trim().toLowerCase();
+
+    if (value === '') {
+        transactionResults.innerHTML = '';
+        return;
+    }
+
+    const filtered = items.filter(item =>
+        item.name.toLowerCase().includes(value) ||
+        String(item.code).includes(value)
+    );
+
+    renderTransactionResults(filtered);
+});
+
+//PRIKAZ REZULTATA PRETRAGE
+function renderTransactionResults(results) {
+
+    transactionResults.innerHTML = '';
+
+    if (results.length === 0) {
+
+        const div = document.createElement('div');
+        div.classList.add('no-results');
+
+        const text = document.createElement('p');
+        text.textContent = 'No results found';
+
+        div.appendChild(text);
+
+        //  samo za RECEIPT
+        if (transactionMode === 'receipt') {
+
+            const button = document.createElement('button');
+            button.classList.add('add-new-btn');
+            button.textContent = '+ Add New Item';
+
+        button.addEventListener('click', () => {
+
+            //  očisti search UI
+            transactionSearch.value = '';
+            transactionResults.innerHTML = '';
+
+            // OVO JE KLJUČ
+            fromTransaction = true;              // kaže sistemu odakle dolazimo
+            modal.classList.add('child-modal'); // ide iznad transaction moda
+            modal.classList.remove('hidden');
+
+            newName.focus();
+        });
+
+            div.appendChild(button);
+        }
+
+        transactionResults.appendChild(div);
+        return;
+    }
+
+    results.forEach(item => {
+
+        const div = document.createElement('div');
+        div.classList.add('result-item');
+
+        div.textContent = `${item.name} (${item.code}) - ${item.status}`;
+
+        div.addEventListener('click', () => {
+            addToTransaction(item);
+            transactionResults.innerHTML = '';  // zatvori Results
+            transactionSearch.value = '';       //Obrisi Search
+        });
+
+        transactionResults.appendChild(div);
+    });
+}
+
+// Proverava da li item već postoji → ako ne postoji, dodaje ga u listu i renderuje UI
+function addToTransaction(item) {
+
+    const exists = transactionItems.find(i => i.id === item.id);
+
+    if (exists) return;
+
+    transactionItems.push({
+        id: item.id,
+        name: item.name,
+        code: item.code || '',
+        status: item.status || '',
+        location: item.location || '',
+        price: item.price || 0,
+        limit: item.limit || 0,
+
+        isNew: item.isNew || false,   // KLJUČNO
+        qty: item.qty || ''      // auto popuni qty za NEW item
+    });
+
+    renderTransactionList();
+}
+// KREIRAMO TRANSACTION LISTU
+function renderTransactionList() {
+
+    transactionList.innerHTML = '';
+
+    transactionItems.forEach(item => {
+
+        const div = document.createElement('div');
+        div.classList.add('transaction-item');
+
+        const current = items.find(i => i.id === item.id);
+        const stock = current ? current.quantity : 0;
+
+        div.innerHTML = `
+            <div class="ti-left">
+                <span class="ti-name">${item.name}</span>
+                <span class="ti-stock">${stock} pcs</span>
+            </div>
+
+            <div class="ti-middle">
+                <input class="ti-input" type="number" value="${item.qty}" min="1">
+            </div>
+
+            <button class="ti-delete">
+                <svg viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor"d="M9 3h6l1 1h4v2H4V4h4l1-1zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM6 9h2v9H6V9z"/>
+                </svg>
+            </button>
+        `;
+
+        const input = div.querySelector('input');
+        input.addEventListener('change', () => {
+            let value = Number(input.value);
+
+            if (value < 1) value = 1;
+
+            item.qty = value;
+            input.value = value;
+        });
+
+        const btn = div.querySelector('button');
+        btn.addEventListener('click', () => {
+            transactionItems = transactionItems.filter(i => i.id !== item.id);
+            renderTransactionList();
+        });
+
+        transactionList.appendChild(div);
+    });
+}
+
+// CONFIRM btn
+transactionConfirm.addEventListener('click', async function () {
+
+    //  1. VALIDACIJA – PRAZAN QTY
+    const invalidItem = transactionItems.find(function(item) {
+
+        if (!item.qty) return true;
+
+        if (Number(item.qty) <= 0) return true;
+
+        return false;
+    });
+
+    if (invalidItem) {
+        showNotification('❌ Enter quantity for → [' + invalidItem.name + ']', 'error');
+        return;
+    }
+
+    // 2. VALIDACIJA – NEMA ITEMA
+    if (transactionItems.length === 0) {
+        showNotification('❌ No items added', 'error');
+        return;
+    }
+
+
+    
+    // 3. VALIDACIJA – ISSUE (stock check)
+    if (transactionMode === 'issue') {
+
+        const problemItem = transactionItems.find(function(item) {
+
+            const current = items.find(function(i) {
+                return i.id === item.id;
+            });
+
+            if (!current) return false;
+
+            if (current.quantity <= 0) {
+                showNotification(item.name + ' is out of stock', 'error');
+                return true;
+            }
+
+            if (item.qty > current.quantity) {
+                showNotification('❌ Not enough stock for ' + item.name, 'error');
+                return true;
+            }
+
+            return false;
+        });
+
+        if (problemItem) return;
+    }
+
+
+
+    // 4. CREATE NEW ITEMS (mora for jer radimo DB)
+    for (const item of transactionItems) {
+
+        if (!item.isNew) continue;
+
+        const existing = items.find(function(i) {
+            return i.code === item.code;
+        });
+
+        if (existing) {
+            item.id = existing.id;
+            item.isNew = false;
+            continue;
+        }
+
+        const result = await supabaseClient
+            .from('items')
+            .insert([{
+                name: item.name,
+                code: item.code,
+                status: item.status,
+                location: item.location,
+                quantity: 0,
+                price: item.price,
+                limit: item.limit,
+                user_id: currentUser.id
+            }])
+            .select()
+            .single();
+
+        if (!result.data || result.error) {
+            showNotification('❌ Error creating item ' + item.name, 'error');
+            return;
+        }
+
+        item.id = result.data.id;
+        item.isNew = false;
+
+        await fetchItems();
+        await addLog(result.data.id, 'created', '', item.name);
+    }
+
+
+   
+    // 5. CREATE TRANSACTION
+    const txResult = await supabaseClient
+        .from('transactions')
+        .insert([{
+            type: transactionMode,
+            user_id: currentUser.id
+        }])
+        .select()
+        .single();
+
+    if (!txResult.data || txResult.error) {
+        showNotification('❌ Error creating transaction', 'error');
+        return;
+    }
+
+    const tx = txResult.data;
+
+
+
+    // 6. INSERT ITEMS + UPDATE STOCK
+    for (const item of transactionItems) {
+
+        await supabaseClient
+            .from('transaction_items')
+            .insert({
+                transaction_id: tx.id,
+                item_id: item.id,
+                quantity: item.qty
+            });
+
+        const current = items.find(function(i) {
+            return i.id === item.id;
+        });
+
+        let newQty;
+
+        if (transactionMode === 'receipt') {
+            newQty = current.quantity + item.qty;
+        } else {
+            newQty = current.quantity - item.qty;
+        }
+
+        await supabaseClient
+            .from('items')
+            .update({ quantity: newQty })
+            .eq('id', item.id);
+
+        await addLog(item.id, 'quantity', current.quantity, newQty);
+    }
+
+
+   
+    //  DONE
+    showNotification(' Transaction completed', 'success');
+
+    await fetchItems();
+
+    transactionModal.classList.add('hidden');
+});
+
+
+
+// ========================================================== ARCHIVE ==========================================================
+
+// ==========================================================
+//  ARCHIVE
+// ----------------------------------------------------------
+// Šta radi:
+// 1. Otvara Archive view iz sidebar-a
+// 2. Uklanja active tab (jer nije tab screen)
+// 3. Prikazuje samo obrisane iteme
+// 4. Omogućava restore itema
+// ==========================================================
+
+
+
+//  SELECTORS
+const archiveBtn   = document.querySelector('.archive-btn');
+const archiveView  = document.getElementById('archive-view');
+const archiveBody  = document.querySelector('.archive-body');
+const archiveEmpty = document.querySelector('.archive-empty');
+
+
+
+//  STATE
+
+// SVI itemi (aktivni + arhivirani)
+let itemsAll = [];
+
+
+//  OPEN ARCHIVE VIEW
+archiveBtn.addEventListener('click', async function() {
+
+    if (!currentUser) return;
+
+    //  1. ukloni active sa tabova (jer nismo u tabs flow-u)
+    document.querySelectorAll('.tab').forEach(function(tab) {
+        tab.classList.remove('active');
+    });
+
+    //  2. sakrij sve view-e
+    document.querySelectorAll('.view').forEach(function(view) {
+        view.classList.remove('active-view');
+    });
+
+    //  3. prikaži archive view
+    archiveView.classList.add('active-view');
+
+    //  4. uzmi sve iteme (aktivne + obrisane)
+    await fetchAllItems();
+
+    //  5. render
+    renderArchiveItems();
+
+    //  6. zatvori sidebar
+    sidebar.classList.add('hidden');
+});
+
+
+
+//  FETCH ALL ITEMS
+async function fetchAllItems() {
+
+    if (!currentUser) return;
+
+    const { data, error } = await supabaseClient
+        .from('items')
+        .select('*')
+        .eq('user_id', currentUser.id);
+
+    if (error) {
+        console.error('FETCH ALL ERROR:', error);
+        return;
+    }
+
+    itemsAll = data;
+}
+
+
+
+//  RENDER ARCHIVE ITEMS
+function renderArchiveItems() {
+
+    // reset
+    archiveBody.innerHTML = '';
+
+    // Filtriramo samo obrisane
+    const archived = itemsAll.filter(function(item) {
+        return item.is_active === false;
+    });
+
+
+
+    //  EMPTY STATE
+    if (archived.length === 0) {
+        // archiveEmpty.classList.remove('hidden');
+         archiveBody.innerHTML =
+            `<tr><td colspan="4" data-i18n="NoArchivetems">${t('NoArchivetems')}</td></tr>`;
+        return;
+    }
+
+    // archiveEmpty.classList.add('hidden');
+
+
+   
+    // RENDER LIST
+    archived.forEach(function(item) {
+
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.code || '-'}</td>
+            <td>${item.location || '-'}</td>
+            <td>${item.quantity}</td>
+            <td>
+                <button class="btn-restore">Restore</button>
+            </td>
+        `;
+
+    
+        //  RESTORE BUTTON
+        const restoreBtn = tr.querySelector('.btn-restore');
+
+        restoreBtn.addEventListener('click', async function() {
+
+            const { error } = await supabaseClient
+                .from('items')
+                .update({ is_active: true })
+                .eq('id', item.id);
+
+            if (error) {
+                console.error(error);
+                showNotification(`❌ ${error.message}`, 'error');
+                return;
+            }
+
+            showNotification(`✔ ${item.name} restored`, 'success');
+
+            // refresh podataka
+            await fetchItems();     // aktivni
+            await fetchAllItems(); // svi
+
+            // ponovo render
+            renderArchiveItems();
+        });
+
+        archiveBody.appendChild(tr);
+    });
+}
+
+
+
+
+
+// -------------------- FEATURE: T TABLE --------------------
+const transactionsContainer = document.querySelector('.transactions-list');
+const transactionsBody = document.querySelector('.transactions-body');
+
+async function fetchTransactions() {
+
+    const { data, error } = await supabaseClient
+        .from('transactions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    renderTransactionsTable(data);
+}
+
+
+function renderTransactionsTable(data) {
+
+    transactionsBody.innerHTML = '';
+
+    if (!data || data.length === 0) {
+        transactionsBody.innerHTML =
+            `<tr><td colspan="2">No transactions</td></tr>`;
+        return;
+    }
+
+    data.forEach(tx => {
+
+        const tr = document.createElement('tr');
+
+        const type = tx.type === 'receipt' ? 'RECEIVE' : 'ISSUE';
+        const date = new Date(tx.created_at).toLocaleString();
+
+        tr.innerHTML = `
+            <td>${type}</td>
+            <td>${date}</td>
+        `;
+
+        tr.addEventListener('click', () => {
+            console.log('clicked transaction', tx.id);
+        });
+
+        transactionsBody.appendChild(tr);
+    });
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -1302,6 +2054,9 @@ function activateTab(tabElement) {
     if (tabName === 'table') {
         renderTable();
     }
+    if (tabName === 'transactions') {
+    fetchTransactions();
+}
 }
 
 
@@ -1511,8 +2266,9 @@ const translations = {
         sidebar_menu: "Meni",
         sidebar_profile: "Profil",
         sidebar_settings: "Podešavanja",
+        sidebar_archive: "Arhiva",
         sidebar_logout: "Odjava",
-
+        
         //SECTION TITLE
         selectedItem: "Izabrani artikal",
         adjustQuantity: "Izmena količine",
@@ -1522,7 +2278,8 @@ const translations = {
         toggleMore: "+ Vise",
         toggleHide: "- Sakri",
 
-        NoLowStockItems: "Bez kritičnih artikala"
+        NoLowStockItems: "Bez kritičnih artikala",
+        NoArchivetems: "Bez Arhiviranih artikala"
 
 
 
@@ -1636,6 +2393,7 @@ const translations = {
         sidebar_menu: "Menu",
         sidebar_profile: "Profile",
         sidebar_settings: "Settings",
+        sidebar_archive: "Archive",
         sidebar_logout: "Logout",
 
         //SECTION TITLE
@@ -1647,7 +2405,8 @@ const translations = {
         toggleMore: "+ More",
         toggleHide: "- Hide",
 
-        NoLowStockItems: "No Low Stock items"
+        NoLowStockItems: "No Low Stock items",
+        NoArchivetems:  "No Archive items"
 
 
 
@@ -1771,20 +2530,62 @@ updateAuthUI();
 //UMESTO fetchItems
 initUser();
 
-// Planiramo da implementiramo feature Prijemnice kao poseban modul (screen), bez menjanja postojećeg sistema za Add/Edit itema. 
-// Postojeći modal (koji već koristimo za dodavanje i izmenu jednog artikla preko editMode) ostaje potpuno isti i koristi se kao 
-// alat unutar prijemnice. 
-// 
-// Novi flow će biti sledeći: 
-// korisnik klikne “Prijem robe”, otvori se modul prijemnice koji prikazuje, naslov, podnaslov,
-// praznu listu gde ce dodati itemi biti kanije prikzani sa Delete dugmetom, checkbox "Kreiraj PDF Izvestaj" i dugme “+ Dodaj artikal”. 
-// Klikom na to dugme “+ Dodaj artikal” otvara se postojeći modal za unos artikla; kada korisnik klikne 
-// Save u tom modalu, umesto da se podatak odmah šalje u bazu, taj artikal se dodaje u lokalnu listu (prijemnica.items), sto zaci da
-// da se taj item prikazuje u listi u Prijemnici. 
-// Nakon toga forma se resetuje (inputi se brišu, fokus se vraća na prvo polje), ali modal ostaje otvoren kako bi korisnik 
-// mogao brzo da unese sledeći artikal bez dodatnih klikova. U isto vreme korisnik može videti ažuriranu listu u 
-// prijemnici (ili se informisati kroz notifikaciju da je artikal dodat). Taj proces može ponavljati više puta dok ne 
-// unese sve potrebne artikle. Kada završi unos, korisnik može zatvoriti modal i vratiti se na pregled prijemnice gde vidi
-//  kompletnu listu stavki. Na kraju, klikom na glavno dugme SAVE u prijemnici svi artikli iz liste se obrađuju
-//   (insert u bazu za nove artikl"items"e, kreiranje transaction objekta, update stanja). Dodatno, u prijemnici postoji checkbox
-//    za generisanje PDF‑a (UI sada, logika kasnije).
+// U aplikaciju se uvodi novi tab **Transactions**, koji predstavlja centralno mesto za rad sa PRIJEMOM i OTPREMOM robe.
+//  Na vrhu ovog taba nalaze se dva glavna dugmeta **Receive** i **Issue**, koja definišu da li korisnik unosi robu u 
+// sistem ili je iz njega izuzima.
+
+// Kada korisnik klikne na **Receive**, otvara se ekran za kreiranje nove prijemnice. Na vrhu ekrana jasno je naznačeno 
+// da se radi o prijemu robe, kako bi korisnik imao jasan kontekst šta radi. Ispod se nalazi search input (koji vec imoa 
+// i reba da ga iskoristimo i ovde) koji se koristi 
+// za pronalaženje postojećih itema, kao i dugme **+ New Item** koje omogućava kreiranje novog artikla direktno iz tog flow-a.
+
+// Ako korisnik pretražuje item i on već postoji, jednostavno ga selektuje, unosi količinu i taj item se dodaje u listu ispod. 
+// Ako item ne postoji, korisnik klikne na **+ New Item**, otvara se postojeća forma za kreiranje artikla, i nakon što ga kreira 
+// u bazi, taj item se automatski dodaje u listu prijemnice. Time se izbegava bilo kakav “privremeni” item koji ne postoji u bazi 
+// i sistem ostaje konzistentan.
+
+// Ispod search sekcije nalazi se lista trenutno odabranih itema. Svaki item u listi ima naziv i input za količinu koju korisnik
+//  želi da doda, kao i dugme za uklanjanje iz liste. Ako korisnik doda isti item više puta, količine se sabiraju i ne prave se 
+// duplikati. Na dnu liste prikazuje se ukupni broj itema i ukupna količina, kako bi korisnik imao jasan pregled pre finalne akcije.
+
+// Na dnu ekrana nalaze se dugmad **Cancel** i **Confirm Receipt**. Kada korisnik klikne na Confirm, pojavljuje se kratak 
+// confirmation modal koji upozorava da će ova akcija povećati stanje u magacinu. Tek nakon potvrde u tom modalu pokreće se 
+// glavna logika.
+
+// U tom trenutku (i samo tada) sistem radi sve kao jednu povezanu celinu: za svaki item se povećava quantity u bazi, zatim 
+// se kreira nova transaction sa tipom “receipt”, potom se upisuju logovi promena za svaki item, i tek kada sve uspešno prođe
+//  operacija se završava. Ako bilo koji deo ne uspe, ništa se ne primenjuje, čime se obezbeđuje konzistentnost podataka.
+
+// Važno pravilo sistema je da **transaction nikada ne postoji bez promene stock-a**, niti se stock menja bez transaction-a.
+//  Do momenta confirm-a sve postoji samo u UI state-u i ne utiče na bazu.
+
+// Kada korisnik klikne na **Issue**, koristi se potpuno isti ekran i isti UX, ali sa nekoliko ključnih razlika. Ne postoji 
+// dugme za kreiranje novog itema, jer se mogu izdavati samo artikli koji već postoje u sistemu. U listi itema se pored inputa 
+// za količinu prikazuje i trenutno stanje (available), i sistem validira da korisnik ne može uneti količinu veću od postojećeg 
+// stock-a.
+
+// Klikom na **Confirm Issue**, nakon potvrde u modalu, sistem smanjuje količine u bazi, kreira transaction tipa “issue” 
+// i loguje promene, opet u jednoj atomic operaciji.
+
+// U ovom modelu ne postoji dugme Save niti koncept draft-a, jer bi to uvodilo mogućnost da postoje transakcije koje nisu 
+// primenjene na stanje, što bi dovelo do nekonzistentnosti. Umesto toga, koristi se jednostavan i brz flow gde korisnik pravi listu, vidi je u realnom vremenu i potvrđuje je jednom akcijom.
+
+// Na kraju, Transactions tab može prikazivati listu svih izvršenih transakcija, gde korisnik može videti istoriju prijema 
+// i otpreme robe, sa detaljima koje je unosio. Kasnije se na tu istu strukturu lako dodaje generisanje PDF dokumenata, slanje
+//  na email i dodatni izveštaji, bez potrebe za promenom osnovne logike.
+
+// Ovim pristupom dobijaš sistem koji je brz za korišćenje, jednostavan za korisnika, ali istovremeno tehnički čist i 
+// profesionalan, bez rizika od neslaganja podataka između UI-a i baze.
+
+
+// ok krecemo onda sa nasim planom
+
+// idemo redom
+
+// naprvai uredno plan faze
+
+// za kreiranje Trasction 
+// Pa kreiranje dugamda Recept i Issue
+// pa moduli z anjh
+// Pa funckionanost njohova
+// Pa povezivanje s asur base i rkeiranje u super basi ako treb
