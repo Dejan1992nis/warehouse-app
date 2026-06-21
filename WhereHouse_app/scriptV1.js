@@ -1810,8 +1810,7 @@ transactionConfirm.addEventListener('click', async function () {
 // ==========================================================
 
 
-
-//  SELECTORS
+//  SELEKTORI
 const archiveBtn   = document.querySelector('.archive-btn');
 const archiveView  = document.getElementById('archive-view');
 const archiveBody  = document.querySelector('.archive-body');
@@ -1820,7 +1819,6 @@ const archiveEmpty = document.querySelector('.archive-empty');
 
 
 //  STATE
-
 // SVI itemi (aktivni + arhivirani)
 let itemsAll = [];
 
