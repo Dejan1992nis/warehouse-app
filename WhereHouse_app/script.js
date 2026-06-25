@@ -1,3 +1,4 @@
+// ========================================================== BACKEND ==========================================================
 
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
@@ -5,41 +6,55 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = 'https://ndnljnalwqpnsdnnjoql.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_G7GepZscofTzQmzyoMmo0Q_0bD6zH0c';
 
-//  PREIMENOVAN CLIENT
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+// KONEKCIJA sa SUPABASE
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY); // Klijent za komunikaciju sa bazom
 
 
-
-//  items BASE
-const items = [];
-
-let currentUser = null;
-let authLoading = false;
-let isLoginMode = false;
 
 async function fetchItems() {
 
-    if (!currentUser) return;
+    if (!currentUser) return;  // Ako ne postoji korisnik → prekini
 
-    const { data, error } = await supabaseClient
-        .from('items')
-        .select('*')
-        .eq('user_id', currentUser.id);
 
-    if (error) {
+    // Uzimamo podatke iz Supabase baze 
+    /*-------------------------------------------
+
+    const { data, error }
+
+    → iz odgovora baze izdvajamo:
+       - data  = podaci koje smo dobili (rezultat query-ja)
+       - error = greška ako postoji
+
+    (isto kao da pišemo:)
+    const data = response.data;
+    const error = response.error;
+
+    -------------------------------------------*/
+
+
+    const { data, error } = await supabaseClient  // Saljemo upit bazi i cekamo odgovor
+        .from('items') // pozovi funkciju from() => podatke izvuci iz table 'items'
+        .select('*')    // → na njen rezultat pozovi select() => Uzmi sve kolone iz te tabele
+        .eq('user_id', currentUser.id); //→ na taj rezultat pozovi eq() => Filter: Uzmi samo redove gde se 'user_id = currentUser.id'
+
+    if (error) {    //Ako atribut 'erorr' vrati gresku prikzai je u Dev.
         console.error(error);
         return;
     }
 
+    // Filtriramo samo aktivne iteme
+    const activeItems = data.filter(function(item) {
+        return item.is_active !== false;  // vrati item iz kolone is_active.true
+    });
+
     items.length = 0;
-    items.push(...data);
+    items.push(...activeItems);
 
     updateDashboardCards();
     renderTable();
     renderLowStockTable();
 }
-//  uzima sve logove za jedan item
-//  sortira ih (najnoviji prvi)
+//  uzima sve logove za jedan item sortira ih (najnoviji prvi)
 async function fetchLogs(itemId) {
     
     if (!currentUser) return [];
@@ -59,186 +74,37 @@ async function fetchLogs(itemId) {
 
     return data;
 }
+async function addLog(itemId, field, oldVal, newVal, transactionId = null) {
 
-// REGISTER
-async function register(email, password) {
-
-    if (authLoading) return;
-
-    // 1. prazna polja
-    if (!email || !password) {
-        showNotification(t("auth_fill_fields"), 'error');
-        return;
-    }
-
-    // 2. email format
-    if (!isValidEmail(email)) {
-        showNotification(t("auth_invalid_email"), 'error');
-        return;
-    }
-
-    // 3. password length
-    if (password.length < 6) {
-        showNotification(t('auth_password_short'), 'error');
-        return;
-    }
-
-    authLoading = true;
-
-    const { data, error } = await supabaseClient.auth.signUp({
-        email: email,
-        password: password
-    });
-
-   
+    const { error } = await supabaseClient
+        .from('item_logs')
+        .insert([{
+            item_id: itemId,
+            field: field,
+            old_value: String(oldVal),
+            new_value: String(newVal),
+            user_id: currentUser.id,
+            transaction_id: transactionId  
+        }]);
 
     if (error) {
-        if (error.message.includes('User already registered')) {
-            showNotification(t("auth_user_exists"), 'error');
-        } else if (error.message.includes('rate limit')) {
-            showNotification(t("auth_too_many"), 'error');
-        } else {
-            showNotification(error.message, 'error'); // može ostati raw
-        }
-
-        authLoading = false;
-        return;
-    }
-
-    showNotification(t("auth_registered"), 'success');
-    authLoading = false;
-}
-
-
-// provera validnosti Mail-a
-function isValidEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-}
-
-// LOGIN
-async function login(email, password) {
-
-    if (authLoading) return;
-
-    //  1. prazna polja
-    if (!email || !password) {
-        showNotification(t('auth_login_fill'), 'error');
-        return;
-    }
-
-    authLoading = true;
-
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: password
-    });
-
-    // error iz Supabase
-    if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-
-            showNotification(t('auth_wrong_credentials'), 'error');
-        } else {
-            showNotification(error.message, 'error');
-        }
-
-        authLoading = false;
-        return;
-    }
-
-    // KLJUČNO — dodatna provera
-    if (!data || !data.user) {
-        showNotification(t('auth_wrong_credentials'), 'error');
-        authLoading = false;
-        return;
-    }
-
-    showNotification(t('auth_logged_in'), 'success');
-
-    currentUser = data?.user || null;
-
-    await loadUserLanguage();
-    await loadUserTrends();
-    startApp();
-
-    authLoading = false;
-}
-
-
-// LOGOUT
-async function logout() {
-    await supabaseClient.auth.signOut();
-    location.reload();
-}
-const logoutBtn = document.getElementById('logout-btn');
-logoutBtn.addEventListener('click', logout);
-
-// PROVERA KORISNIKA
-async function initUser() {
-    const { data } = await supabaseClient.auth.getUser();
-    currentUser = data?.user || null;
-
-    if (currentUser) {
-        startApp(); // odmah
-    } else {
-        showAuthScreen();
+        console.error('LOG ERROR:', error);
     }
 }
 
-// PRIKAZ AUTH EKRANA
-function showAuthScreen() {
-    authScreen.style.display = 'flex';
-    appWrapper.classList.add('hidden');
-}
+// ========================================================== GLOBAL VARIABLES ==========================================================
+const items             = [];
+let transactions        = [];
 
-// STARTOVANJE APP
-async function startApp() {
-    authScreen.style.display = 'none';
-    appWrapper.classList.remove('hidden');
+let currentUser         = null;
+let selectedItem        = null;
+let originalQuantity    = null;
+let tempQuantity        = 0;
 
-    showUserInfo();
+let currentPage         = 1;
+const itemsPerPage      = 20;
 
-    loadUserLanguage();
-    loadUserTrends();
-    fetchItems();
-}
-// UCITAVAMO JEZIK
-async function loadUserLanguage() {
-    const savedLang = await loadUserSetting('language');
-
-    if (savedLang) {
-        currentLang = savedLang;
-    }
-
-    applyTranslations();
-    updateActiveLang();
-}
-
-//UCITAVANJE TREBDA
-async function loadUserTrends() {
-
-    const data = await loadUserSetting('trendUI');
-
-    savedTrends = data || {};
-
-    // ✅ odmah primeni na UI
-    Object.keys(savedTrends).forEach(key => {
-
-        const el = document.getElementById(key + "-trend");
-        if (!el) return;
-
-        const arrow = el.querySelector(".trend-arrow");
-        const value = el.querySelector(".trend-value");
-
-        const trend = savedTrends[key];
-
-        el.className = trend.className;
-        arrow.textContent = trend.arrow;
-        value.textContent = trend.value;
-    });
-}
-// ========================================= USER SETTING ==================================
+// ========================================================== USER SETTING ==========================================================
 
 async function saveUserSetting(key, value) {
     if (!currentUser) return;
@@ -271,53 +137,170 @@ async function loadUserSetting(key) {
 
     return data ? data.value : null;
 }
-// ====================================== SIDE MENI ============================
-const Burgerbtn = document.getElementById("user-btn");
-const sidebar   = document.getElementById("sidebar");
-const closeBtn  = document.getElementById("close-sidebar");
-
-//Otvaranje
-Burgerbtn.addEventListener("click", () => {
-    sidebar.classList.remove("hidden");
-});
-
-//X
-closeBtn.addEventListener("click", () => {
-    sidebar.classList.add("hidden");
-});
-
-//klik spolja zatvaranje menia
-document.addEventListener("click", (e) => {
-    if (!sidebar.contains(e.target) && !Burgerbtn.contains(e.target)) {
-        sidebar.classList.add("hidden");
-    }
-});
 
 
-
-
-
-
-
-//za Log (prilikom promen samo Kolicni pa odmah Save)
-let originalQuantity = null;
-
-// ================================ LOG IN / REGISTARTION
+// ========================================================== AUTH ==========================================================
+// -------------------- FEATURE: AUTH --------------------
+//1.  SELECTORS ===
 const appWrapper    = document.getElementById('app');
 const authScreen    = document.getElementById('auth-screen');
-
-const authTitle     = document.getElementById('auth-title');
-const authSubtitle  = document.getElementById('auth-subtitle');
-
 const emailInput    = document.getElementById('auth-email');
 const passwordInput = document.getElementById('auth-password');
-
 const authMainBtn   = document.getElementById('auth-main-btn');
 const switchMode    = document.getElementById('switch-mode');
+const authTitle     = document.getElementById('auth-title');
+const authSubtitle  = document.getElementById('auth-subtitle');
 const switchLabel   = document.getElementById('auth-switch-label');
-
 const authCard      = document.querySelector('.auth-card');
 
+const logoutBtn     = document.getElementById('logout-btn');
+
+//2.  STATE ===
+let authLoading = false;
+let isLoginMode = false;
+
+
+
+//3.  FUNCTIONS ===
+async function register(email, password) {
+
+    if (authLoading) return;
+
+    // 1. prazna polja
+    if (!email || !password) {
+        showNotification(`❌ ${t("auth_fill_fields")}`, 'error');
+        return;
+    }
+
+    // 2. email format
+    if (!isValidEmail(email)) {
+        showNotification(`❌ ${t("auth_invalid_email")}`, 'error');
+        return;
+    }
+
+    // 3. password length
+    if (password.length < 6) {
+        showNotification(`❌ ${t('auth_password_short')}`, 'error');
+        return;
+    }
+
+    authLoading = true;
+
+    const { data, error } = await supabaseClient.auth.signUp({
+        email: email,
+        password: password
+    });
+
+   
+
+    if (error) {
+        if (error.message.includes('User already registered')) {
+            showNotification(`❌ ${t("auth_user_exists")}`, 'error');
+        } else if (error.message.includes('rate limit')) {
+            showNotification(`❌ ${t("auth_too_many")}`, 'error');
+        } else {
+            showNotification(error.message, 'error'); // može ostati raw
+        }
+
+        authLoading = false;
+        return;
+    }
+
+    showNotification(`✔ ${t("auth_registered")}`, 'success');
+    authLoading = false;
+}
+// LOGIN
+async function login(email, password) {
+
+    if (authLoading) return;
+
+    //  1. prazna polja
+    if (!email || !password) {
+        showNotification(`❌ ${t('auth_login_fill')}`, 'error');
+        return;
+    }
+
+    authLoading = true;
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
+
+    // error iz Supabase
+    if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+
+            showNotification(`❌ ${t('auth_wrong_credentials')}`, 'error');
+        } else {
+            showNotification(error.message, 'error');
+        }
+
+        authLoading = false;
+        return;
+    }
+
+    // KLJUČNO — dodatna provera
+    if (!data || !data.user) {
+        showNotification(`❌ ${t('auth_wrong_credentials')}`, 'error');
+        authLoading = false;
+        return;
+    }
+
+    showNotification(`✔ ${t('auth_logged_in')}`, 'success');
+
+    currentUser = data?.user || null;
+
+    // await loadUserLanguage();
+    // await loadUserTrends();
+    startApp();
+
+    authLoading = false;
+}
+// LOGOUT
+async function logout() {
+    await supabaseClient.auth.signOut();
+    location.reload();
+}
+// PROVERA KORISNIKA
+async function initUser() {
+    const { data } = await supabaseClient.auth.getUser();
+    currentUser = data?.user || null;
+
+    if (currentUser) {
+        startApp(); // odmah
+    } else {
+        showAuthScreen();
+    }
+}
+// STARTOVANJE APP
+async function startApp() {
+    authScreen.style.display = 'none';
+    appWrapper.classList.remove('hidden');
+
+    showUserInfo();
+
+    await loadUserLanguage();
+    await loadUserTrends();
+
+    await fetchItems();
+    await fetchTransactions();
+}
+function showUserInfo() {
+
+    const el = document.querySelector('.user-email');
+    if (!el || !currentUser) return;
+
+    // uzmi deo pre @
+    const email = currentUser.email;
+
+    el.textContent = email;
+}
+// PRIKAZ AUTH EKRANA
+function showAuthScreen() {
+    authScreen.style.display = 'flex';
+    appWrapper.classList.add('hidden');
+}
 function updateAuthUI() {
 
     if (isLoginMode) {
@@ -349,8 +332,14 @@ function updateAuthUI() {
     //  NAJBITNIJE — refresh prevoda
     applyTranslations();
 }
+// provera validnosti Mail-a
+function isValidEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
 
 
+//4.  EVENTS ===
 authMainBtn.addEventListener('click', () => {
 
     const email = emailInput.value.trim();
@@ -362,596 +351,31 @@ authMainBtn.addEventListener('click', () => {
         register(email, password);
     }
 });
-
-
+// Promena LogIn <=>Registration
 switchMode.addEventListener('click', () => {
     isLoginMode = !isLoginMode;
     updateAuthUI();
 });
+// Enter klik 
 passwordInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         authMainBtn.click();
     }
 });
+// LogOut  
+logoutBtn.addEventListener('click', logout);
 
 
 
-/* ============================================================
-   2. SELECTORS
-============================================================ */
+// ========================================================== INPUT ==========================================================
 
-// NAV
-const nav               = document.querySelector('.navigation');
-
-// INPUT
+// -------------------- FEATURE: SEARCH  --------------------
+//1.  SELECTORS ===
 const input             = document.querySelector('#input-search');
 const clearBtn          = document.querySelector('.clear-btn');
 const resultsContainer  = document.querySelector('.results');
 
-// ITEM DISPLAY
-const itemName          = document.getElementById('item-name');
-const itemCode          = document.getElementById('item-code');
-const itemStatus        = document.getElementById('item-status');
-const itemLocation      = document.getElementById('item-location');
-const itemPrice         = document.getElementById('item-price')
-const ItemLimit         = document.getElementById('item-limit')
-const quantityValue     = document.getElementById('quantity-value');
-
-const plusBtn           = document.querySelector('.btn-plus');
-const minusBtn          = document.querySelector('.btn-minus');
-
-const saveBtn           = document.querySelector('.save-btn');
-const notification      = document.querySelector('.notification');
-
-// TABLE
-const tableWrapper      = document.querySelector('.table-wrapper');
-const tableBody         = document.querySelector('.table-body');
-const prevBtn           = document.querySelector('.prev-btn');
-const nextBtn           = document.querySelector('.next-btn');
-const pageinfo          = document.querySelector('.page-info');
-
-//ADD ITEM FORM
-
-const modal             = document.querySelector('.modal');
-const addOpenBtn        = document.querySelector('.btn-add');
-
-const addSave           = document.querySelector('.btn-save');
-const addCancel         = document.querySelector('.btn-cancel');
-
-
-const newName           = document.getElementById('new-name');
-const newCode           = document.getElementById('new-code');
-const newStatus         = document.getElementById('new-status');
-const newLocation       = document.getElementById('new-location');
-const newPrice          = document.getElementById('new-price');
-const newLimit          = document.getElementById('new-limit');
-
-const newQuantity       = document.getElementById('new-quantity');
-
-//EDIT ITEM
-const editBtn           = document.querySelector('.btn-edit');
-const modalTitle        = document.querySelector('.modal__title');
-
-//DELETE ITEM
-const deleteBtn         = document.querySelector('.btn-delete');
-const deleteModal       = document.querySelector('.delete-modal');
-const confirmDeleteBtn  = document.querySelector('.btn-confirm-delete');
-const cancelDeleteBtn   = document.querySelector('.btn-cancel-delete');
-
-
-// hvata celu app 
-const swipeArea         = document.body;
-
-//History Log
-const historyModal      = document.querySelector('.history-modal');
-const historyBtn        = document.querySelector('.btn-history');
-const historyClose      = document.querySelector('.history-close');
-const historyWrapper    = document.querySelector('.history-wrapper');
-const ItemLog           = document.querySelector('.history-modal_itemLog')
-
-/* ============================================================
-   3. STATE
-============================================================ */
-
-let selectedItem    = null;
-
-//Pagination
-let currentPage     = 1;
-const itemsPerPage  = 20;
-
-//Edit mode
-let editMode        = false;
-let editItem        = null;
-
-//Mobile Swipe
-let touchStartX = 0;
-let touchEndX = 0;
-
-// Da li korisnkov dodir ekrana na tabli
-
-// Ako korisnik počne swipe VAN tabele, ali završi GA U tabeli → aktiviraće se swipe (greška)
-// Zato koristimo ovu promenljivu da zapamtimo gde je dodir POČEO
-let isScrollingTable = false;
-
-
-/* ============================================================
-   4. EVENTS
-============================================================ */
-
-// NAVIGATION
-nav.addEventListener('click', function (event) {
-
-    const selectedTab = event.target.closest('.tab');
-    if (!selectedTab) return;
-
-    activateTab(selectedTab);
-
-});
-
-// SEARCH
-input.addEventListener('input', handleSearch);
-
-// CLEAR
-clearBtn.addEventListener('click', function () {
-    resetDisplay();
-    clearResults();
-});
-
-// QUANTITY
-plusBtn.addEventListener('click', function () {
-    if (!selectedItem) return;
-    
-    selectedItem.quantity++;
-    quantityValue.textContent = selectedItem.quantity;
-});
-minusBtn.addEventListener('click', function () {
-    if (!selectedItem) return;
-
-    if (selectedItem.quantity > 0) {
-        selectedItem.quantity--;
-    }
-
-    quantityValue.textContent = selectedItem.quantity;
-});
-
-
-//  SAVE (INPUT TAB - CHANGE QUANTITY) ===============================================
-saveBtn.addEventListener('click', async function () {
-
-    // 1. VALIDACIJA
-    if (!selectedItem) {
-        showNotification(`❌ ${t('noItemSelected')}`, 'error');
-        return;
-    }
-
-    // 2. STARE I NOVE VREDNOSTI
-    const oldQuantity = originalQuantity;
-    const newQuantity = selectedItem.quantity;
-
-    // 3. LOGUJ SAMO AKO SE PROMENILA KOLIČINA
-    if (oldQuantity !== newQuantity) {
-
-        await addLog(
-            selectedItem.id,
-            'quantity',
-            oldQuantity,
-            newQuantity
-        );
-    }
-
-    //  4. UPDATE U BAZI
-    const { error } = await supabaseClient
-        .from('items')
-        .update({ quantity: newQuantity })
-        .eq('id', Number(selectedItem.id));
-
-    if (error) {
-        console.error(error);
-        showNotification(`❌ ${error.message}`, 'error');
-        return;
-    }
-
-    // 5. SUCCESS + REFRESH
-    showNotification(`✔ ${selectedItem.name} ${t('saved')}`, 'success');
-
-    await fetchItems();
-
-    // 6. RESET
-    selectedItem = null;
-    originalQuantity = null;
-
-    resetDisplay();
-
-    clearResults();
-    
-
-});
-
-
-
-
-
-
-
-// NEW ITEM FORM
-
-
-const toggleMoreBtn = document.getElementById('toggle-more');
-const optionalFields = document.getElementById('optional-fields');
-
-//Toggle btn More/Hide
-toggleMoreBtn.addEventListener('click', function () {
-    optionalFields.classList.toggle('open');
-
-    if (optionalFields.classList.contains('open')) {
-        toggleMoreBtn.textContent = t('toggleHide');
-    } else {
-        toggleMoreBtn.textContent = t('toggleMore');
-    }
-});
-
-// Otvaranje Modula
-addOpenBtn.addEventListener('click', function(){
-
-    // OVO JE KLJUČ
-    editMode = false;
-    editItem = null;
-
-    modalTitle.textContent = t('addModulTitle');
-
-    modal.classList.remove('hidden');
-    newName.focus();
-})
-
-
-//addCancel
-addCancel.addEventListener('click', function(){
-    modal.classList.add('hidden');
-    
-    editMode = false;
-    editItem = null;
-
-    newName.value = '';
-    newCode.value = '';
-    newStatus.value = '';
-    newLocation.value = '';
-    newPrice.value = '';
-    newLimit.value = '';
-    newQuantity.value = '';
-
-    modalTitle.textContent = t('addModulTitle');
-});
-
-//SaveBtn
-addSave.addEventListener('click', async function(){
-
-    const name      = newName.value.trim();
-    const code      = newCode.value.trim();
-    const status    = newStatus.value.trim();
-    const location  = newLocation.value.trim();
-    
-    const quantityRaw = newQuantity.value.trim();
-    const quantity    = Number(quantityRaw);
-    const priceRow    = newPrice.value.trim()
-    const price       = Number(priceRow)
-    const limitRow    = newLimit.value.trim();
-    const limit       = Number(limitRow)
-
-
-    //  VALIDACIJA
-    if (!name || quantityRaw === '' || isNaN(quantity) || priceRow === '' || isNaN(price) || limitRow === '' || isNaN(limit)) {
-        showNotification(`❌ ${t('errorFill')}`, 'error');
-        return;
-    }
-
-    // ============================================================
-    //  EDIT MODE
-    // ============================================================
-    if (editMode) {
-
-        //  LOG CHANGES (pre update-a)
-        if (editItem.name !== name) {
-            await addLog(editItem.id, 'name', editItem.name, name);
-        }
-
-        if (editItem.code !== code) {
-            await addLog(editItem.id, 'code', editItem.code, code);
-        }
-
-        if (editItem.location !== location) {
-            await addLog(editItem.id, 'location', editItem.location, location);
-        }
-        if (editItem.status !== status) {
-            await addLog(editItem.id, 'status', editItem.status, status);
-        }
-
-        if (editItem.quantity !== quantity) {
-            await addLog(editItem.id, 'quantity', editItem.quantity, quantity);
-        }
-        if (editItem.price !== price) {
-            await addLog(editItem.id, 'price', editItem.price, price);
-        }
-        if (editItem.limit !== limit) {
-            await addLog(editItem.id, 'limit', editItem.limit, limit);
-        }
-
-
-        //  UPDATE ITEM
-        const { error } = await supabaseClient
-            .from('items')
-            .update({
-                name: name,
-                code: code,
-                status:status,
-                location: location,
-                quantity: quantity,
-                price: price,
-                limit: limit
-            })
-            .eq('id', Number(editItem.id));
-
-        if (error) {
-            console.error(error);
-            showNotification(`❌ ${error.message}`, 'error');
-            return;
-        }
-
-
-        //  SUCCESS
-        showNotification(`✔ ${name} ${t('updated')}`, 'success');
-
-        await fetchItems();
-
-        //  vrati selektovan item
-        const currentId = editItem.id;
-        selectedItem = items.find(item => item.id === currentId);
-
-        if (selectedItem) {
-            selectItem(selectedItem);
-        }
-
-        modal.classList.add('hidden');
-        resetForm();
-
-        return;
-    }
-        // ======== ADD MODE ================
-    else {
-
-        //  INSERT ITEM + VRATI ID
-        const { data, error } = await supabaseClient
-            .from('items')
-            .insert([
-                {   name, 
-                    code, 
-                    status,
-                    location, 
-                    quantity, 
-                    price, 
-                    limit, 
-                    user_id: currentUser.id }
-            ])
-            .select();
-
-        if (error || !data || data.length === 0) {
-            console.error(error);
-            showNotification('❌ Error saving item', 'error');
-            return;
-        }
-
-        const newId = data[0].id;
-
-        //  LOG CREATE
-        await addLog(newId, 'created', '', name);
-
-
-        //  REFRESH UI
-        await fetchItems();
-
-        showNotification(`✔ ${name} ${t('added')}`, 'success');
-    }
-
-
-    // ============================================================
-    // CLEANUP
-    // ============================================================
-    renderTable();
-    modal.classList.add('hidden');
-
-    resetForm();
-
-    editMode = false;
-    editItem = null;
-});
-
-//helper f
-function resetForm(){
-    newName.value = '';
-    newCode.value = '';
-    newStatus.value = '';
-    newLocation.value = '';
-    newQuantity.value = '';
-    newPrice.value = '';
-    newLimit.value = '';
-}
-
-//Klik izvan forme - zatvaranje forme
-modal.addEventListener('click', function(e){
-    if(e.target === modal){
-        modal.classList.add('hidden');
-    }
-});
-
-// EDIT btn
-editBtn.addEventListener('click', function(){
-
-    if(!selectedItem){
-        showNotification(`❌ ${t('noItemSelected')}`, 'error');
-        return;
-    }
-
-    // uključi edit mode
-    editMode = true;
-    editItem = selectedItem;
-
-    // popuni formu
-    newName.value       = selectedItem.name;
-    newCode.value       = selectedItem.code;
-    newStatus.value     = selectedItem.status;
-    newLocation.value   = selectedItem.location;
-    newQuantity.value   = selectedItem.quantity;
-    newPrice.value      = selectedItem.price;
-    newLimit.value      = selectedItem.limit;
-
-    // promeni naslov modala
-    modalTitle.textContent = t('editTitle');
-
-    // otvori modal
-    modal.classList.remove('hidden');
-});
-
-deleteBtn.addEventListener('click', function(){
-    if(!selectedItem){
-        showNotification(`❌ ${t('noItemSelected')}`, 'error')
-        return;
-    } 
-
-     // Otvori confirmation modal
-    openDeleteModal();
-})
-
-
-cancelDeleteBtn.addEventListener('click', function(){
-    closeDeleteModal();
-})
-
-confirmDeleteBtn.addEventListener('click', async function () {
-
-    if (!selectedItem) return;
-
-    const itemId = selectedItem.id;
-
-    // 1. obriši logove
-    await supabaseClient
-        .from('item_logs')
-        .delete()
-        .eq('item_id', itemId)
-        .eq('user_id', currentUser.id);
-
-    // 2. obriši item
-    const { error } = await supabaseClient
-        .from('items')
-        .delete()
-        .eq('id', itemId);
-
-    if (error) {
-        console.error(error);
-        showNotification(`❌ ${error.message}`, 'error');
-        return;
-    }
-
-    showNotification(`✔ ${'deleteInfo'}`, 'success')
-
-    // refresh UI
-    await fetchItems();
-
-    selectedItem = null;
-    resetDisplay();
-
-    closeDeleteModal()
-});
-
-function openDeleteModal() {
-    deleteModal.classList.remove('hidden');
-}
-
-function closeDeleteModal() {
-    deleteModal.classList.add('hidden');
-}
-/* ============================================================
-   SWIPE NAVIGATION (MOBILE)
-============================================================ */
-
-swipeArea.addEventListener('touchstart', function(e){
-
-if (e.target.closest('.table-wrapper') || e.target.closest('.low-stock-wrapper')) {
-    isScrollingTable = true;
-    return;
-}
-    isScrollingTable = false;
-    touchStartX = e.changedTouches[0].clientX;
-});
-
-// kada pusti prst
-swipeArea.addEventListener('touchend', function(e){
-
-    if (isScrollingTable) return;
-
-    touchEndX = e.changedTouches[0].clientX;
-    handleSwipe();
-});
-
-function handleSwipe(){
-
-    const diff = touchStartX - touchEndX;
-
-    // minimalna distanca da bi bio swipe
-    const threshold = 50;
-
-    if (Math.abs(diff) < threshold) return;
-
-    // uzimamo sve tabove
-    const tabs = Array.from(nav.querySelectorAll('.tab'));
-
-    // koji je trenutno aktivan
-    const activeIndex = tabs.findIndex(tab =>
-        tab.classList.contains('active')
-    );
-
-    // Swipe LEFT → sledeći tab
-    if (diff > 0){
-        const nextIndex = activeIndex + 1;
-
-        if (nextIndex < tabs.length){
-            activateTab(tabs[nextIndex]); //  koristi tvoju postojeću logiku
-        }
-    }
-
-    // Swipe RIGHT → prethodni tab
-    if (diff < 0){
-        const prevIndex = activeIndex - 1;
-
-        if (prevIndex >= 0){
-            activateTab(tabs[prevIndex]); //  koristi tvoju postojeću logiku
-        }
-    }
-}
-
-//========================= HISTORY LOG =========================
-historyBtn.addEventListener('click', async function () {
-
-    if (!selectedItem) {
-        showNotification(`❌ ${t('noItemSelected')}`, 'error');
-        return;
-    }
-
-    // UZMI LOGOVE
-    const logs = await fetchLogs(selectedItem.id);
-
-    // PRIKAŽI IH
-    renderLogs(logs);
-
-    // OTVORI MODAL
-    historyModal.classList.remove('hidden');
-});
-
-historyClose.addEventListener('click', function () {
-    historyModal.classList.add('hidden');
-});
-/* ============================================================
-   5. SEARCH LOGIC
-============================================================ */
-
+//3.  FUNCTIONS ===
 function handleSearch() {
 
     const inputValue = input.value.trim().toLowerCase();
@@ -969,18 +393,47 @@ function handleSearch() {
         String(item.code).includes(inputValue)
     );
 
-    renderResults(filtered);
+    renderResults(filtered, 'input');
 }
 
-function renderResults(results) {
+function renderResults(results, mode) {
 
     clearResults();
 
+    if (results.length === 0) {
+
+        const div = document.createElement('div');
+        div.classList.add('no-results');
+
+        const text = document.createElement('p');
+        text.textContent = t('noResults');
+
+        div.appendChild(text);
+
+        // samo za RECEIVE!
+        if (mode === 'receipt') {
+
+            const button = document.createElement('button');
+            button.classList.add('add-new-btn');
+            button.textContent = t('addNewItem');
+
+            button.addEventListener('click', () => {
+                modal.classList.remove('hidden');
+                addName.focus();
+            });
+
+            div.appendChild(button);
+        }
+
+        resultsContainer.appendChild(div);
+        return;
+    }
+
     results.forEach(item => {
         const div = document.createElement('div');
-
         div.classList.add('result-item');
-        div.textContent = `${item.name} (${item.code}) - ${item.status} `;
+
+        div.textContent = `${item.name} (${item.code}) - ${item.status}`;
 
         div.addEventListener('click', function () {
             selectItem(item);
@@ -994,6 +447,28 @@ function clearResults() {
     resultsContainer.innerHTML = '';
 }
 
+
+//4.  EVENTS ===
+// Search Input
+input.addEventListener('input', handleSearch);
+// Clear btn
+clearBtn.addEventListener('click', function () {
+    resetDisplay();
+    clearResults();
+});
+
+// -------------------- FEATURE: SELECT ITEM --------------------
+
+//1.  SELECTORS ===
+const itemName          = document.getElementById('item-name');
+const itemCode          = document.getElementById('item-code');
+const itemStatus        = document.getElementById('item-status');
+const itemLocation      = document.getElementById('item-location');
+const itemPrice         = document.getElementById('item-price')
+const ItemLimit         = document.getElementById('item-limit')
+const quantityValue     = document.getElementById('quantity-value');
+
+//3.  FUNCTIONS ===
 function resetDisplay() {
     clearBtn.style.display = 'none';
     input.value = '';
@@ -1005,16 +480,11 @@ function resetDisplay() {
     ItemLimit.textContent = '-';
     quantityValue.textContent = '0';
     selectedItem = null;
+    tempQuantity = 0;
 
      // Sakri History dugme
     historyWrapper.classList.add('hidden');
 }
-
-
-/* ============================================================
-   6. ITEM SELECTION
-============================================================ */
-
 function selectItem(item) {
 
     itemName.textContent        = item.name;
@@ -1023,97 +493,111 @@ function selectItem(item) {
     itemLocation.textContent    = item.location;
     itemPrice.textContent       = item.price;
     ItemLimit.textContent       = item.limit;
-    quantityValue.textContent   = item.quantity;
 
+    tempQuantity = item.quantity;               // NOVO
+    quantityValue.textContent = tempQuantity;   // IZMENJENO
 
     input.value = item.name;
 
     selectedItem = item;
-    
-    // Prikaži History dugme
+
     historyWrapper.classList.remove('hidden');
 
     originalQuantity = item.quantity;
+
     clearResults();
 }
 
+// -------------------- FEATURE: CHANGE QUANTITY -------------------
+//1.  SELECTORS ===
+const plusBtn           = document.querySelector('.btn-plus');
+const minusBtn          = document.querySelector('.btn-minus');
 
-/* ============================================================
-   7. TABLE + PAGINATION
-============================================================ */
+//4.  EVENTS ===
+plusBtn.addEventListener('click', function () {
+    if (!selectedItem) return;
 
-function renderTable() {
+    tempQuantity++;
+    quantityValue.textContent = tempQuantity;
+});
+minusBtn.addEventListener('click', function () {
+    if (!selectedItem) return;
 
-    tableBody.innerHTML = '';
-
-    const totalPages = Math.ceil(items.length / itemsPerPage) || 1;
-
-    const start = (currentPage - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-
-    const pageItems = items.slice(start, end);
-
-    if (pageItems.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="4">${t('noItems')}</td></tr>`;
-    } else {
-
-        pageItems.forEach(item => {
-
-            const tr = document.createElement('tr');
-
-            tr.innerHTML = `
-                <td>${item.name}</td>
-                <td>${item.code}</td>
-                <td>${item.location}</td>
-                <td>${item.quantity} pcs</td>
-                <td>${item.status}</td>
-                <td>${item.price} RSD</td>
-                <td>${item.limit} </td>
-            `;
-
-            tr.addEventListener('click', function () {
-                selectItem(item);
-                goToInputTab();
-            });
-
-            tableBody.appendChild(tr);
-        });
+    if (tempQuantity > 0) {
+        tempQuantity--;
     }
 
-    pageinfo.textContent = `Page ${currentPage} / ${totalPages}`;
-
-    prevBtn.disabled = currentPage === 1;
-    nextBtn.disabled = currentPage === totalPages;
-}
+    quantityValue.textContent = tempQuantity;
+});
 
 
-function setupPagination() {
+// -------------------- FEATURE: SAVE QUANTITY ------------------
 
-    prevBtn.addEventListener('click', function () {
-        if (currentPage > 1) {
-            currentPage--;
-            renderTable();
-        }
-    });
+//1.  SELECTORS ===
+const saveBtn           = document.querySelector('.save-btn');
 
-    nextBtn.addEventListener('click', function () {
+//3.  FUNCTIONS ===
 
-        const totalPages = Math.ceil(items.length / itemsPerPage);
+//4.  EVENTS ===
+saveBtn.addEventListener('click', async function () {
 
-        if (currentPage < totalPages) {
-            currentPage++;
-            renderTable();
-        }
-    });
-}
-/* ============================================================
-   8. KREIRANJE LOGOVA U MODULU
-============================================================ */
+    // 1. VALIDACIJA
+    if (!selectedItem) {
+        showNotification(`❌ ${t('noItemSelected')}`, 'error');
+        return;
+    }
+
+    // 2. STARE I NOVE VREDNOSTI
+    const oldQuantity = originalQuantity;
+    const newQuantity = tempQuantity;
+
+    const diff = newQuantity - oldQuantity;
+
+    if (diff !== 0) {
+
+        const type = diff > 0 ? 'receipt' : 'issue';
+
+        await createTransaction(
+            [{
+                id: selectedItem.id,
+                qty: Math.abs(diff)
+            }],
+            type
+        );
+    }
+
+    // 5. SUCCESS + REFRESH
+    showNotification(`✔ ${selectedItem.name} ${t('saved')}`, 'success');
+
+    await fetchItems();
+    await fetchTransactions();
+
+    // 6. RESET
+    selectedItem = null;
+    originalQuantity = null;
+
+    resetDisplay();
+
+    clearResults();
+    
+
+});
+
+
+// -------------------- FEATURE: HISTORY LOG ------------------
+//1.  SELECTORS ===
+const historyModal      = document.querySelector('.history-modal');
+const historyBtn        = document.querySelector('.btn-history');
+const historyClose      = document.querySelector('.history-close');
+const historyWrapper    = document.querySelector('.history-wrapper');
+const ItemLog           = document.querySelector('.history-modal_itemLog')
+//2.  STATE ===
+//3.  FUNCTIONS ===
 function renderLogs(logs) {
 
     const container = document.querySelector('.history-modal__body');
     //Naziv Item za koji geldamo LogHistory
-    ItemLog.textContent = selectedItem ? selectedItem.name : 'No item';
+    ItemLog.textContent = selectedItem ? selectedItem.name : t('noItems');
 
     container.innerHTML = '';
 
@@ -1128,7 +612,13 @@ function renderLogs(logs) {
         div.classList.add('history-item');
 
         let text = '';
-        let date = new Date(log.created_at).toLocaleString('sr-RS');
+        let date = new Date(log.created_at).toLocaleString('sr-RS', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
 
         //  FORMATIRANJE PO TIPU
         if (log.field === 'quantity') {
@@ -1167,37 +657,1347 @@ function renderLogs(logs) {
             div.classList.add('plus');
         }
 
+        // ================= TRANSACTION LINE =================
+        let txLine = '';
+
+
+        if (log.transaction_id) {
+            txLine = `<div class="log-tx">${t('transactionID')} #${log.transaction_id}</div>`;
+        }
+
+        // ================= RENDER =================
         div.innerHTML = `
-            <span>${text}</span>
-            <span>${date}</span>
+            <div class="log-row">
+                <span class="log-main">${text}</span>
+                <span class="log-date">${date}</span>
+            </div>
+            ${txLine}
         `;
+
 
         container.appendChild(div);
     });
 }
-/* ============================================================
-   8. UTILITIES
-============================================================ */
 
+//4.  EVENTS ===
+historyBtn.addEventListener('click', async function () {
+
+    if (!selectedItem) {
+        showNotification(`❌ ${t('noItemSelected')}`, 'error');
+        return;
+    }
+
+    // UZMI LOGOVE
+    const logs = await fetchLogs(selectedItem.id);
+
+    // PRIKAŽI IH
+    renderLogs(logs);
+
+    // OTVORI MODAL
+    historyModal.classList.remove('hidden');
+});
+
+historyClose.addEventListener('click', function () {
+    historyModal.classList.add('hidden');
+});
+
+// -------------------- FEATURE: ADD / EDIT --------------------
+
+// ===== ADD MODAL =====
+const modal = document.querySelector('.add-modal');
+
+const addSaveBtn = document.getElementById('add-save');
+const addCancelBtn = document.getElementById('add-cancel');
+
+const addName = document.getElementById('add-name');
+const addQty = document.getElementById('add-quantity');
+const addPrice = document.getElementById('add-price');
+const addLimit = document.getElementById('add-limit');
+const addCode = document.getElementById('add-code');
+const addStatus = document.getElementById('add-status');
+const addLocation = document.getElementById('add-location');
+
+const addToggleBtn = document.getElementById('add-toggle-more');
+const addOptional = document.getElementById('add-optional-fields');
+
+
+
+
+// SAVE → IDE SAMO U TRANSACTION 
+addSaveBtn.addEventListener('click', () => {
+
+    const name = addName.value.trim();
+    const qty = Number(addQty.value);
+    const price = Number(addPrice.value);
+    const limit = Number(addLimit.value);
+
+
+
+
+    // VALIDACIJA UNOSA prvo
+    if (!name || isNaN(qty) || qty < 0 || isNaN(price) || isNaN(limit)){
+        showNotification(`❌ ${t('fillRequired')}`, 'error');
+        return;
+    }
+
+    //Restet COPY state
+    isCopyMode = false;
+    copiedItemData = null;
+
+    // PROVERA DUPLIKATA posle što imamo name
+    const exists = items.find(i => 
+        i.name.toLowerCase() === name.toLowerCase()
+    );
+
+    if (exists) {
+        showNotification(`❌ ${t('nameExists')}`, 'error');
+        return;
+    }
+
+    addToTransaction({
+        id: 'tmp_' + Date.now(), 
+        name,
+        code: addCode.value.trim(),
+        status: addStatus.value.trim(),
+        location: addLocation.value.trim(),
+        price,
+        limit,
+        isNew: true,
+        qty
+    });
+
+    showNotification(`✔ ${t('itemAddedTx')}`, 'success');
+
+    modal.classList.add('hidden');
+   
+    resetForm();
+});
+
+
+// CANCEL
+addCancelBtn.addEventListener('click', () => {
+
+    // Rester COPY stanja   
+    isCopyMode = false;
+    copiedItemData = null;
+
+    modal.classList.add('hidden');
+    resetForm();
+});
+
+
+
+function resetForm() {
+    addName.value = '';
+    addQty.value = '';
+    addPrice.value = '';
+    addLimit.value = '';
+    addCode.value = '';
+    addStatus.value = '';
+    addLocation.value = '';
+
+    addOptional.classList.add('hidden');
+    modal.classList.remove('child-modal');
+
+}
+
+// TOGGLE
+addToggleBtn.addEventListener('click', () => {
+
+    const isOpen = addOptional.classList.contains('hidden');
+
+    addOptional.classList.toggle('hidden');
+
+    if (isOpen) {
+        // sada je otvoreno
+        addToggleBtn.textContent = `${t('toggleHide')}`;
+    } else {
+        // sada je zatvoreno
+        addToggleBtn.textContent = `${t('toggleMore')}`;
+    }
+
+});
+
+
+
+// ===== EDIT MODAL =====
+const editBtn           = document.querySelector('.btn-edit');
+const editModal = document.querySelector('.edit-modal');
+
+const editSaveBtn = document.getElementById('edit-save');
+const editCancelBtn = document.getElementById('edit-cancel');
+
+const editToggleBtn = document.getElementById('edit-toggle-more');
+const editOptional = document.getElementById('edit-optional-fields');
+
+let editItem = null;
+
+
+// TOGGLE
+editToggleBtn.addEventListener('click', () => {
+
+    const isOpen = editOptional.classList.contains('hidden');
+
+    editOptional.classList.toggle('hidden');
+
+    if (isOpen) {
+        editToggleBtn.textContent = `${t('toggleHide')}`;
+    } else {
+        editToggleBtn.textContent = `${t('toggleMore')}`;
+    }
+
+});
+
+
+// OPEN EDIT
+editBtn.addEventListener('click', () => {
+
+    if (!selectedItem) {
+        showNotification(`❌ ${t('noItemSelected')}`, 'error');
+        return;
+    }
+
+    editItem = selectedItem;
+
+    document.getElementById('edit-name').value = selectedItem.name;
+    document.getElementById('edit-price').value = selectedItem.price;
+    document.getElementById('edit-limit').value = selectedItem.limit;
+    document.getElementById('edit-code').value = selectedItem.code;
+    document.getElementById('edit-status').value = selectedItem.status;
+    document.getElementById('edit-location').value = selectedItem.location;
+
+    editModal.classList.remove('hidden');
+});
+
+
+// SAVE → IDE DIREKTNO U DB 
+editSaveBtn.addEventListener('click', async () => {
+
+    const name = document.getElementById('edit-name').value.trim();
+    const code = document.getElementById('edit-code').value.trim();
+    const status = document.getElementById('edit-status').value.trim();
+    const location = document.getElementById('edit-location').value.trim();
+    const price = Number(document.getElementById('edit-price').value);
+    const limit = Number(document.getElementById('edit-limit').value);
+
+    if (!name || isNaN(price) || isNaN(limit)) {
+        showNotification(`❌ ${t('invalidInput')}`, 'error')
+        return;
+    }
+
+    // LOGOVI
+    if (editItem.name !== name)         await addLog(editItem.id, 'name', editItem.name, name);
+    if (editItem.code !== code)         await addLog(editItem.id, 'code', editItem.code, code);
+    if (editItem.location !== location) await addLog(editItem.id, 'location', editItem.location, location);
+    if (editItem.status !== status)     await addLog(editItem.id, 'status', editItem.status, status);
+    if (editItem.price !== price)       await addLog(editItem.id, 'price', editItem.price, price);
+    if (editItem.limit !== limit)       await addLog(editItem.id, 'limit', editItem.limit, limit);
+
+    const { error } = await supabaseClient
+        .from('items')
+        .update({ name, code, status, location, price, limit })
+        .eq('id', editItem.id);
+
+    if (error) {
+        showNotification(error.message, 'error');
+        return;
+    }
+
+    showNotification(`✔ ${t('updatedSuccess')}`, 'success');
+
+    await fetchItems();
+
+    //  KLJUČNO — update UI kartice
+    selectedItem = items.find(i => i.id === editItem.id);
+    if (selectedItem) selectItem(selectedItem);
+
+    editModal.classList.add('hidden');
+    editItem = null;
+});
+
+
+// CANCEL
+editCancelBtn.addEventListener('click', () => {
+    editModal.classList.add('hidden');
+    editItem = null;
+});
+
+
+
+
+
+// --------------------------------------------------------- TEST ----------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// -------------------- FEATURE: ARCHIVE --------------------
+//1.  SELECTORS ===
+const archiveItemBtn     = document.querySelector('.btn-archive');
+const archiveModal       = document.querySelector('.archive-modal');
+const confirmArchiveBtn  = document.querySelector('.btn-confirm-archive');
+const cancelArchiveBtn   = document.querySelector('.btn-cancel-archive');
+
+//3.  FUNCTIONS ===
+function openArchiveModal() {
+    archiveModal.classList.remove('hidden');
+}
+
+function closeArchiveModal() {
+    archiveModal.classList.add('hidden');
+}
+
+//4.  EVENTS ===
+archiveItemBtn.addEventListener('click', function(){
+    if(!selectedItem){
+        showNotification(`❌ ${t('noItemSelected')}`, 'error')
+        return;
+    } 
+
+     // Otvori confirmation modal
+    openArchiveModal();
+})
+cancelArchiveBtn.addEventListener('click', function(){
+    closeArchiveModal();
+})
+confirmArchiveBtn.addEventListener('click', async function () {
+
+    if (!selectedItem) return;
+
+    const itemId = selectedItem.id;
+
+    // 1. ARCHIVE ITEM (umesto potpunog brisna sada Arhiviramo)
+    const { error } = await supabaseClient
+        .from('items')
+        .update({ is_active: false })
+        .eq('id', itemId);
+
+    if (error) {
+        console.error(error);
+        showNotification(`❌ ${error.message}`, 'error');
+        return;
+    }
+
+    showNotification(`✔ ${t('archiveInfo')}`, 'success')
+
+    // refresh UI
+    await fetchItems();
+
+    selectedItem = null;
+    resetDisplay();
+
+    closeArchiveModal()
+});
+
+// -------------------- FEATURE: TOGGLE MORE --------------------
+//1.  SELECTORS ===
+const toggleMoreBtn = document.getElementById('toggle-more');
+const optionalFields = document.getElementById('optional-fields');
+
+
+
+
+// ========================================================== TABLE ==========================================================
+
+// -------------------- FEATURE: TABLE VIEW --------------------
+//1.  SELECTORS ===
+const tableWrapper      = document.querySelector('.table-wrapper');
+const tableBody         = document.querySelector('.table-body');
+
+
+//3.  FUNCTIONS ===
+function renderTable() {
+
+    tableBody.innerHTML = '';
+
+    const totalPages = Math.ceil(items.length / itemsPerPage) || 1;
+
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+
+    const pageItems = items.slice(start, end);
+
+    if (pageItems.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="4">${t('noItems')}</td></tr>`;
+    } else {
+
+        pageItems.forEach(item => {
+
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+                <td>${item.name}</td>
+                <td>${item.code}</td>
+                <td>${item.location}</td>
+                <td>${item.quantity} pcs</td>
+                <td>${item.price} RSD</td>
+                <td>${item.quantity * item.price} RSD</td>
+                <td>${item.status}</td>
+                <td>${item.limit} </td>
+            `;
+
+            tr.addEventListener('click', function () {
+                selectItem(item);
+                goToInputTab();
+            });
+
+            tableBody.appendChild(tr);
+        });
+    }
+
+    pageinfo.textContent = `Page ${currentPage} / ${totalPages}`;
+
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage === totalPages;
+}
 function goToInputTab() {
     document.querySelector('[data-tab="input"]').click();
     clearBtn.style.display = 'block';
 }
 
-function showNotification(message, type) {
 
+// -------------------- FEATURE: PAGINATION --------------------
+//1.  SELECTORS ===
+const prevBtn           = document.querySelector('.prev-btn');
+const nextBtn           = document.querySelector('.next-btn');
+const pageinfo          = document.querySelector('.page-info');
 
-notification.textContent = message;
+//3.  FUNCTIONS ===
+function setupPagination() {
 
-notification.classList.remove('success', 'error', 'info');
-notification.classList.add(type);
+    prevBtn.addEventListener('click', function () {
+        if (currentPage > 1) {
+            currentPage--;
+            renderTable();
+        }
+    });
 
-setTimeout(() => {
-    notification.classList.remove(type);
-}, 3000);
+    nextBtn.addEventListener('click', function () {
 
+        const totalPages = Math.ceil(items.length / itemsPerPage);
+
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderTable();
+        }
+    });
 }
 
+
+
+// ========================================================== MANAGEMENT ==========================================================
+
+// -------------------- FEATURE: CARDS - TOTALS -------------------
+//1.  SELECTORS ===
+const totalItemsEl      = document.getElementById('total-items');
+const totalQuantityEl   = document.getElementById('total-quantity');
+const totalPriceEl      = document.getElementById('total-price');
+const lowStockCard      = document.getElementById('low-stock-count');
+
+//3.  FUNCTIONS ===
+// ===== GLVAN F za UPISVANJE inf u KARTICE
+function updateDashboardCards() {
+
+    // TOTAL ITEMS
+    const totalItems = items.length;
+    totalItemsEl.textContent = totalItems;
+
+
+    //Broj  TOTAL QUANTITY
+    const totalQuantity = items.reduce((sum, item) => {
+        return sum + Number(item.quantity);
+    }, 0);
+
+    totalQuantityEl.textContent = totalQuantity;
+
+
+    //Broj  TOTAL PRICE
+    const totalPrice = items.reduce((sum, item) => {
+        return sum + (Number(item.price) * Number(item.quantity));
+    }, 0);
+
+    totalPriceEl.textContent = totalPrice.toLocaleString();
+
+
+    // Broj LOW STOCK Itema
+    const lowStock = items.filter(item => {
+        return Number(item.quantity) < Number(item.limit);
+    });
+
+    const lowStockCount = lowStock.length;
+    lowStockCard.textContent = lowStockCount;
+
+
+    // TREND UPDATE (BEZ SIDE EFFECTA)
+    updateTrend("items-trend", totalItems, "items");
+    updateTrend("quantity-trend", totalQuantity, "quantity");
+    updateTrend("price-trend", totalPrice, "price");
+    updateTrend("lowstock-trend", lowStockCount, "lowstock");
+}
+
+
+// -------------------- FEATURE: CARDS - TRENDS -------------------
+//2.  STATE ===
+//  load poslednjeg prikazanog trenda
+let savedTrends = {};
+
+let previousTotals = {
+    items: null,
+    quantity: null,
+    price: null,
+    lowstock: null
+};
+
+
+//3.  FUNCTIONS ===
+
+// Ucitavanje Trenda
+async function loadUserTrends() {
+
+    const data = await loadUserSetting('trendUI');
+
+    savedTrends = data || {};
+
+    //  odmah primeni na UI
+    Object.keys(savedTrends).forEach(key => {
+
+        const el = document.getElementById(key + "-trend");
+        if (!el) return;
+
+        const arrow = el.querySelector(".trend-arrow");
+        const value = el.querySelector(".trend-value");
+        const date  = el.querySelector(".trend-date");
+
+        const trend = savedTrends[key];
+
+        el.className = trend.className;
+        arrow.textContent = trend.arrow;
+        value.textContent = trend.value;
+
+        if (trend.date && date) {
+            date.textContent = formatDate(new Date(trend.date));
+        }
+    });
+}
+// Ispisivanje Trenda
+function updateTrend(elementId, currentValue, key) {
+
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    const arrow = el.querySelector(".trend-arrow");
+    const value = el.querySelector(".trend-value");
+    const date  = el.querySelector(".trend-date");
+
+    const prev = previousTotals[key];
+
+    if (prev === null || prev === 0) {
+        previousTotals[key] = currentValue;
+        return;
+    }
+
+    const diff = currentValue - prev;
+    const percent = ((diff / prev) * 100).toFixed(1);
+
+    const isNegativeMetric = (key === "lowstock");
+
+    let className, arrowText, valueText;
+
+    if (diff > 0) {
+        className = isNegativeMetric ? "card-trend down" : "card-trend up";
+        arrowText = "▲";
+        valueText = `+${diff} (${percent}%)`;
+
+    } else if (diff < 0) {
+        className = isNegativeMetric ? "card-trend up" : "card-trend down";
+        arrowText = "▼";
+        valueText = `${diff} (${percent}%)`;
+
+    } else {
+        return;
+    }
+
+    const now = new Date(); //  BITNO
+
+    el.className        = className;
+    arrow.textContent   = arrowText;
+    value.textContent   = valueText;
+
+    if (date) {
+        date.textContent = formatDate(now);
+    }
+
+    savedTrends[key] = {
+        className,
+        arrow: arrowText,
+        value: valueText,
+        date: now.toISOString()
+    };
+
+    saveUserSetting('trendUI', savedTrends);
+
+    previousTotals[key] = currentValue;
+}
+//Formatiranje datuma
+function formatDate(date) {
+    return date.toLocaleString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// -------------------- FEATURE: LOW STOCK TABLE -------------------
+//1.  SELECTORS ===
+const tableBodyDash     = document.querySelector('.table-body-dashboard');
+
+//3.  FUNCTIONS ===
+// Reder Low stock Tabele
+function renderLowStockTable() {
+
+    // koristimo LIMIT PO ITEMU
+    const lowStock = items.filter(item => {
+        return Number(item.quantity) < Number(item.limit);
+    });
+
+    // kartica (Low Stock)
+    lowStockCard.textContent = lowStock.length ;
+
+    tableBodyDash.innerHTML = '';
+
+    if (lowStock.length === 0) {
+        tableBodyDash.innerHTML =
+            `<tr><td colspan="4" data-i18n="NoLowStockItems">${t('NoLowStockItems')}</td></tr>`;
+        return;
+    }
+
+    lowStock.forEach(item => {
+
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.code}</td>
+            <td>${item.location}</td>
+            <td>${item.quantity}</td>
+            <td>${item.limit}</td>
+        `;
+
+        tr.addEventListener('click', function () {
+            selectItem(item);
+            goToInputTab();
+        });
+
+        tableBodyDash.appendChild(tr);
+    });
+}
+
+
+
+
+
+
+
+
+// ========================================================== TRANSACTION ==========================================================
+// -------------------- FEATURE: TRANSACTIONS --------------------
+
+// BUTTONS
+const btnReceive        = document.getElementById('btn-receive');
+const btnIssue          = document.getElementById('btn-issue');
+
+// MODAL
+const transactionModal  = document.querySelector('.transaction-modal');
+const transactionTitle  = document.getElementById('transaction-title');
+const transactionCancel = document.getElementById('transaction-cancel');
+const transactionConfirm= document.getElementById('transaction-confirm');
+
+// SEARCH
+const transactionSearch  = document.getElementById('transaction-search');
+const transactionResults= document.querySelector('.transaction-results');
+
+// LISTA
+const transactionList   = document.querySelector('.transaction-list');
+
+
+//STATE
+let transactionMode = null;
+let transactionItems = []; 
+let isCopyMode = false;
+let copiedItemData = null;
+
+//OTVARANJE MODULA
+
+btnReceive.addEventListener('click', () => {
+    transactionMode = 'receipt';
+    transactionTitle.textContent = t('txNewReceipt'); 
+    openTransactionModal();
+})
+
+btnIssue.addEventListener('click', () => {
+    transactionMode = 'issue';
+    transactionTitle.textContent = t('txNewIssue'); 
+    openTransactionModal();
+});
+
+
+function openTransactionModal() {
+    transactionItems = [];
+    transactionList.innerHTML = '';
+    transactionSearch.value = '';
+    transactionResults.innerHTML = '';
+    
+
+    transactionModal.classList.remove('hidden');
+    transactionSearch.focus();
+}
+// ZATVARANJE MOUDLA
+transactionCancel.addEventListener('click', () => {
+    transactionModal.classList.add('hidden');
+});
+
+
+
+// SEARCH 
+transactionSearch.addEventListener('input', function () {
+
+    const value = this.value.trim().toLowerCase();
+
+    if (value === '') {
+        transactionResults.innerHTML = '';
+        return;
+    }
+
+    const filtered = items.filter(item =>
+        item.name.toLowerCase().includes(value) ||
+        String(item.code).includes(value)
+    );
+
+    renderTransactionResults(filtered);
+});
+
+//PRIKAZ REZULTATA PRETRAGE
+function renderTransactionResults(results) {
+
+    transactionResults.innerHTML = '';
+
+    if (results.length === 0) {
+
+        const div = document.createElement('div');
+        div.classList.add('no-results');
+
+        const text = document.createElement('p');
+        text.textContent = t('noResults');
+
+        div.appendChild(text);
+
+        //  samo za RECEIPT
+        if (transactionMode === 'receipt') {
+
+            const button = document.createElement('button');
+            button.classList.add('add-new-btn');
+            button.textContent = t('addNewItem');
+
+        button.addEventListener('click', () => {
+
+            //  očisti search UI
+            transactionSearch.value = '';
+            transactionResults.innerHTML = '';
+
+            // OVO JE KLJUČ
+            // fromTransaction = true;              // kaže sistemu odakle dolazimo
+            modal.classList.add('child-modal'); // ide iznad transaction moda
+            modal.classList.remove('hidden');
+
+            addName.focus();
+        });
+
+            div.appendChild(button);
+        }
+
+        transactionResults.appendChild(div);
+        return;
+    }
+
+    results.forEach(item => {
+
+        const div = document.createElement('div');
+        div.classList.add('result-item');
+
+        div.textContent = `${item.name} (${item.code}) - ${item.status}`;
+
+        div.addEventListener('click', () => {
+            addToTransaction(item);
+            transactionResults.innerHTML = '';  // zatvori Results
+            transactionSearch.value = '';       //Obrisi Search
+        });
+
+        transactionResults.appendChild(div);
+    });
+}
+
+// Proverava da li item već postoji → ako ne postoji, dodaje ga u listu i renderuje UI
+function addToTransaction(item) {
+
+    const exists = transactionItems.find(i =>
+        !i.isNew && i.id === item.id
+    );
+
+
+  if (exists) {
+        showNotification(`ℹ ${t('itemExists')}`, 'info');
+        return;
+    }
+
+
+    transactionItems.push({
+        id: item.id || 'tmp_' + Date.now(),
+        name: item.name,
+        code: item.code || '',
+        status: item.status || '',
+        location: item.location || '',
+        price: item.price || 0,
+        limit: item.limit || 0,
+
+        isNew: item.isNew || false,   // KLJUČNO
+        qty: item.qty || ''      // auto popuni qty za NEW item
+    });
+
+    renderTransactionList();
+}
+// KREIRAMO TRANSACTION LISTU
+function renderTransactionList() {
+
+    transactionList.innerHTML = '';
+
+    transactionItems.forEach(item => {
+
+        const div = document.createElement('div');
+        div.classList.add('transaction-item');
+
+        const current = items.find(i => i.id === item.id);
+        const stock = current ? current.quantity : 0;
+
+        div.innerHTML = `
+            <div class="ti-left">
+                <span class="ti-name">${item.name}</span>
+                <span class="ti-stock">${stock} pcs</span>
+            </div>
+
+            <div class="ti-middle">
+                <input class="ti-input" type="number" value="${item.qty}" min="1">
+            </div>
+
+
+            <div class="ti-actions">
+
+                ${transactionMode === 'receipt' ? `
+                <button class="ti-copy">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path fill="currentColor" d="M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm4 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h12v14z"/>
+                    </svg>
+                </button>
+                ` : ''}
+
+                <button class="ti-delete">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path fill="currentColor"
+                        d="M9 3h6l1 1h4v2H4V4h4l1-1zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM6 9h2v9H6V9z"/>
+                    </svg>
+                </button>
+
+            </div>
+        `;
+
+        const input = div.querySelector('input');
+        input.addEventListener('change', () => {
+            let value = Number(input.value);
+
+            if (value < 1) value = 1;
+
+            item.qty = value;
+            input.value = value;
+        });
+
+const deleteBtn = div.querySelector('.ti-delete');
+
+deleteBtn.addEventListener('click', () => {
+    transactionItems = transactionItems.filter(i => i.id !== item.id);
+    renderTransactionList();
+});
+
+        
+        //  COPY (OVDE TREBA!)
+        const copyBtn = div.querySelector('.ti-copy');
+
+        if (copyBtn) {      // mora ovde porevra jer u Otpremnici ne zlimo da se prikzae COPY dugme
+            copyBtn.addEventListener('click', () => {
+                openCopyModal(item);
+            });
+        }
+
+
+        transactionList.appendChild(div);
+    });
+}
+
+
+// CONFIRM btn
+transactionConfirm.addEventListener('click', async function () {
+
+    //  1. VALIDACIJA – PRAZAN QTY
+    const invalidItem = transactionItems.find(function(item) {
+
+        if (!item.qty) return true;
+
+        if (Number(item.qty) <= 0) return true;
+
+        return false;
+    });
+
+    if (invalidItem) {
+        showNotification(`❌ ${t('enterQty')} [${invalidItem.name}]`, 'error');
+        return;
+    }
+
+    // 2. VALIDACIJA – NEMA ITEMA
+    if (transactionItems.length === 0) {
+        showNotification(`❌ ${t('noItemsTx')}`, 'error');
+        return;
+    }
+
+
+    
+    // 3. VALIDACIJA – ISSUE (stock check)
+    if (transactionMode === 'issue') {
+
+        const problemItem = transactionItems.find(function(item) {
+
+            const current = items.find(function(i) {
+                return i.id === item.id;
+            });
+
+            if (!current) return false;
+
+            if (current.quantity <= 0) {
+                showNotification(`❌ ${item.name} ${t('outOfStock')}`, 'error');
+                return true;
+            }
+
+            if (item.qty > current.quantity) {
+                showNotification(`❌ ${t('notEnoughStock')} ${item.name}`, 'error');
+                return true;
+            }
+
+            return false;
+        });
+
+        if (problemItem) return;
+    }
+
+
+    // CREATE TRANSACTION (centralized)
+    await createTransaction(transactionItems, transactionMode);
+
+   
+    // not. 
+    showNotification(`✔ ${t('txSuccess')}`, 'success');
+
+    transactionModal.classList.add('hidden'); // zatvori modal
+
+    await fetchItems();
+    await fetchTransactions(); // pa refresh
+});
+
+// COPY funstion
+function openCopyModal(item) {
+
+    //Validacija - Ako nije Prijem modul
+    if (transactionMode !== 'receipt') {
+        showNotification(`❌ ${t('notAllowed')}`, 'error');
+        return;
+    }
+
+
+    isCopyMode = true;
+    copiedItemData = item;
+
+    modal.classList.remove('hidden');
+
+    addName.value = item.name + ' copy';
+    addCode.value = item.code || '';
+    addStatus.value = item.status || '';
+    addLocation.value = item.location || '';
+    addPrice.value = item.price || '';
+    addLimit.value = item.limit || '';
+    addQty.value = '';
+
+    addOptional.classList.remove('hidden');
+}
+
+// KREIRANJE TRASKCIJE
+async function createTransaction(itemsList, type) {
+
+    // =====================================================
+    //  1. CREATE NEW ITEMS (AKO POSTOJE)
+    // =====================================================
+    for (const item of itemsList) {
+
+        if (!item.isNew) continue;
+
+        const result = await supabaseClient
+            .from('items')
+            .insert([{
+                name: item.name,
+                code: item.code,
+                status: item.status,
+                location: item.location,
+                quantity: 0, // start 0 
+                price: item.price,
+                limit: item.limit,
+                user_id: currentUser.id,
+                is_active: true
+            }])
+            .select()
+            .single();
+
+        if (!result.data || result.error) {
+            showNotification(`❌ ${t('errCreateItem')} ${item.name}`, 'error');
+            return;
+        }
+
+        //  zameni temp ID sa pravim
+        item.id = result.data.id;
+        item.isNew = false;
+
+        //  log
+        await addLog(item.id, 'created', '', item.name);
+    }
+
+
+    // =====================================================
+    //  2. CREATE TRANSACTION
+    // =====================================================
+    const txResult = await supabaseClient
+        .from('transactions')
+        .insert([{
+            type: type,
+            user_id: currentUser.id
+        }])
+        .select()
+        .single();
+
+    if (!txResult.data || txResult.error) {
+        showNotification(`❌ ${t('errCreateTx')}`, 'error');
+        return;
+    }
+
+    const tx = txResult.data;
+
+
+    // =====================================================
+    //  3. INSERT ITEMS + UPDATE STOCK
+    // =====================================================
+    for (const item of itemsList) {
+
+        // INSERT transaction item
+        const { error: txItemError } = await supabaseClient
+            .from('transaction_items')
+            .insert({
+                transaction_id: tx.id,
+                item_id: item.id,
+                quantity: item.qty
+            });
+
+        if (txItemError) {
+            showNotification(`❌ ${t('errInsertTxItem')}`, 'error');
+            return;
+        }
+
+        const current = items.find(i => i.id === item.id);
+
+        //  ako je novi item → nema ga u items listi još
+        let currentQty = current ? current.quantity : 0;
+
+        let newQty;
+
+        if (type === 'receipt') {
+            newQty = currentQty + item.qty;
+        } else {
+            newQty = currentQty - item.qty;
+        }
+
+        const { error: updateError } = await supabaseClient
+            .from('items')
+            .update({ quantity: newQty })
+            .eq('id', item.id);
+
+        if (updateError) {
+            showNotification(`❌ ${t('errUpdateStock')}`, 'error');
+            return;
+        }
+
+        //  log quantity
+        await addLog(item.id, 'quantity', currentQty, newQty, tx.id);
+    }
+}
+
+// -------------------- FEATURE: TRANSACTION TABLE --------------------
+const transactionsContainer = document.querySelector('.transactions-list');
+const transactionsBody = document.querySelector('.transactions-body');
+
+async function fetchTransactions() {
+
+    const { data, error } = await supabaseClient
+        .from('transactions')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false });
+        
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    transactions = data;
+    renderTransactionsTable();
+}
+
+
+function renderTransactionsTable() {
+
+    transactionsBody.innerHTML = '';
+
+    if (!transactions || transactions.length === 0) {
+        transactionsBody.innerHTML =
+            `<tr><td colspan="2" data-i18n="NoTransactions">${t('NoTransactions')}</td></tr>`;
+        return;
+    }
+
+    transactions.forEach(tx => {
+
+        const tr = document.createElement('tr');
+    
+        const txId = tx.id
+        const type = tx.type === 'receipt' ? t('receiveBtn') : t('issueBtn');
+        const date = new Date(tx.created_at).toLocaleString('sr-RS', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        tr.innerHTML = `
+            <td>#${txId}</td>
+            <td>${type}</td>
+            <td>${date}</td>
+        `;
+
+        tr.addEventListener('click', () => {
+            console.log('clicked transaction', tx.id);
+        });
+
+        transactionsBody.appendChild(tr);
+    });
+}
+
+
+
+
+// ========================================================== ARCHIVE ==========================================================
+
+// ==========================================================
+//  ARCHIVE
+// ----------------------------------------------------------
+// Šta radi:
+// 1. Otvara Archive view iz sidebar-a
+// 2. Uklanja active tab (jer nije tab screen)
+// 3. Prikazuje samo obrisane iteme
+// 4. Omogućava restore itema
+// ==========================================================
+
+
+//  SELEKTORI
+const openArchiveBtn    = document.querySelector('.archive-btn');
+const archiveView       = document.getElementById('archive-view');
+const archiveBody       = document.querySelector('.archive-body');
+const archiveEmpty      = document.querySelector('.archive-empty');
+
+
+
+//  STATE
+// SVI itemi (aktivni + arhivirani)
+let itemsAll = [];
+
+
+//  OPEN ARCHIVE VIEW
+openArchiveBtn.addEventListener('click', async function() {
+
+    if (!currentUser) return;
+
+    //  1. ukloni active sa tabova (jer nismo u tabs flow-u)
+    document.querySelectorAll('.tab').forEach(function(tab) {
+        tab.classList.remove('active');
+    });
+
+    //  2. sakrij sve view-e
+    document.querySelectorAll('.view').forEach(function(view) {
+        view.classList.remove('active-view');
+    });
+
+    //  3. prikaži archive view
+    archiveView.classList.add('active-view');
+
+    //  4. uzmi sve iteme (aktivne + obrisane)
+    await fetchAllItems();
+
+    //  5. render
+    renderArchiveItems();
+
+    //  6. zatvori sidebar
+    sidebar.classList.add('hidden');
+});
+
+
+
+//  FETCH ALL ITEMS
+async function fetchAllItems() {
+
+    if (!currentUser) return;
+
+    const { data, error } = await supabaseClient
+        .from('items')
+        .select('*')
+        .eq('user_id', currentUser.id);
+
+    if (error) {
+        console.error('FETCH ALL ERROR:', error);
+        return;
+    }
+
+    itemsAll = data;
+}
+
+
+
+//  RENDER ARCHIVE ITEMS
+function renderArchiveItems() {
+
+    // reset
+    archiveBody.innerHTML = '';
+
+    // Filtriramo samo obrisane
+    const archived = itemsAll.filter(function(item) {
+        return item.is_active === false;
+    });
+
+
+
+    //  EMPTY STATE
+    if (archived.length === 0) {
+        // archiveEmpty.classList.remove('hidden');
+         archiveBody.innerHTML =
+            `<tr><td colspan="4" data-i18n="NoArchivetems">${t('NoArchivetems')}</td></tr>`;
+        return;
+    }
+
+    // archiveEmpty.classList.add('hidden');
+
+
+   
+    // RENDER LIST
+    archived.forEach(function(item) {
+
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.code || '-'}</td>
+            <td>${item.location || '-'}</td>
+            <td>${item.quantity}</td>
+            <td>
+                <button class="btn-restore">${t('restore')}</button>
+            </td>
+        `;
+
+    
+        //  RESTORE BUTTON
+        const restoreBtn = tr.querySelector('.btn-restore');
+
+        restoreBtn.addEventListener('click', async function() {
+
+            const { error } = await supabaseClient
+                .from('items')
+                .update({ is_active: true })
+                .eq('id', item.id);
+
+            if (error) {
+                console.error(error);
+                showNotification(`❌ ${error.message}`, 'error');
+                return;
+            }
+
+            showNotification(`✔ ${item.name} ${t('itemRestored')}`, 'success');
+
+            // refresh podataka
+            await fetchItems();     // aktivni
+            await fetchAllItems(); // svi
+
+            // ponovo render
+            renderArchiveItems();
+        });
+
+        archiveBody.appendChild(tr);
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ========================================================== GLOBAL UI ==========================================================
+// -------------------- FEATURE: NAVIGATION --------------------
+//1.  SELECTORS ===
+const nav               = document.querySelector('.navigation');
+
+//4.  EVENTS ===
+// Navigacija
+nav.addEventListener('click', function (event) {
+
+    const selectedTab = event.target.closest('.tab');
+    if (!selectedTab) return;
+
+    activateTab(selectedTab);
+
+});
 function activateTab(tabElement) {
 
     // prvo uzmi tabName
@@ -1205,7 +2005,6 @@ function activateTab(tabElement) {
 
     // Ako se izadje iz INPUT taba resetuj odabtani item
     if (tabName !== 'input') {
-        selectedItem = null;
         resetDisplay();
     }
 
@@ -1228,68 +2027,148 @@ function activateTab(tabElement) {
     if (tabName === 'table') {
         renderTable();
     }
+
+    if (tabName === 'transactions') {
+        renderTransactionsTable(); 
+    }
+
 }
-async function addLog(itemId, field, oldVal, newVal) {
 
-    const { error } = await supabaseClient
-        .from('item_logs')
-        .insert([
-            {
-                item_id: itemId,
-                field: field,
-                old_value: String(oldVal),
-                new_value: String(newVal),
-                user_id: currentUser.id
-            }
-        ]);
 
-    if (error) {
-        console.error('LOG ERROR:', error);
+
+// -------------------- FEATURE: SIDEBAR --------------------
+//1.  SELECTORS ===
+const Burgerbtn = document.getElementById("user-btn");
+const sidebar   = document.getElementById("sidebar");
+const closeBtn  = document.getElementById("close-sidebar");
+
+
+//4.  EVENTS ===
+//Otvaranje
+Burgerbtn.addEventListener("click", () => {
+    sidebar.classList.remove("hidden");
+});
+//X
+closeBtn.addEventListener("click", () => {
+    sidebar.classList.add("hidden");
+});
+//klik spolja zatvaranje menia
+document.addEventListener("click", (e) => {
+    if (!sidebar.contains(e.target) && !Burgerbtn.contains(e.target)) {
+        sidebar.classList.add("hidden");
+    }
+});
+
+// -------------------- FEATURE: SWIPE --------------------
+//1.  SELECTORS ===
+const swipeArea         = document.body;
+
+//2.  STATE ===
+//Mobile Swipe
+let touchStartX = 0;
+let touchEndX = 0;
+let isScrollingTable = false;
+
+//3.  FUNCTIONS ===
+function handleSwipe(){
+
+    const diff = touchStartX - touchEndX;
+
+    // minimalna distanca da bi bio swipe
+    const threshold = 50;
+
+    if (Math.abs(diff) < threshold) return;
+
+    // uzimamo sve tabove
+    const tabs = Array.from(nav.querySelectorAll('.tab'));
+
+    // koji je trenutno aktivan
+    const activeIndex = tabs.findIndex(tab =>
+        tab.classList.contains('active')
+    );
+
+    // Swipe LEFT → sledeći tab
+    if (diff > 0){
+        const nextIndex = activeIndex + 1;
+
+        if (nextIndex < tabs.length){
+            activateTab(tabs[nextIndex]); //  koristi tvoju postojeću logiku
+        }
+    }
+
+    // Swipe RIGHT → prethodni tab
+    if (diff < 0){
+        const prevIndex = activeIndex - 1;
+
+        if (prevIndex >= 0){
+            activateTab(tabs[prevIndex]); //  koristi tvoju postojeću logiku
+        }
     }
 }
+//4.  EVENTS ===
+swipeArea.addEventListener('touchstart', function(e){
 
-/* ============================================================
-   9. i18n (LANGUAGE SYSTEM)
-============================================================ */
+if (e.target.closest('.table-wrapper') || e.target.closest('.low-stock-wrapper')) {
+    isScrollingTable = true;
+    return;
+}
+    isScrollingTable = false;
+    touchStartX = e.changedTouches[0].clientX;
+});
 
+// kada pusti prst
+swipeArea.addEventListener('touchend', function(e){
 
-// Defultni jezik app je SR
-let currentLang = 'en'; // default
+    if (isScrollingTable) return;
 
+    touchEndX = e.changedTouches[0].clientX;
+    handleSwipe();
+});
 
-// Dugmad za izbor jezika (SR / EN)
+// -------------------- FEATURE: i18n (LANGUAGE SYSTEM) --------------------
+//1.  SELECTORS ===
 const langButtons = document.querySelectorAll('.lang-btn');
 
-
+//2.  STATE ===
+// Defultni jezik app je SR
+let currentLang = 'en'; // default
 const translations = {
 
     sr: {
         input: "ULAZ",
         table: "TABELA",
         management: "UPRAVLJANJE",
+        transaction: "TRANSAKCIJA",
 
         save: "Sačuvaj",
         edit: "Izmeni",
-        delete: "Obriši",
+        archive: "Arhiviraj",
         cancel: "Otkaži",
         add: "+Dodaj",
+        receiveBtn: "+ Prijem",
+        issueBtn: "- Otprem",
+        restore: "Vrati",
+        addNewItem: "+ Dodaj novi artikal",
+
 
         prev: "◀ Nazad",
         next: "Napred ▶",
 
         saved: "Sačuvano",
-        errorFill: "Popuni sva polja!",
         added: "Dodat",
         updated: "izmenjen",
         noItemSelected: "Artikal nije selektovan!",
-        deleteInfo: "Deo je uspesno obrisan!",
+        archiveInfo: "Deo je uspesno arhiviran!",
 
-        deleteTittle: "Obriši Deo",
-        deleteMessage1: "Ovim ćete trajno izbrisati stavku i CELU njenu istoriju.",
-        deleteMessage2: "⚠ Ova radnja se ne može poništiti!",
+
+        archiveTitle: "Arhiviraj artikal",
+        archiveMessage1: "Ovaj artikal će biti premešten u arhivu. Možeš ga kasnije vratiti.",
+        archiveMessage2: "⚠️ Artikal će biti uklonjen iz aplikacije i dostupan samo u arhivi.",
+
 
         editTitle: "Izmeni artikal",
         noItems: "Nema artikala",
+        noItem: "Nema artikla",
 
         searchTitle: "Pretraga artikla",
         searchPlaceholder: "Unesi naziv ili šifru...",
@@ -1308,9 +2187,11 @@ const translations = {
         colQuantity: "KOLIČINA",
         colStatus: "STATUS",
         colPrice: "CENA",
+        colTotal: "UKUPNO",
 
         MangTitle: "Panel Upravljanja",
 
+        // ADD FORMA
         addModulTitle: "Dodaj novi artikal",
 
         addModuleName: "Naziv *",
@@ -1321,10 +2202,18 @@ const translations = {
         addModulePrice: 'Cena *',
         historyLog: "Istorija Dela",
         noHistoryYet:"Bez izmena...",
+        //Placeholders
+        phName: "Unesi naziv artikla...",
+        phQuantity: "Unesi količinu...",
+        phPrice: "Unesi cenu po komadu...",
+        phLimit: "Minimalna zaliha...",
+        phCode: "Šifra artikla...",
+        phStatus: "NOV...",
+        phLocation: "M2-P2-R1-P4",
 
         created: "Kreirano: ",
 
-        TotalItems:"Ukupno Artikla ",
+        TotalItems:"Ukupno artikla",
         TotalQuantity:"Ukupna Kolicina ",
         TotalPrice:"Ukupno Novca ",
         LowStock: "Male Zalihe ",
@@ -1366,12 +2255,37 @@ const translations = {
         auth_wrong_credentials: "Pogrešan email ili lozinka",
         auth_logged_in: "Uspešna prijava",
 
+        // NOTIFICATIONS
+        fillRequired: "Popuni sva obavezna polja",
+        itemAddedTx: "Artikal dodat u transakciju",
+        invalidInput: "Nevažeći unos",
+        updatedSuccess: "Uspešno izmenjeno",
+        itemExists: "Artikal je već dodat",
+
+        enterQty: "Unesi količinu za →",
+        noItemsTx: "Nema dodatih artikala",
+        outOfStock: "nije na stanju",
+        notEnoughStock: "Nema dovoljno zaliha za",
+
+        txSuccess: "Transakcija završena",
+
+        errCreateItem: "Greška pri kreiranju artikla",
+        errCreateTx: "Greška pri kreiranju transakcije",
+        errInsertTxItem: "Greška pri dodavanju stavke",
+        errUpdateStock: "Greška pri ažuriranju stanja",
+
+        itemRestored: "Artikal vraćen",
+        noResults: "Nema rezultata",
+
+        notAllowed: "Nije dozvoljeno u ovom režimu",
+
         // SIDEBAR
         sidebar_menu: "Meni",
         sidebar_profile: "Profil",
         sidebar_settings: "Podešavanja",
+        sidebar_archive: "Arhiva",
         sidebar_logout: "Odjava",
-
+        
         //SECTION TITLE
         selectedItem: "Izabrani artikal",
         adjustQuantity: "Izmena količine",
@@ -1381,7 +2295,28 @@ const translations = {
         toggleMore: "+ Vise",
         toggleHide: "- Sakri",
 
-        NoLowStockItems: "Bez kritičnih artikala"
+        NoLowStockItems: "Bez kritičnih Artikala",
+        NoArchivetems: "Bez Arhiviranih Artikala",
+        NoTransactions : "Bez Transakcija",
+
+        //TRANSACTION
+        transactionsTitle: "Transakcije",
+        txType: "Tip",
+        txDate: "Datum",
+
+        //TRANSACTION MODULE
+        txNewReceipt: "Nova PRIJEMNICA",
+        txNewIssue: "Nova OTPREMNICA",
+        txSearchPlaceholder: "Pretraži artikal...",
+        txSelectedItems: "Izabrani artikli",
+        txGeneratePDF: "Generiši PDF",
+
+        confirm: "Potvrdi",
+        cancel: "Otkaži",
+
+        //TRANSACTION ID
+        transactionID: "ID Transakcije:"
+
 
 
 
@@ -1391,29 +2326,37 @@ const translations = {
         input: "INPUT",
         table: "TABLE",
         management: "MANAGEMENT",
+        transaction: "TRANSACTION",
 
         save: "Save",
         edit: "Edit",
-        delete: "Delete",
+        archive: "Archive",
         cancel: "Cancel",
         add: "+Add",
+        receiveBtn: "+ Receive",
+        issueBtn: "- Issue",
+        restore: "Restore",
+        addNewItem: "+ Add new item",
+
 
         prev: "◀ Back",
         next: "Next ▶",
 
         saved: "Saved",
-        errorFill: "Fill in all fields!",
         added: "Added",
         updated: "Updated",
-        noItemSelected: "Item is not Select!",
-        deleteInfo: "Item is successfully deleted!",
+        noItemSelected: "Item is not selected!",
+        archiveInfo: "Item is successfully archived!",
 
-        deleteTittle: "Delete Item",
-        deleteMessage1: "This will permanently delete the item and ALL its history.",
-        deleteMessage2: "⚠ This action cannot be undone.",
+
+        archiveTitle: "Archive Item",
+        archiveMessage1: "This item will be moved to archive. You can restore it later.",
+        archiveMessage2: "⚠️ Item will be removed from the application and available only in the archive.",
+
 
         editTitle: "Edit item",
         noItems: "No items",
+        noItem: "No item",
 
         searchTitle: "Item search",
         searchPlaceholder: "Enter name or code...",
@@ -1432,11 +2375,12 @@ const translations = {
         colQuantity: "QUANTITY",
         colStatus: "STATUS",
         colPrice: "PRICE",
+        colTotal: "TOTAL",
 
         MangTitle: "Management panel",
 
         addModulTitle: "Add new item",
-
+        // ADD FORMA
         addModuleName: "Name *",
         addModuleCode: "Code",
         addModuleLocation: "Location",
@@ -1444,7 +2388,17 @@ const translations = {
         addModuleStatus:"Status",
         addModulePrice: 'Price *',
         historyLog: "History Log",
-        noHistoryYet:"No History jet...",
+        noHistoryYet:"No History yet...",
+
+        addModuleLimit: "Limit *",
+        //Placeholders
+        phName: "Enter name...",
+        phQuantity: "Enter quantity...",
+        phPrice: "Enter price per unit...",
+        phLimit: "Minimum stock...",
+        phCode: "Item code...",
+        phStatus: "NEW",
+        phLocation: "M2-P2-R1-P4",
 
         created: "Created: ",
 
@@ -1491,10 +2445,35 @@ const translations = {
         auth_wrong_credentials: "Wrong email or password",
         auth_logged_in: "Logged in successfully",
 
+        fillRequired: "Fill all required fields",
+        itemAddedTx: "Item added to transaction",
+        invalidInput: "Invalid input",
+        updatedSuccess: "Updated successfully",
+        itemExists: "Item already selected",
+
+        enterQty: "Enter quantity for →",
+        noItemsTx: "No items added",
+        outOfStock: "is out of stock",
+        notEnoughStock: "Not enough stock for",
+
+        txSuccess: "Transaction completed",
+
+        errCreateItem: "Error creating item",
+        errCreateTx: "Error creating transaction",
+        errInsertTxItem: "Error inserting item",
+        errUpdateStock: "Error updating stock",
+
+        itemRestored: "Item restored",
+        noResults: "No results found",
+
+        notAllowed: "It is not allowed in this mode.",
+
+
         // SIDEBAR
         sidebar_menu: "Menu",
         sidebar_profile: "Profile",
         sidebar_settings: "Settings",
+        sidebar_archive: "Archive",
         sidebar_logout: "Logout",
 
         //SECTION TITLE
@@ -1506,8 +2485,27 @@ const translations = {
         toggleMore: "+ More",
         toggleHide: "- Hide",
 
-        NoLowStockItems: "No Low Stock items"
+        NoLowStockItems: "No Low Stock Items",
+        NoArchivetems:  "No Archive Items",
+        NoTransactions : "No Transactions",
 
+        //TRANSACTION
+        transactionsTitle: "Transactions",
+        txType: "Type",
+        txDate: "Date",
+
+        //TRANSACTION MODULE
+        txNewReceipt: "New RECEIPT",
+        txNewIssue: "New ISSUE",
+        txSearchPlaceholder: "Search item...",
+        txSelectedItems: "Selected items",
+        txGeneratePDF: "Generate PDF",
+
+        confirm: "Confirm",
+        cancel: "Cancel",
+
+         //TRANSACTION ID
+        transactionID: "Transaction ID:"
 
 
       
@@ -1515,6 +2513,18 @@ const translations = {
 
 };
 
+//3.  FUNCTIONS ===
+// Ucitavanje jezika iz Superbase
+async function loadUserLanguage() {
+    const savedLang = await loadUserSetting('language');
+
+    if (savedLang) {
+        currentLang = savedLang;
+    }
+
+    applyTranslations();
+    updateActiveLang();
+}
 // Vraća prevod za dati key
 function t(key){
 
@@ -1531,8 +2541,6 @@ function t(key){
     // 3. fallback -> vrati key
     return key;
 }
-
-
 // Prolazi kroz HTML i menja tekstove
 function applyTranslations(){
 
@@ -1548,8 +2556,6 @@ function applyTranslations(){
         el.placeholder = t(key);
     });
 }
-
-
 // Menja jezik + pamti + refresh UI
 async function setLang(lang){
 
@@ -1559,21 +2565,14 @@ async function setLang(lang){
 
     applyTranslations();
     updateActiveLang();
+
+    //Tabele
+    
+    renderTransactionsTable();
+    renderTable();
+    renderLowStockTable();
+
 }
-
-// EVENTS (klik na dugmad)
-langButtons.forEach(btn => {
-
-    btn.addEventListener('click', function(){
-
-        const lang = btn.dataset.lang;
-
-        setLang(lang); // promena jezika
-
-    });
-
-});
-
 // Postavlja koji jezik je aktivan (UI)
 function updateActiveLang(){
 
@@ -1588,176 +2587,45 @@ function updateActiveLang(){
     });
 }
 
-/* ==================================== 10. DEASHBORD ==================================== */
+//4.  EVENTS ===
+// klik na dugmad
+langButtons.forEach(btn => {
 
-const totalItemsEl      = document.getElementById('total-items');
-const totalQuantityEl   = document.getElementById('total-quantity');
-const totalPriceEl      = document.getElementById('total-price');
+    btn.addEventListener('click', function(){
 
-const tableBodyDash     = document.querySelector('.table-body-dashboard');
-const lowStockCard      = document.getElementById('low-stock-count');
+        const lang = btn.dataset.lang;
 
-let previousTotals = {
-    items: null,
-    quantity: null,
-    price: null,
-    lowstock: null
-};
+        setLang(lang); // promena jezika
 
-//  load poslednjeg prikazanog trenda
-let savedTrends = {};
-
-
-// ==================================== Management panel (CARDS) ============================
-
-// === ISCRAVANJE TRENDA ====
-function updateTrend(elementId, currentValue, key) {
-
-    const el = document.getElementById(elementId);
-    if (!el) return;
-
-    const arrow = el.querySelector(".trend-arrow");
-    const value = el.querySelector(".trend-value");
-
-    const prev = previousTotals[key];
-
-    if (prev === null || prev === 0) {
-        previousTotals[key] = currentValue;
-        return;
-    }
-
-    const diff = currentValue - prev;
-    const percent = ((diff / prev) * 100).toFixed(1);
-
-    const isNegativeMetric = (key === "lowstock");
-
-    let className, arrowText, valueText;
-
-    if (diff > 0) {
-        className = isNegativeMetric ? "card-trend down" : "card-trend up";
-        arrowText = "▲";
-        valueText = `+${diff} (${percent}%)`;
-
-    } else if (diff < 0) {
-        className = isNegativeMetric ? "card-trend up" : "card-trend down";
-        arrowText = "▼";
-        valueText = `${diff} (${percent}%)`;
-
-    } else {
-        return;
-    }
-
-    el.className = className;
-    arrow.textContent = arrowText;
-    value.textContent = valueText;
-
-    savedTrends[key] = {
-        className,
-        arrow: arrowText,
-        value: valueText
-    };
-
-    saveUserSetting('trendUI', savedTrends);
-
-    previousTotals[key] = currentValue;
-}
-// ===== GLVAN F za UPISVANJE inf u KARTICE
-function updateDashboardCards() {
-
-    // TOTAL ITEMS
-    const totalItems = items.length;
-    totalItemsEl.textContent = totalItems;
-
-
-    //Broj  TOTAL QUANTITY
-    const totalQuantity = items.reduce((sum, item) => {
-        return sum + Number(item.quantity);
-    }, 0);
-
-    totalQuantityEl.textContent = totalQuantity;
-
-
-    //Broj  TOTAL PRICE
-    const totalPrice = items.reduce((sum, item) => {
-        return sum + Number(item.price);
-    }, 0);
-
-    totalPriceEl.textContent = totalPrice.toLocaleString();
-
-
-    // Broj LOW STOCK Itema
-    const lowStock = items.filter(item => {
-        return Number(item.quantity) < Number(item.limit);
     });
 
-    const lowStockCount = lowStock.length;
-    lowStockCard.textContent = lowStockCount;
+});
 
 
-    // TREND UPDATE (BEZ SIDE EFFECTA)
-    updateTrend("items-trend", totalItems, "items");
-    updateTrend("quantity-trend", totalQuantity, "quantity");
-    updateTrend("price-trend", totalPrice, "price");
-    updateTrend("lowstock-trend", lowStockCount, "lowstock");
-}
-// ============ RENDER LOW STOCK TABELE ==========
-function renderLowStockTable() {
+// -------------------- FEATURE: NOTIFICATIONS --------------------
+//1.  SELECTORS ===
+const notification      = document.querySelector('.notification');
 
-    // koristimo LIMIT PO ITEMU
-    const lowStock = items.filter(item => {
-        return Number(item.quantity) < Number(item.limit);
-    });
+//3.  FUNCTIONS ===
+function showNotification(message, type) {
 
-    // kartica (Low Stock)
-    lowStockCard.textContent = lowStock.length ;
 
-    tableBodyDash.innerHTML = '';
+notification.textContent = message;
 
-    if (lowStock.length === 0) {
-        tableBodyDash.innerHTML =
-            `<tr><td colspan="4">${t('NoLowStockItems')}</td></tr>`;
-        return;
-    }
+notification.classList.remove('success', 'error', 'info');
+notification.classList.add(type);
 
-    lowStock.forEach(item => {
+setTimeout(() => {
+    notification.classList.remove(type);
+}, 3000);
 
-        const tr = document.createElement('tr');
-
-        tr.innerHTML = `
-            <td>${item.name}</td>
-            <td>${item.code}</td>
-            <td>${item.location}</td>
-            <td>${item.quantity}</td>
-            <td>${item.limit}</td>
-        `;
-
-        tr.addEventListener('click', function () {
-            selectItem(item);
-            goToInputTab();
-        });
-
-        tableBodyDash.appendChild(tr);
-    });
 }
 
 
 
-// ================================================== CURRENT USER ====================================================
 
-function showUserInfo() {
 
-    const el = document.querySelector('.user-email');
-    if (!el || !currentUser) return;
-
-    // uzmi deo pre @
-    const email = currentUser.email;
-
-    el.textContent = email;
-}
-
-/* ============================================================
-   11. INIT (pokretanje aplikacije)
-============================================================ */
+// ========================================================== INICIALISATION ==========================================================
 
 // PAGINATION INIT
 setupPagination();
@@ -1766,3 +2634,4 @@ updateAuthUI();
 
 //UMESTO fetchItems
 initUser();
+

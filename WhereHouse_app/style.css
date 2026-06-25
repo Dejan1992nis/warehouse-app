@@ -818,8 +818,8 @@ body {
 =========================================================== */
 
 .table {
-    width: max-content;   /* ✅ KLJUČ */
-    min-width: 100%;      /* ✅ da ne pukne layout */
+    width: max-content;   /*  KLJUČ */
+    min-width: 100%;      /*  da ne pukne layout */
     border-collapse: collapse;
     font-size: 13px;
 }
@@ -956,7 +956,6 @@ body {
 .modal {
     position: fixed;
     inset: 0;
-
     background: rgba(0,0,0,0.65);
 
     display: flex;
@@ -966,16 +965,16 @@ body {
     z-index: 1000;
 }
 
-/* transaction = parent */
+/* TRANSACTION */
 .transaction-modal {
-    z-index: 1100;
+    z-index: 2000;
 }
 
-/* add/edit = child */
-.modal.child-modal {
-    z-index: 1200;
+/* ADD / EDIT UVEK IZNAD */
+.add-modal,
+.edit-modal {
+    z-index: 3000;
 }
-
 
 
 /* ================= CONTENT ================= */
@@ -998,7 +997,7 @@ body {
 }
 
 .input-group {
-    margin-top: 12px; /* 🔥 isti svuda */
+    margin-top: 12px; /*  isti svuda */
 }
 
 
@@ -1240,7 +1239,7 @@ body {
 
 .history-item {
     display: flex;
-    flex-direction: column; /* ✅ KLJUČ */
+    flex-direction: column; /*  KLJUČ */
 
     padding: 12px 14px;
     margin-bottom: 10px;
@@ -1561,7 +1560,10 @@ body {
 .card-label {
     font-size: 14px;
     color: #94a3b8;
-    margin-bottom: 5px;
+
+    white-space: nowrap;       /*  ključ */
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* VALUE */
@@ -1572,94 +1574,53 @@ body {
 }
 
 /* ================= RIGHT SIDE (PROGRESS PLACEHOLDER) ================= */
-
-.card-progress {
-    width: 60px;
-    height: 60px;
-
-    border-radius: 50%;
-
-    border: 4px solid rgba(255,255,255,0.1);
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    font-size: 12px;
-    font-weight: 600;
-    color: #e2e8f0;
-}
-
-/* VARIJANTE (boje kao na slici) */
-.card-progress.blue {
-    border-color: #3b82f6;
-}
-
-.card-progress.orange {
-    border-color: #f59e0b;
-}
-
-.card-progress.green {
-    border-color: #22c55e;
-}
-
 /* TREND UMESTO KRUGA */
 .card-trend {
     display: flex;
     flex-direction: column;
-    align-items:flex-end;
+    align-items: flex-end;
     gap: 4px;
 
     font-size: 13px;
     font-weight: 600;
+
+    min-width: 90px; /* stabilizuje layout */
 }
 
+/* STRELICA + BROJ (uvek u istom redu) */
 .trend-main {
     display: flex;
     align-items: center;
-    gap: 4px;
+    justify-content: flex-end;
+    gap: 6px;
+
+    white-space: nowrap;   /*  ključ: nema preloma */
 }
 
-/* ZELENO (rast) */
+/* BROJ */
+.trend-value {
+    white-space: nowrap;   /*  ključ: nema lomljenja broja */
+}
+
+/* DATUM ispod */
+.trend-date {
+    font-size: 11px;
+    color: #64748b;
+
+    text-align: right;
+}
+
+/* BOJE */
 .card-trend.up {
     color: #22c55e;
 }
 
-/* CRVENO (pad) */
 .card-trend.down {
     color: #ef4444;
 }
 
-/* SIVO (nema promene) */
 .card-trend.neutral {
     color: #94a3b8;
-}
-.trend-date {
-    font-size: 11px;
-    color: #64748b;
-    margin-left: 4px;
-    margin-top: 2px;
-}
-/* ================= SECTION ================= */
-
-.dashboard-section {
-    margin-top: 16px;
-}
-
-/* HEADER */
-.low-stock-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    margin-bottom: 12px;
-}
-
-/* TITLE */
-.dashboard-section h3 {
-    font-size: 15px;
-    font-weight: 600;
-    color: #e2e8f0;
 }
 
 /* ========================================= LOW STOCK TABLE ================================== */
@@ -2024,6 +1985,12 @@ body {
     align-items: center;
 }
 
+/* ACTIONS btn */
+.ti-actions {
+    display: flex;
+    gap: 8px;
+}
+
 .ti-delete {
     background: transparent;
     border: none;
@@ -2037,6 +2004,22 @@ body {
     color: #ff0000;
     transform: scale(1.1);
 }
+
+
+.ti-copy {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8; /* neutral gray */
+
+    transition: 0.2s;
+}
+
+.ti-copy:hover {
+    color: #3b82f6; /* plava */
+    transform: scale(1.1);
+}
+
 
 /* PDF OPTION */
 .pdf-option {
