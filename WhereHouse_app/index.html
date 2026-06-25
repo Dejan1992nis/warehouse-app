@@ -148,12 +148,12 @@
 
             <header class="view-actions">
                 <h2 class="title" data-i18n="searchTitle" >Item search</h2>
-
+        </header>       
                 <div class="header-actions">
                     <button class="btn-edit headerBtn"  data-i18n="edit">Edit</button>
-                    <button class="btn-delete headerBtn danger" data-i18n="delete">Delete</button>
+                    <button class="btn-archive headerBtn" data-i18n="archive">Archive</button>
                 </div>
-            </header>            
+                      
 
             <!-- search -->
             <div class="search">
@@ -193,6 +193,49 @@
             <!-- save -->
             <button class="save-btn" data-i18n="save">SAVE</button>
         </section>
+        <!-- TRANSACTIONS VIEW -->
+        <section id="transactions-view" class="view">
+
+            <header class="view-actions">
+                <h2 class="title" data-i18n="transactionsTitle">Transactions</h2>
+            </header>
+
+            <!-- ACTION BUTTONS -->
+            <div class="header-actions">
+
+                <button id="btn-receive" class="headerBtn" data-i18n="receiveBtn">
+                    + Receive
+                </button>
+
+                <button id="btn-issue" class="headerBtn" data-i18n="issueBtn">
+                    - Issue
+                </button>
+
+            </div>
+
+            <!-- TABLE -->
+            <div class="table-wrapper">
+
+                <table class="table">
+
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th data-i18n="txType">TYPE</th>
+                            <th data-i18n="txDate">DATE</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="transactions-body">
+                        <!-- JS -->
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
 
 
 
@@ -202,7 +245,7 @@
 
             <header class="view-actions">
                 <h2 class="title" data-i18n="tableTitle">Items Table</h2>
-                <button class="btn-add headerBtn" data-i18n="add">+Add</button>
+                <!-- <button class="btn-add headerBtn" data-i18n="add">+Add</button> -->
             </header>
 
 
@@ -219,6 +262,7 @@
                             <th data-i18n="colLocation">LOCATION</th>
                             <th data-i18n="colQuantity">QUANTITY</th>
                             <th data-i18n="colPrice">PRICE</th>
+                            <th data-i18n="colTotal">TOTAL</th>
                             <th data-i18n="colStatus">STATUS</th>
                             <th>LIMIT</th>
                         </tr>
@@ -379,43 +423,6 @@
         </section>
 
 
-        <!-- TRANSACTIONS VIEW -->
-        <section id="transactions-view" class="view">
-
-            <header class="view-actions">
-                <h2 class="title">Transactions</h2>
-            </header>
-
-            <!-- ACTION BUTTONS -->
-            <div class="transactions-actions">
-
-                <button id="btn-receive" class="headerBtn">+ Receive</button>
-                <button id="btn-issue" class="headerBtn danger">- Issue</button>
-
-            </div>
-
-            <!-- TABELA TRANSAKCIJA (kasnije punimo) -->
-            <div class="table-wrapper">
-
-                <table class="table">
-
-                    <thead>
-                        <tr>
-                            <th>TYPE</th>
-                            <th>DATE</th>
-                        </tr>
-                    </thead>
-
-                    <tbody class="transactions-body">
-                        <!-- JS -->
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </section>
-
 
 
 <!--  VIEWs FROM SIDEBAR-->
@@ -475,43 +482,163 @@
 
 
 
-            <!-- MODAL Add / Edit -->
-            <div class="modal hidden">
-            <div class="modal__content">
-                <h3 class="modal__title" data-i18n="addModulTitle">Add new Item</h3>
-
-                <!-- REQUIRED FIELDS -->
-                <input type="text" id="new-name" placeholder="Naziv *" data-i18n-placeholder="addModuleName">
-                <input type="number" id="new-quantity" class="hidden" placeholder="Količina *" data-i18n-placeholder="addModuleQuantity">
-                <input type="number" id="new-price" placeholder="Cena *" data-i18n-placeholder="addModulePrice">
-                <input type="number" id="new-limit" placeholder="Limit *">
 
 
-                <!-- TOGGLE BUTTON -->
-                <button type="button" id="toggle-more" class="btn-more" data-i18n="toggleMore">
-                + More
-                </button>
 
 
-                <!-- OPTIONAL FIELDS -->
-                <div id="optional-fields">
-
-                <input type="text" id="new-code" placeholder="Šifra" data-i18n-placeholder="addModuleCode">
-                <input type="text" id="new-status" placeholder="Status" data-i18n-placeholder="addModuleStatus">
-                <input type="text" id="new-location" placeholder="Lokacija" data-i18n-placeholder="addModuleLocation">
-
-                </div>
 
 
-                <!-- ACTIONS -->
-                <div class="modal__actions">
-                <button class="btn-save" data-i18n="save">Sačuvaj</button>
-                <button class="btn-cancel" data-i18n="cancel">Otkaži</button>
-                </div>
 
+
+
+
+
+
+
+
+
+
+<!-- ADD ITEM MODAL -->
+<div class="modal add-modal hidden">
+
+    <div class="modal__content">
+
+        <h3 class="modal__title" data-i18n="addModulTitle">
+            Add new Item
+        </h3>
+
+        <!-- REQUIRED -->
+        <div class="input-group">
+            <label data-i18n="addModuleName">Name *</label>
+            <input type="text" id="add-name" data-i18n-placeholder="phName">
+        </div>
+
+        <div class="input-group">
+            <label data-i18n="addModuleQuantity">Quantity *</label>
+            <input type="number" id="add-quantity" data-i18n-placeholder="phQuantity">
+        </div>
+
+       
+            <div class="input-group">
+                <label data-i18n="addModulePrice">Price *</label>
+                <input type="number" id="add-price" data-i18n-placeholder="phPrice">
             </div>
 
+            <div class="input-group">
+                <label>Limit *</label>
+                <input type="number" id="add-limit" data-i18n-placeholder="phLimit">
             </div>
+       
+
+        <!-- TOGGLE -->
+        <button type="button" id="add-toggle-more" class="btn-more" data-i18n="toggleMore">
+            + More
+        </button>
+
+        <!-- OPTIONAL -->
+        <div id="add-optional-fields" class="hidden">
+
+            <div class="input-group">
+                <label data-i18n="addModuleCode">Code</label>
+                <input type="text" id="add-code" data-i18n-placeholder="phCode">
+            </div>
+
+            <div class="input-group">
+                <label data-i18n="addModuleStatus">Status</label>
+                <input type="text" id="add-status" data-i18n-placeholder="phStatus">
+            </div>
+
+            <div class="input-group">
+                <label data-i18n="addModuleLocation">Location</label>
+                <input type="text" id="add-location" data-i18n-placeholder="phLocation">
+            </div>
+
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="modal__actions">
+            <button id="add-save" class="btn-save" data-i18n="save">Save</button>
+            <button id="add-cancel" class="btn-cancel" data-i18n="cancel">Cancel</button>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- EDIT ITEM MODAL -->
+<div class="modal edit-modal hidden">
+
+    <div class="modal__content">
+
+        <h3 class="modal__title" data-i18n="editTitle">
+            Edit Item
+        </h3>
+
+        <!-- REQUIRED -->
+        <div class="input-group">
+            <label data-i18n="addModuleName">Name *</label>
+            <input type="text" id="edit-name" data-i18n-placeholder="phName">
+        </div>
+
+        <div class="row">
+            <div class="input-group">
+                <label data-i18n="addModulePrice">Price *</label>
+                <input type="number" id="edit-price" data-i18n-placeholder="phPrice">
+            </div>
+
+            <div class="input-group">
+                <label data-i18n="addModuleLimit">Limit *</label>
+                <input type="number" id="edit-limit" data-i18n-placeholder="phLimit">
+            </div>
+        </div>
+
+        <!-- TOGGLE -->
+        <button type="button" id="edit-toggle-more" class="btn-more" data-i18n="toggleMore">
+            + More
+        </button>
+
+        <!-- OPTIONAL -->
+        <div id="edit-optional-fields" class="hidden">
+
+            <div class="input-group">
+                <label data-i18n="addModuleCode">Code</label>
+                <input type="text" id="edit-code" data-i18n-placeholder="phCode">
+            </div>
+
+            <div class="input-group">
+                <label data-i18n="addModuleStatus">Status</label>
+                <input type="text" id="edit-status" data-i18n-placeholder="phStatus">
+            </div>
+
+            <div class="input-group">
+                <label data-i18n="addModuleLocation">Location</label>
+                <input type="text" id="edit-location" data-i18n-placeholder="phLocation">
+            </div>
+
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="modal__actions">
+            <button id="edit-save" class="btn-save" data-i18n="save">Save</button>
+            <button id="edit-cancel" class="btn-cancel" data-i18n="cancel">Cancel</button>
+        </div>
+
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             <!-- MODUEL HistoryLog -->
             <div class="history-modal hidden">
@@ -537,74 +664,85 @@
 
             </div>
 
-            <!-- MODUEL Delete -->
-            <div class="delete-modal hidden">
+            <!-- MODUEL Archive -->
+            <div class="archive-modal hidden">
 
-                <div class="delete-modal_content">
+                <div class="archive-modal_content">
 
-                    <h3 class="delete-modal_title" data-i18n="deleteTittle">Delete Item</h3>
+                    <h3 class="archive-modal_title" data-i18n="archiveTitle">Archive Item</h3>
 
-                    <p data-i18n="deleteMessage1">This will permanently delete the item and ALL its history.</p>
-                    <p data-i18n="deleteMessage2"> ⚠ This action cannot be undone.</p>
+                    <p data-i18n="archiveMessage1">This will move the item to archive. You can restore it later.</p>
+                    <p data-i18n="archiveMessage2"> ⚠️ Item will no longer appear in active list.</p>
 
-                    <div class="delete-modal_actions">
-                        <button class="btn-confirm-delete" data-i18n="delete">Delete</button>
-                        <button class="btn-cancel-delete" data-i18n="cancel">Cancel</button>
+                    <div class="archive-modal_actions">
+                        <button class="btn-confirm-archive" data-i18n="archive">Archive</button>
+                        <button class="btn-cancel-archive" data-i18n="cancel">Cancel</button>
                     </div>
 
                 </div>
 
             </div>
 
-        <!-- MODAL TRANSACTION -->
-        <div class="modal transaction-modal hidden">
+<!-- MODAL TRANSACTION -->
+<div class="modal transaction-modal hidden">
 
-            <div class="modal__content transaction-container">
+    <div class="modal__content transaction-container">
 
-                <!-- HEADER -->
-                <div class="transaction-header">
-                    <h3 id="transaction-title">New Transaction</h3>
-                </div>
-
-                <!-- SEARCH -->
-                <div class="search transaction-search">
-                    <input type="text" id="transaction-search" placeholder="Search item..." />
-                    <div class="results transaction-results"></div>
-                </div>
-
-                <!-- LIST HEADER -->
-                <p class="transaction-subtitle section-title" >Selected items</p>
-
-                <!-- LIST -->
-                <div class="transaction-list"></div>
-
-                <!-- PDF OPTION -->
-                <div class="pdf-option">
-                    <label class="switch">
-                        <input type="checkbox" id="pdf-toggle">
-                        <span class="slider"></span>
-                    </label>
-                    <span>Generate PDF</span>
-                </div>
-
-                <!-- ACTIONS -->
-                <div class="modal__actions">
-                    <button id="transaction-confirm" class="btn-save">Confirm</button>
-                    <button id="transaction-cancel" class="btn-cancel">Cancel</button>
-                </div>
-
-            </div>
-
+        <!-- HEADER -->
+        <div class="transaction-header">
+            <h3 id="transaction-title" > <!-- Upisujemo putem JS --> </h3>
         </div>
+
+        <!-- SEARCH -->
+        <div class="search transaction-search">
+            <input 
+                type="text" 
+                id="transaction-search" 
+                data-i18n-placeholder="txSearchPlaceholder"
+                placeholder="Search item..." 
+            />
+            <div class="results transaction-results"></div>
+        </div>
+
+        <!-- LIST HEADER -->
+        <p class="transaction-subtitle section-title" data-i18n="txSelectedItems">
+            Selected items
+        </p>
+
+        <!-- LIST -->
+        <div class="transaction-list"></div>
+
+        <!-- PDF OPTION -->
+        <div class="pdf-option">
+            <label class="switch">
+                <input type="checkbox" id="pdf-toggle">
+                <span class="slider"></span>
+            </label>
+            <span data-i18n="txGeneratePDF">Generate PDF</span>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="modal__actions">
+            <button id="transaction-confirm" class="btn-save" data-i18n="confirm">
+                Confirm
+            </button>
+            <button id="transaction-cancel" class="btn-cancel" data-i18n="cancel">
+                Cancel
+            </button>
+        </div>
+
+    </div>
+
+</div>
 
 
         
         <!-- NAVIGATION -->
         <nav class="navigation">
-            <button class="tab active" data-tab="input" data-i18n="input">INPUT</button>
-            <button class="tab" data-tab="table"        data-i18n="table">TABLE</button>
-            <button class="tab" data-tab="management"   data-i18n="management">MANAGEMNT</button>
-            <button class="tab" data-tab="transactions">TRANSACTIONS</button>
+            <button class="tab active"  data-tab="input"        data-i18n="input">INPUT</button>
+            <button class="tab"         data-tab="transactions" data-i18n="transaction">TRANSACTIONS</button>
+            <button class="tab"         data-tab="table"        data-i18n="table">TABLE</button>
+            <button class="tab"         data-tab="management"   data-i18n="management">MANAGEMNT</button>
         </nav>
 
 
@@ -631,10 +769,11 @@
 
 1. NAVIGATION + STRUCTURE
 ------------------------------------------------------------
-- Aplikacija organizovana u 3 glavna taba:
+- Aplikacija organizovana u 4 glavna taba:
   ✔ INPUT
   ✔ TABLE
   ✔ MANAGEMENT (Dashboard)
+  ✔ TRANSACTIONS
 
 - Navigacija:
   ✔ Klik na tab
@@ -645,6 +784,7 @@
 2. INPUT TAB (CORE FUNCTIONALITY)
 ------------------------------------------------------------
 - Search sistem (name + code)
+
 - Dinamički prikaz selektovanog item-a:
   ✔ Name
   ✔ Code
@@ -658,28 +798,32 @@
   ✔ povećavanje (+)
   ✔ smanjivanje (-)
 
-- SAVE funkcionalnost:
-  ✔ update quantity u bazi
-  ✔ logovanje promene (samo ako postoji razlika)
-  ✔ reset selekcije i UI-a
+- SAVE funkcionalnost (UPGRADED - NOVO ):
+  ✔ više NE radi direktan update 
+  ✔ koristi TRANSACTION sistem 
+  ✔ automatski kreira:
+      - receipt (povećanje)
+      - issue (smanjenje)
+  ✔ centralizovana logika (createTransaction)
 
 - EDIT funkcionalnost:
   ✔ modal za edit
   ✔ reuse Add forme
-  ✔ update svih polja
-  ✔ loguje svaku promenu (field-by-field)
+  ✔ update svih polja osim Quantity
+  ✔ loguje promene
 
-- DELETE funkcionalnost:
-  ✔ confirmation modal
-  ✔ briše i logove i item
+- ARCHIVE funkcionalnost (NEW ):
+  ✔ soft delete → is_active = false
+  ✔ item se uklanja iz aktivnog prikaza
+  ✔ NE briše se iz baze
+  ✔ istorija ostaje sačuvana
+  ✔ koristi Archive modal (umesto Delete)
 
 - HISTORY LOG:
-  ✔ dostupno samo kada je item selektovan
-  ✔ prikaz izmene:
-      - quantity (vizuelni indikator + / -)
-      - promena field-ova
-      - creation event
-      - timestamp (sortirano: najnovije prvo)
+  ✔ quantity promene (+ / -)
+  ✔ edit promene
+  ✔ creation event
+  ✔ timestamp (najnovije prvo)
 
 - Safety:
   ✔ reset selektovanog item-a pri promeni taba
@@ -687,7 +831,7 @@
 
 3. TABLE TAB
 ------------------------------------------------------------
-- Prikaz svih item-a:
+- Prikaz svih AKTIVNIH item-a (is_active = true):
   ✔ Name
   ✔ Code
   ✔ Location
@@ -700,18 +844,69 @@
   ✔ previous / next
 
 - Interakcija:
-  ✔ klik na row → prebacuje na INPUT tab
-  ✔ automatski selektuje item
+  ✔ klik na row → INPUT tab
+  ✔ auto selektovanje item-a
 
 - ADD ITEM:
   ✔ modal unos
   ✔ insert u bazu
   ✔ automatski log "created"
 
-- EDIT / DELETE integrisani sa tabelom
+- EDIT / ARCHIVE integracija
 
 
-4. MANAGEMENT TAB (DASHBOARD)
+4. TRANSACTIONS SYSTEM (MAJOR FEATURE )
+------------------------------------------------------------
+- Centralizovan sistem za sve promene stock-a
+
+- Tipovi:
+  ✔ receipt (ulaz robe)
+  ✔ issue (izlaz robe)
+
+- TRANSACTION TAB:
+  ✔ kreiranje transakcija
+  ✔ dodavanje više itema
+  ✔ validacija quantity
+  ✔ stock kontrola (issue)
+
+- AUTOMATSKI TRANSACTION (NOVO ):
+  ✔ INPUT tab koristi isti system
+  ✔ garantuje konzistentan data model
+
+- DB STRUCTURE:
+  ✔ transactions
+  ✔ transaction_items
+
+- FUNKCIONALNOST:
+  ✔ kreira transaction record
+  ✔ povezuje item-e
+  ✔ update quantity
+  ✔ automatski loguje promene
+
+- CENTRAL FUNCTION:
+  ✔ createTransaction()
+  ✔ koristi se svuda (reusable logic)
+
+
+5. ARCHIVE SYSTEM (NEW FEATURE )
+------------------------------------------------------------
+- Soft delete implementacija:
+  ✔ is_active = false
+
+- ARCHIVE VIEW:
+  ✔ prikaz svih arhiviranih itema
+  ✔ tabela posebno
+
+- RESTORE funkcionalnost:
+  ✔ vraća item nazad u aktivne
+
+- UX poboljšanje:
+  ✔ nema "Delete"
+  ✔ koristi se "Archive"
+  ✔ sigurniji sistem za korisnika
+
+
+6. MANAGEMENT TAB (DASHBOARD)
 ------------------------------------------------------------
 - Dashboard kartice:
   ✔ Total Items
@@ -719,41 +914,31 @@
   ✔ Total Price
   ✔ Low Stock count
 
-- REAL-TIME TREND SYSTEM (NOVO) 
-  ✔ prikazuje promene u odnosu na prethodno stanje
-  ✔ koristi:
-      - diff (apsolutna promena)
-      - procentualna promena
+- REAL-TIME TREND SYSTEM:
+  ✔ diff + %
+  ✔ stabilan prikaz
 
-- Trend logika:
-  ✔ ▲ rast (pozitivno)
-  ✔ ▼ pad (negativno)
-  ✔ nema promene → UI ostaje isti (no reset)
-
-- Inverse metric handling (PRO FEATURE) 
-  ✔ Low Stock:
-      - rast = NEGATIVNO (crveno)
-      - pad = POZITIVNO (zeleno)
-
-- Clean UX:
-  ✔ uklonjeni fake progress krugovi
-  ✔ metrics imaju realno značenje
-  ✔ nema prikaza kada nema podataka (no "--")
+- Inverse metric:
+  ✔ Low stock:
+      - rast = loše
+      - pad = dobro
 
 - Low Stock tabela:
-  ✔ filter: quantity < limit
-  ✔ brz pregled kritičnih artikala
-  ✔ klik → vodi na item
+  ✔ filter quantity < limit
+  ✔ brz pristup
 
 
-5. LOG SYSTEM (AUDIT TRAIL)
+7. LOG SYSTEM (AUDIT TRAIL)
 ------------------------------------------------------------
 - Supabase tabela: item_logs
 
 - Loguje:
-  ✔ quantity promene
-  ✔ edit promene (field-by-field)
+  ✔ quantity promene (IZ TRANSACTIONS )
+  ✔ edit promene
   ✔ creation event
+
+- NAPOMENA:
+  ✔ svi quantity logovi dolaze iz centralnog transaction sistema
 
 - Struktura:
   ✔ item_id
@@ -763,80 +948,66 @@
   ✔ user_id
   ✔ created_at
 
-- UI prikaz:
-  ✔ sortirano po datumu
-  ✔ vizuelni indikator (+ zeleno / - crveno)
 
-
-6. LANGUAGE SYSTEM (i18n)
+8. LANGUAGE SYSTEM (i18n)
 ------------------------------------------------------------
-- Podržani jezici:
+- Jezici:
   ✔ SR
   ✔ EN
 
-- Funkcionalnosti:
-  ✔ runtime switching
-  ✔ localStorage persistence
-  ✔ dynamic DOM update
-
 - Pokriva:
-  ✔ UI tekst
-  ✔ forme
-  ✔ notificacije
-  ✔ dashboard
+  ✔ UI
+  ✔ notif
+  ✔ modal-e
+  ✔ archive system
+  ✔ transactions
+
+- Strukturisan translation model
 
 
-7. AUTHENTICATION (SUPABASE)
+9. AUTHENTICATION (SUPABASE)
 ------------------------------------------------------------
-- Register / Login sistem
-- Validacija:
-  ✔ email format
-  ✔ password length
-  ✔ error handling
-
-- Session sistem:
-  ✔ korisnik ostaje ulogovan
-  ✔ auto-login nakon refresh
-  ✔ logout resetuje stanje
-
-- User isolation:
-  ✔ svaki user vidi samo svoje podatke
+- Register / Login
+- Session management
+- User isolation (multi-user safe)
 
 
-8. UI / UX FEATURES
+10. UI / UX FEATURES
 ------------------------------------------------------------
-- Notification system (success / error)
-- Modal sistem:
+- Notification system
+- Modal system:
   ✔ Add / Edit
-  ✔ Delete confirmation
-  ✔ History log
+  ✔ Archive
+  ✔ History
+  ✔ Transaction
 
-- Responsive dizajn (mobile-first)
-- Sidebar menu
-- Clean card layout
 - State-driven UI
 
-- UX Improvements (NOVO):
-  ✔ trend bez resetovanja (stable UI)
-  ✔ nema misleading informacija
-  ✔ inverse metric handling
+- UX Improvements:
+  ✔ nema više hard delete
+  ✔ archive UX (sigurnije)
+  ✔ real-time sync (fetchItems + fetchTransactions)
 
 
-9. PWA (PROGRESSIVE WEB APP)
+11. PWA (PROGRESSIVE WEB APP)
 ------------------------------------------------------------
-- Instalacija na mobilni uređaj
+- Instalacija
+- Mobile-ready
 - Standalone mode
-- Custom ikonice
-- Theme color
-
-- Deploy:
-  ✔ Netlify hosting
+- Netlify deploy
 
 
 ------------------------------------------------------------
 STATUS:
- FEATURE-COMPLETE INVENTORY APP
-(CRUD + AUTH + LOGS + DASHBOARD + TRENDS + MOBILE UX)
+ADVANCED INVENTORY MANAGEMENT SYSTEM 
+
+- CRUD 
+- AUTH 
+- LOG SYSTEM 
+- TRANSACTIONS ENGINE 
+- ARCHIVE SYSTEM 
+- DASHBOARD 
+- MOBILE UX 
 
 ------------------------------------------------------------
 -->
