@@ -22,10 +22,37 @@
     
 </head>
 <body>
+        <!-- LOADING -->
+
+    <div id="boot-screen" class="boot-screen">
+        <div class="loader"></div>
+    </div>
+    
+    <!-- STARTING LOADING -->
+<div id="starting-loading" class="starting-loading">
+    
+    <div class="loading-card">
+
+        <!-- LOGO -->
+        <div class="loading-logo">
+            <span class="logo-main">W</span>
+            <span class="logo-divider"></span>
+            <span class="logo-sub">Manager</span>
+        </div>
+
+        <!-- SPINNER -->
+        <div class="loader"></div>
+
+        <!-- TEXT -->
+        <p class="loading-text">Loading your workspace...</p>
+
+    </div>
+
+</div>
 
 
         <!-- LOG IN / REGISTARTION -->
-        <div id="auth-screen" class="auth-screen">
+        <div id="auth-screen" class="auth-screen" style="display:none;">
 
             <div class="auth-card">
 
@@ -124,7 +151,15 @@
                         </div>
 
                         <button data-i18n="sidebar_profile">Profile</button>
-                        <button data-i18n="sidebar_settings">Settings</button>
+
+                        <button id="settings-btn" data-i18n="sidebar_settings">Settings</button>
+
+                            <div id="settings-submenu" class="submenu hidden">
+                                <button id="open-warehouses"    data-i18n="sidebar_WH">Warehouses</button>
+                                <button id="open-partners"      data-i18n="sidebar_Partner">Partners</button>
+                            </div>
+
+
                         <button class="archive-btn" data-i18n="sidebar_archive">Archive</button>
 
                         <hr>
@@ -141,14 +176,14 @@
         
         
         
-        <!-- INPUT VIEW -->
-        <section id="input-view" class="view active-view">
+        <!-- ARTICLE VIEW -->
+        <section id="item-view" class="view active-view">
 
 
 
             <header class="view-actions">
                 <h2 class="title" data-i18n="searchTitle" >Item search</h2>
-        </header>       
+            </header>       
                 <div class="header-actions">
                     <button class="btn-edit headerBtn"  data-i18n="edit">Edit</button>
                     <button class="btn-archive headerBtn" data-i18n="archive">Archive</button>
@@ -180,6 +215,23 @@
                 </div>
                 
             </div>
+            <!-- DropDown-->
+
+            <div class="tx-meta">
+                
+                <div class="input-group">
+                    <label>Warehouse *</label>
+                    <select id="quick-warehouse"></select>
+                </div>
+
+                <div class="input-group">
+                    <label>Partner *</label>
+                    <select id="quick-partner"></select>
+                </div>
+
+            </div>
+
+
 
             <!-- quantity control -->
              <div class="section-title" data-i18n="adjustQuantity">Adjust Quantity</div>
@@ -193,6 +245,10 @@
             <!-- save -->
             <button class="save-btn" data-i18n="save">SAVE</button>
         </section>
+
+
+
+
         <!-- TRANSACTIONS VIEW -->
         <section id="transactions-view" class="view">
 
@@ -221,8 +277,9 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th data-i18n="txType">TYPE</th>
-                            <th data-i18n="txDate">DATE</th>
+                            <th data-i18n="txType">Type</th>
+                            <th data-i18n="txDate">Date</th>
+                            <th data-i18n="txAction">Action</th>
                         </tr>
                     </thead>
 
@@ -241,7 +298,7 @@
 
 
         <!-- TABLE VIEW -->
-        <section id="table-view" class="view">
+        <section id="inventory-view" class="view">
 
             <header class="view-actions">
                 <h2 class="title" data-i18n="tableTitle">Items Table</h2>
@@ -294,7 +351,7 @@
 
 
         <!-- DASHBOARD VIEW -->
-        <section id="management-view" class="view">
+        <section id="dashboard-view" class="view">
 
             <header class="view-actions">
                 <h2 class="title" data-i18n="MangTitle">Management Panel</h2>
@@ -425,7 +482,7 @@
 
 
 
-<!--  VIEWs FROM SIDEBAR-->
+<!--  ======================================== VIEWs FROM SIDEBAR ========================================-->
 
 
         <!-- ARCHIVE VIEW -->
@@ -464,179 +521,181 @@
 
         </section>
 
+        <!-- WEREHUSE VIEW -->
+        <section id="warehouses-view" class="view">
 
+            <header class="view-actions">
+                <h2 class="title" data-i18n="whPageTitle"></h2>
+            </header>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!-- ADD ITEM MODAL -->
-<div class="modal add-modal hidden">
-
-    <div class="modal__content">
-
-        <h3 class="modal__title" data-i18n="addModulTitle">
-            Add new Item
-        </h3>
-
-        <!-- REQUIRED -->
-        <div class="input-group">
-            <label data-i18n="addModuleName">Name *</label>
-            <input type="text" id="add-name" data-i18n-placeholder="phName">
-        </div>
-
-        <div class="input-group">
-            <label data-i18n="addModuleQuantity">Quantity *</label>
-            <input type="number" id="add-quantity" data-i18n-placeholder="phQuantity">
-        </div>
-
-       
-            <div class="input-group">
-                <label data-i18n="addModulePrice">Price *</label>
-                <input type="number" id="add-price" data-i18n-placeholder="phPrice">
+            <div class="header-actions">
+                <button id="add-warehouse-btn" class="headerBtn" data-i18n="addWarehouse"></button>
             </div>
 
-            <div class="input-group">
-                <label>Limit *</label>
-                <input type="number" id="add-limit" data-i18n-placeholder="phLimit">
-            </div>
-       
+            <div id="warehouses-list" class="transaction-list settings-list"></div>
 
-        <!-- TOGGLE -->
-        <button type="button" id="add-toggle-more" class="btn-more" data-i18n="toggleMore">
-            + More
-        </button>
+        </section>
 
-        <!-- OPTIONAL -->
-        <div id="add-optional-fields" class="hidden">
+        <!-- PARTNEr VIEW -->
+        <section id="partners-view" class="view">
 
-            <div class="input-group">
-                <label data-i18n="addModuleCode">Code</label>
-                <input type="text" id="add-code" data-i18n-placeholder="phCode">
+            <header class="view-actions">
+                <h2 class="title" data-i18n="ptPageTitle"></h2>
+            </header>
+
+            <div class="header-actions">
+                <button id="add-partner-btn" class="headerBtn" data-i18n="addPartner"></button>
             </div>
 
-            <div class="input-group">
-                <label data-i18n="addModuleStatus">Status</label>
-                <input type="text" id="add-status" data-i18n-placeholder="phStatus">
+            <div id="partners-list" class="transaction-list settings-list"></div>
+
+        </section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--  ======================================== MODALS ========================================-->
+
+
+
+
+            <!-- ADD ITEM MODAL -->
+            <div class="modal add-modal hidden">
+
+                <div class="modal__content">
+
+                    <h3 class="modal__title" data-i18n="addModulTitle">
+                        Add new Item
+                    </h3>
+
+                    <!-- REQUIRED -->
+                    <div class="input-group">
+                        <label data-i18n="addModuleName">Name *</label>
+                        <input type="text" id="add-name" data-i18n-placeholder="phName">
+                    </div>
+
+                    <div class="input-group">
+                        <label data-i18n="addModuleQuantity">Quantity *</label>
+                        <input type="number" id="add-quantity" data-i18n-placeholder="phQuantity">
+                    </div>
+
+                
+                        <div class="input-group">
+                            <label data-i18n="addModulePrice">Price *</label>
+                            <input type="number" id="add-price" data-i18n-placeholder="phPrice">
+                        </div>
+
+                        <div class="input-group">
+                            <label>Limit *</label>
+                            <input type="number" id="add-limit" data-i18n-placeholder="phLimit">
+                        </div>
+                
+
+                    <!-- TOGGLE -->
+                    <button type="button" id="add-toggle-more" class="btn-more" data-i18n="toggleMore">
+                        + More
+                    </button>
+
+                    <!-- OPTIONAL -->
+                    <div id="add-optional-fields" class="hidden">
+
+                        <div class="input-group">
+                            <label data-i18n="addModuleCode">Code</label>
+                            <input type="text" id="add-code" data-i18n-placeholder="phCode">
+                        </div>
+
+                        <div class="input-group">
+                            <label data-i18n="addModuleStatus">Status</label>
+                            <input type="text" id="add-status" data-i18n-placeholder="phStatus">
+                        </div>
+
+                        <div class="input-group">
+                            <label data-i18n="addModuleLocation">Location</label>
+                            <input type="text" id="add-location" data-i18n-placeholder="phLocation">
+                        </div>
+
+                    </div>
+
+                    <!-- ACTIONS -->
+                    <div class="modal__actions">
+                        <button id="add-save" class="btn-save" data-i18n="save">Save</button>
+                        <button id="add-cancel" class="btn-cancel" data-i18n="cancel">Cancel</button>
+                    </div>
+
+                </div>
             </div>
 
-            <div class="input-group">
-                <label data-i18n="addModuleLocation">Location</label>
-                <input type="text" id="add-location" data-i18n-placeholder="phLocation">
+            <!-- EDIT ITEM MODAL -->
+            <div class="modal edit-modal hidden">
+
+                <div class="modal__content">
+
+                    <h3 class="modal__title" data-i18n="editTitle">
+                        Edit Item
+                    </h3>
+
+                    <!-- REQUIRED -->
+                    <div class="input-group">
+                        <label data-i18n="addModuleName">Name *</label>
+                        <input type="text" id="edit-name" data-i18n-placeholder="phName">
+                    </div>
+
+                    <div class="row">
+                        <div class="input-group">
+                            <label data-i18n="addModulePrice">Price *</label>
+                            <input type="number" id="edit-price" data-i18n-placeholder="phPrice">
+                        </div>
+
+                        <div class="input-group">
+                            <label data-i18n="addModuleLimit">Limit *</label>
+                            <input type="number" id="edit-limit" data-i18n-placeholder="phLimit">
+                        </div>
+                    </div>
+
+                    <!-- TOGGLE -->
+                    <button type="button" id="edit-toggle-more" class="btn-more" data-i18n="toggleMore">
+                        + More
+                    </button>
+
+                    <!-- OPTIONAL -->
+                    <div id="edit-optional-fields" class="hidden">
+
+                        <div class="input-group">
+                            <label data-i18n="addModuleCode">Code</label>
+                            <input type="text" id="edit-code" data-i18n-placeholder="phCode">
+                        </div>
+
+                        <div class="input-group">
+                            <label data-i18n="addModuleStatus">Status</label>
+                            <input type="text" id="edit-status" data-i18n-placeholder="phStatus">
+                        </div>
+
+                        <div class="input-group">
+                            <label data-i18n="addModuleLocation">Location</label>
+                            <input type="text" id="edit-location" data-i18n-placeholder="phLocation">
+                        </div>
+
+                    </div>
+
+                    <!-- ACTIONS -->
+                    <div class="modal__actions">
+                        <button id="edit-save" class="btn-save" data-i18n="save">Save</button>
+                        <button id="edit-cancel" class="btn-cancel" data-i18n="cancel">Cancel</button>
+                    </div>
+
+                </div>
             </div>
-
-        </div>
-
-        <!-- ACTIONS -->
-        <div class="modal__actions">
-            <button id="add-save" class="btn-save" data-i18n="save">Save</button>
-            <button id="add-cancel" class="btn-cancel" data-i18n="cancel">Cancel</button>
-        </div>
-
-    </div>
-</div>
-
-
-<!-- EDIT ITEM MODAL -->
-<div class="modal edit-modal hidden">
-
-    <div class="modal__content">
-
-        <h3 class="modal__title" data-i18n="editTitle">
-            Edit Item
-        </h3>
-
-        <!-- REQUIRED -->
-        <div class="input-group">
-            <label data-i18n="addModuleName">Name *</label>
-            <input type="text" id="edit-name" data-i18n-placeholder="phName">
-        </div>
-
-        <div class="row">
-            <div class="input-group">
-                <label data-i18n="addModulePrice">Price *</label>
-                <input type="number" id="edit-price" data-i18n-placeholder="phPrice">
-            </div>
-
-            <div class="input-group">
-                <label data-i18n="addModuleLimit">Limit *</label>
-                <input type="number" id="edit-limit" data-i18n-placeholder="phLimit">
-            </div>
-        </div>
-
-        <!-- TOGGLE -->
-        <button type="button" id="edit-toggle-more" class="btn-more" data-i18n="toggleMore">
-            + More
-        </button>
-
-        <!-- OPTIONAL -->
-        <div id="edit-optional-fields" class="hidden">
-
-            <div class="input-group">
-                <label data-i18n="addModuleCode">Code</label>
-                <input type="text" id="edit-code" data-i18n-placeholder="phCode">
-            </div>
-
-            <div class="input-group">
-                <label data-i18n="addModuleStatus">Status</label>
-                <input type="text" id="edit-status" data-i18n-placeholder="phStatus">
-            </div>
-
-            <div class="input-group">
-                <label data-i18n="addModuleLocation">Location</label>
-                <input type="text" id="edit-location" data-i18n-placeholder="phLocation">
-            </div>
-
-        </div>
-
-        <!-- ACTIONS -->
-        <div class="modal__actions">
-            <button id="edit-save" class="btn-save" data-i18n="save">Save</button>
-            <button id="edit-cancel" class="btn-cancel" data-i18n="cancel">Cancel</button>
-        </div>
-
-    </div>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -683,66 +742,208 @@
 
             </div>
 
-<!-- MODAL TRANSACTION -->
-<div class="modal transaction-modal hidden">
+            <!-- MODAL TRANSACTION -->
+            <div class="modal transaction-modal hidden">
 
-    <div class="modal__content transaction-container">
+                <div class="modal__content transaction-container">
 
-        <!-- HEADER -->
-        <div class="transaction-header">
-            <h3 id="transaction-title" > <!-- Upisujemo putem JS --> </h3>
-        </div>
+                    <!-- HEADER -->
+                    <div class="transaction-header">
+                        <h3 id="transaction-title" > <!-- Upisujemo putem JS --> </h3>
+                    </div>
 
-        <!-- SEARCH -->
-        <div class="search transaction-search">
-            <input 
-                type="text" 
-                id="transaction-search" 
-                data-i18n-placeholder="txSearchPlaceholder"
-                placeholder="Search item..." 
-            />
-            <div class="results transaction-results"></div>
-        </div>
+                    <!-- SEARCH -->
+                    <div class="search transaction-search">
+                        <input 
+                            type="text" 
+                            id="transaction-search" 
+                            data-i18n-placeholder="txSearchPlaceholder"
+                            placeholder="Search item..." 
+                        />
+                        <div class="results transaction-results"></div>
+                    </div>
 
-        <!-- LIST HEADER -->
-        <p class="transaction-subtitle section-title" data-i18n="txSelectedItems">
-            Selected items
-        </p>
+                    <!-- LIST HEADER -->
+                    <p class="transaction-subtitle section-title" data-i18n="txSelectedItems">
+                        Selected items
+                    </p>
 
-        <!-- LIST -->
-        <div class="transaction-list"></div>
+                    <!-- LIST -->
+                    <div class="transaction-list"></div>
 
-        <!-- PDF OPTION -->
-        <div class="pdf-option">
-            <label class="switch">
-                <input type="checkbox" id="pdf-toggle">
-                <span class="slider"></span>
-            </label>
-            <span data-i18n="txGeneratePDF">Generate PDF</span>
-        </div>
+                    <!-- DROPDOWNs -->
+                    <div class="input-group">
+                        <label data-i18n="warehouse">Warehouse *</label>
+                        <select id="tx-warehouse"></select>
+                    </div>
 
-        <!-- ACTIONS -->
-        <div class="modal__actions">
-            <button id="transaction-confirm" class="btn-save" data-i18n="confirm">
-                Confirm
-            </button>
-            <button id="transaction-cancel" class="btn-cancel" data-i18n="cancel">
-                Cancel
-            </button>
-        </div>
+                    <div class="input-group">
+                        <label data-i18n="partner">Partner *</label>
+                        <select id="tx-partner"></select>
+                    </div>
 
-    </div>
+                    <!-- PDF OPTION -->
+                    <div class="pdf-option">
+                        <label class="switch">
+                            <input type="checkbox" id="pdf-toggle">
+                            <span class="slider"></span>
+                        </label>
+                        <span data-i18n="txGeneratePDF">Generate PDF</span>
+                    </div>
+                    
 
-</div>
+                    <!-- ACTIONS -->
+                    <div class="modal__actions">
+                        <button id="transaction-confirm" class="btn-save" data-i18n="confirm">
+                            Confirm
+                        </button>
+                        <button id="transaction-cancel" class="btn-cancel" data-i18n="cancel">
+                            Cancel
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
 
 
+
+            <!-- MODAL MY WAREHOUSE -->
+            <div class="modal warehouse-modal hidden">
+
+                <div class="modal__content">
+
+                    <h3 class="modal__title" data-i18n="whTitle"></h3>
+
+                    <div class="input-group">
+                        <label data-i18n="whName"></label>
+                        <input type="text" id="wh-name">
+                    </div>
+
+                    <div class="input-group">
+                        <label data-i18n="whAddress"></label>
+                        <input type="text" id="wh-address">
+                    </div>
+
+                    <div class="input-group">
+                        <label data-i18n="email"></label>
+                        <input type="text" id="wh-email">
+                    </div>
+
+                    <div class="input-group">
+                        <label data-i18n="phone"></label>
+                        <input type="text" id="wh-phone">
+                    </div>
+
+                    <div class="input-group">
+                        <label data-i18n="web"></label>
+                        <input type="text" id="wh-website">
+                    </div>
+
+                    <div class="input-group">
+                        <label data-i18n="pib"></label>
+                        <input type="text" id="wh-pib">
+                    </div>
+
+                    <div class="input-group">
+                        <label data-i18n="mb"></label>
+                        <input type="text" id="wh-mb">
+                    </div>
+
+                    <div class="input-group">
+                        <label data-i18n="vat"></label>
+                        <input type="number" id="wh-vat" placeholder="20">
+                    </div>
+
+                    <div class="input-group">
+                        <label data-i18n="bank"></label>
+                        <input type="text" id="wh-bank">
+                    </div>
+
+                    <div class="input-group">
+                        <label>IBAN</label>
+                        <input type="text" id="wh-iban">
+                    </div>
+
+                    <div class="input-group">
+                        <label>SWIFT / BIC</label>
+                        <input type="text" id="wh-swift">
+                    </div>
+
+                    <div class="modal__actions">
+                        <button id="wh-save" class="btn-save" data-i18n="save"></button>
+                        <button id="wh-cancel" class="btn-cancel" data-i18n="cancel"></button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- MODAL MY PARTNERS -->
+            <div class="modal partner-modal hidden">
+
+                <div class="modal__content">
+
+                    <h3 class="modal__title" data-i18n="ptTitle"></h3>
+
+                    <div class="input-group">
+                        <label data-i18n="whName"></label>
+                        <input type="text" id="pt-name">
+                    </div>
+
+                    <div class="input-group">
+                        <label data-i18n="whAddress"></label>
+                        <input type="text" id="pt-address">
+                    </div>
+
+                    <div class="input-group">
+                        <label data-i18n="email"></label>
+                        <input type="text" id="pt-email">
+                    </div>
+
+                    <div class="input-group">
+                        <label data-i18n="phone"></label>
+                        <input type="text" id="pt-phone">
+                    </div>
+
+                    <div class="input-group">
+                        <label data-i18n="web"></label>
+                        <input type="text" id="pt-website">
+                    </div>
+
+                    <div class="input-group">
+                        <label data-i18n="pib"></label>
+                        <input type="text" id="pt-pib">
+                    </div>
+
+                    <div class="input-group">
+                        <label data-i18n="mb"></label>
+                        <input type="text" id="pt-mb">
+                    </div>
+
+                    <div class="input-group">
+                        <label data-i18n="type"></label>
+                        <select id="pt-type">
+                            <option value="supplier" data-i18n="supplier"></option>
+                            <option value="customer" data-i18n="customer"></option>
+                        </select>
+                    </div>
+
+                    <div class="modal__actions">
+                        <button id="pt-save" class="btn-save" data-i18n="save"></button>
+                        <button id="pt-cancel" class="btn-cancel" data-i18n="cancel"></button>
+                    </div>
+
+                </div>
+            </div>
         
-        <!-- NAVIGATION -->
+ 
+<!--  ======================================== NAVIGATION ========================================-->
+ 
         <nav class="navigation">
-            <button class="tab active"  data-tab="input"        data-i18n="input">INPUT</button>
-            <button class="tab"         data-tab="transactions" data-i18n="transaction">TRANSACTIONS</button>
-            <button class="tab"         data-tab="table"        data-i18n="table">TABLE</button>
-            <button class="tab"         data-tab="management"   data-i18n="management">MANAGEMNT</button>
+            <button class="tab active"  data-tab="item"         data-i18n="item">ITEM</button>
+            <button class="tab"         data-tab="transactions" data-i18n="transaction">TRANSACTION</button>
+            <button class="tab"         data-tab="inventory"    data-i18n="inventory">INVENTORY</button>
+            <button class="tab"         data-tab="dashboard"    data-i18n="dashboard">DASHBOARD</button>
         </nav>
 
 
@@ -757,10 +958,12 @@
 
 
 
+    <!--  jsPDF LIBRARY -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-
-
+    <!--  JS -->
     <script type="module" src="script.js"></script>
+
 </body>
 </html>
 
@@ -781,6 +984,7 @@
   ✔ Automatski aktivan view
 
 
+
 2. INPUT TAB (CORE FUNCTIONALITY)
 ------------------------------------------------------------
 - Search sistem (name + code)
@@ -798,40 +1002,36 @@
   ✔ povećavanje (+)
   ✔ smanjivanje (-)
 
-- SAVE funkcionalnost (UPGRADED - NOVO ):
-  ✔ više NE radi direktan update 
-  ✔ koristi TRANSACTION sistem 
-  ✔ automatski kreira:
+- SAVE funkcionalnost:
+  ✔ koristi TRANSACTION sistem (centralizovano)
+  ✔ automatski generiše:
       - receipt (povećanje)
       - issue (smanjenje)
-  ✔ centralizovana logika (createTransaction)
 
 - EDIT funkcionalnost:
   ✔ modal za edit
-  ✔ reuse Add forme
   ✔ update svih polja osim Quantity
   ✔ loguje promene
 
-- ARCHIVE funkcionalnost (NEW ):
-  ✔ soft delete → is_active = false
-  ✔ item se uklanja iz aktivnog prikaza
-  ✔ NE briše se iz baze
-  ✔ istorija ostaje sačuvana
-  ✔ koristi Archive modal (umesto Delete)
+- ARCHIVE funkcionalnost:
+  ✔ soft delete (is_active = false)
+  ✔ item ostaje u bazi (bez gubitka podataka)
+  ✔ istorija ostaje dostupna
 
 - HISTORY LOG:
-  ✔ quantity promene (+ / -)
+  ✔ prikaz promena količine (stara → nova vrednost)
   ✔ edit promene
-  ✔ creation event
-  ✔ timestamp (najnovije prvo)
+  ✔ creation log
+  ✔ najnovije promene prve
 
 - Safety:
   ✔ reset selektovanog item-a pri promeni taba
 
 
+
 3. TABLE TAB
 ------------------------------------------------------------
-- Prikaz svih AKTIVNIH item-a (is_active = true):
+- Prikaz aktivnih item-a (is_active = true):
   ✔ Name
   ✔ Code
   ✔ Location
@@ -844,109 +1044,96 @@
   ✔ previous / next
 
 - Interakcija:
-  ✔ klik na row → INPUT tab
-  ✔ auto selektovanje item-a
-
-- ADD ITEM:
-  ✔ modal unos
-  ✔ insert u bazu
-  ✔ automatski log "created"
-
-- EDIT / ARCHIVE integracija
+  ✔ klik na red → otvara INPUT tab
+  ✔ automatski selektuje item
 
 
-4. TRANSACTIONS SYSTEM (MAJOR FEATURE )
+
+4. TRANSACTIONS SYSTEM (CORE ENGINE)
 ------------------------------------------------------------
-- Centralizovan sistem za sve promene stock-a
+- Centralizovan sistem za sve promene zaliha
 
 - Tipovi:
   ✔ receipt (ulaz robe)
   ✔ issue (izlaz robe)
 
-- TRANSACTION TAB:
-  ✔ kreiranje transakcija
-  ✔ dodavanje više itema
-  ✔ validacija quantity
-  ✔ stock kontrola (issue)
+- Funkcionalnost:
+  ✔ više itema u jednoj transakciji
+  ✔ validacija količine
+  ✔ kontrola zaliha (issue)
 
-- AUTOMATSKI TRANSACTION (NOVO ):
-  ✔ INPUT tab koristi isti system
-  ✔ garantuje konzistentan data model
+- UX poboljšanje:
+  ✔ već dodati itemi se NE prikazuju ponovo u search-u
+  ✔ sprečeno dupliranje itema u listi
 
-- DB STRUCTURE:
+- DB struktura:
   ✔ transactions
   ✔ transaction_items
 
-- FUNKCIONALNOST:
-  ✔ kreira transaction record
-  ✔ povezuje item-e
-  ✔ update quantity
-  ✔ automatski loguje promene
-
-- CENTRAL FUNCTION:
+- Centralna logika:
   ✔ createTransaction()
-  ✔ koristi se svuda (reusable logic)
+
+- Stock update:
+  ✔ atomic update preko SQL funkcije
+  ✔ sigurno i tačno računanje količine u bazi
+
+- LOG sistem (fix):
+  ✔ ponovo loguje:
+      - old quantity → new quantity
+  ✔ tačan audit trail
 
 
-5. ARCHIVE SYSTEM (NEW FEATURE )
+
+5. ARCHIVE SYSTEM
 ------------------------------------------------------------
 - Soft delete implementacija:
   ✔ is_active = false
 
 - ARCHIVE VIEW:
-  ✔ prikaz svih arhiviranih itema
-  ✔ tabela posebno
+  ✔ posebna tabela za arhivirane iteme
 
-- RESTORE funkcionalnost:
-  ✔ vraća item nazad u aktivne
+- RESTORE:
+  ✔ vraća item u aktivne
 
-- UX poboljšanje:
-  ✔ nema "Delete"
-  ✔ koristi se "Archive"
-  ✔ sigurniji sistem za korisnika
+- UX:
+  ✔ nema hard delete
+  ✔ sigurniji rad sa podacima
+
 
 
 6. MANAGEMENT TAB (DASHBOARD)
 ------------------------------------------------------------
-- Dashboard kartice:
+- KPI kartice:
   ✔ Total Items
   ✔ Total Quantity
-  ✔ Total Price
-  ✔ Low Stock count
+  ✔ Total Value
+  ✔ Low Stock
 
-- REAL-TIME TREND SYSTEM:
-  ✔ diff + %
+- Trend sistem:
+  ✔ razlika + procenat
   ✔ stabilan prikaz
 
-- Inverse metric:
-  ✔ Low stock:
-      - rast = loše
-      - pad = dobro
-
-- Low Stock tabela:
+- Low stock tabela:
   ✔ filter quantity < limit
-  ✔ brz pristup
+
 
 
 7. LOG SYSTEM (AUDIT TRAIL)
 ------------------------------------------------------------
-- Supabase tabela: item_logs
+- Tabela: item_logs
 
-- Loguje:
-  ✔ quantity promene (IZ TRANSACTIONS )
+- Beleži:
+  ✔ quantity promene (iz TRANSAKCIJA)
   ✔ edit promene
-  ✔ creation event
+  ✔ creation
 
-- NAPOMENA:
-  ✔ svi quantity logovi dolaze iz centralnog transaction sistema
+- Format:
+  ✔ old_value → new_value
+  ✔ povezano sa transaction_id
 
-- Struktura:
-  ✔ item_id
-  ✔ field
-  ✔ old_value
-  ✔ new_value
-  ✔ user_id
-  ✔ created_at
+- Napomena:
+  ✔ logika je vraćena nakon optimizacije (fix bug)
+
 
 
 8. LANGUAGE SYSTEM (i18n)
@@ -957,57 +1144,84 @@
 
 - Pokriva:
   ✔ UI
-  ✔ notif
-  ✔ modal-e
-  ✔ archive system
-  ✔ transactions
+  ✔ notifikacije
+  ✔ modale
+  ✔ archive i transactions
 
-- Strukturisan translation model
 
 
 9. AUTHENTICATION (SUPABASE)
 ------------------------------------------------------------
 - Register / Login
 - Session management
-- User isolation (multi-user safe)
+- Potpuna izolacija korisnika (user_id)
+
+- Sistem trenutno:
+  ✔ 1 korisnik = 1 nalog
+  ✔ nema deljenja podataka između korisnika
+
 
 
 10. UI / UX FEATURES
 ------------------------------------------------------------
-- Notification system
-- Modal system:
-  ✔ Add / Edit
+- Notification sistem
+- Modal sistem:
+  ✔ Add
+  ✔ Edit
   ✔ Archive
   ✔ History
   ✔ Transaction
 
-- State-driven UI
-
-- UX Improvements:
-  ✔ nema više hard delete
-  ✔ archive UX (sigurnije)
-  ✔ real-time sync (fetchItems + fetchTransactions)
+- UX poboljšanja:
+  ✔ nema duplih itema u transaction search-u
+  ✔ brži workflow
+  ✔ čistiji UI
 
 
-11. PWA (PROGRESSIVE WEB APP)
+
+11. PERFORMANCE + LOADING (NEW)
 ------------------------------------------------------------
-- Instalacija
-- Mobile-ready
-- Standalone mode
+- Dodan inicijalni loading screen:
+  ✔ prikaz tokom provere session-a
+  ✔ nema flicker UI-ja
+  ✔ bolji first impression
+
+- Fade-out efekat:
+  ✔ loading nestaje tek nakon što je user state poznat
+
+- Optimizacije:
+  ✔ parallel processing (Promise.all)
+  ✔ brži transaction sistem
+  ✔ manji broj blokirajućih operacija
+
+- Rezultat:
+  ✔ značajno brži UI
+  ✔ fluidnije korisničko iskustvo
+
+
+
+12. PWA (PROGRESSIVE WEB APP)
+------------------------------------------------------------
+- Instalacija na uređaj
+- Mobile UX
+- Standalone režim
 - Netlify deploy
+
 
 
 ------------------------------------------------------------
 STATUS:
-ADVANCED INVENTORY MANAGEMENT SYSTEM 
+ADVANCED INVENTORY MANAGEMENT SYSTEM
 
-- CRUD 
-- AUTH 
-- LOG SYSTEM 
-- TRANSACTIONS ENGINE 
-- ARCHIVE SYSTEM 
-- DASHBOARD 
-- MOBILE UX 
+✔ Core CRUD
+✔ Auth system
+✔ Transaction engine
+✔ Audit log system
+✔ Archive system
+✔ Dashboard analytics
+✔ Multi-language support
+✔ Performance optimized
+✔ Mobile-ready UX
 
 ------------------------------------------------------------
 -->

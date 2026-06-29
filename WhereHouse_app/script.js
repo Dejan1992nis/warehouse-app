@@ -9,6 +9,13 @@ const SUPABASE_KEY = 'sb_publishable_G7GepZscofTzQmzyoMmo0Q_0bD6zH0c';
 // KONEKCIJA sa SUPABASE
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY); // Klijent za komunikaciju sa bazom
 
+// TABS IMENA
+const TAB = {
+    ITEM: 'item',
+    INVENTORY: 'inventory',
+    DASHBOARD: 'dashboard',
+    TRANSACTION: 'transaction'
+};
 
 
 async function fetchItems() {
@@ -92,6 +99,50 @@ async function addLog(itemId, field, oldVal, newVal, transactionId = null) {
     }
 }
 
+//-------------- My W & My Partners --------------
+async function fetchWarehouses() {
+    const { data, error } = await supabaseClient
+        .from('warehouses')
+        .select('*')
+        .eq('user_id', currentUser.id);
+
+    if (!error) warehouses = data || [];
+}
+
+async function fetchPartners() {
+    const { data, error } = await supabaseClient
+        .from('partners')
+        .select('*')
+        .eq('user_id', currentUser.id);
+
+    if (!error) partners = data || [];
+}
+function populateDropdownsQuick() {
+
+    const wSelect = document.getElementById('quick-warehouse');
+    const pSelect = document.getElementById('quick-partner');
+
+    if (!wSelect || !pSelect) return;
+
+    // reset
+    wSelect.innerHTML = `<option value="">${t("selectWarehouse")}</option>`;
+    pSelect.innerHTML = `<option value="">${t("selectPartner")}</option>`;
+
+    warehouses.forEach(w => {
+        const opt = document.createElement('option');
+        opt.value = w.id;
+        opt.textContent = w.name;
+        wSelect.appendChild(opt);
+    });
+
+    partners.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name;
+        pSelect.appendChild(opt);
+    });
+}
+
 // ========================================================== GLOBAL VARIABLES ==========================================================
 const items             = [];
 let transactions        = [];
@@ -103,6 +154,9 @@ let tempQuantity        = 0;
 
 let currentPage         = 1;
 const itemsPerPage      = 20;
+
+let warehouses = [];
+let partners = [];
 
 // ========================================================== USER SETTING ==========================================================
 
@@ -253,7 +307,7 @@ async function login(email, password) {
 
     // await loadUserLanguage();
     // await loadUserTrends();
-    startApp();
+    // startApp();
 
     authLoading = false;
 }
@@ -264,15 +318,40 @@ async function logout() {
 }
 // PROVERA KORISNIKA
 async function initUser() {
-    const { data } = await supabaseClient.auth.getUser();
-    currentUser = data?.user || null;
+
+    // 1. koristi SESSION (BRZO i bez flicker)
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    currentUser = session?.user || null;
 
     if (currentUser) {
-        startApp(); // odmah
+        await startApp();
     } else {
         showAuthScreen();
     }
+
+    // 2. ukloni loading TEK kad znamo stanje
+const loader = document.getElementById('starting-loading');
+
+if (loader) {
+    loader.classList.add('fade-out');
+
+    setTimeout(() => {
+        loader.remove();
+    }, 300);
 }
+}
+supabaseClient.auth.onAuthStateChange((event, session) => {
+
+    currentUser = session?.user || null;
+
+    if (currentUser) {
+        startApp();
+    } else {
+        showAuthScreen();
+    }
+
+});
 // STARTOVANJE APP
 async function startApp() {
     authScreen.style.display = 'none';
@@ -285,6 +364,10 @@ async function startApp() {
 
     await fetchItems();
     await fetchTransactions();
+
+    await fetchWarehouses();
+    await fetchPartners();
+    populateDropdownsQuick();
 }
 function showUserInfo() {
 
@@ -375,6 +458,10 @@ const input             = document.querySelector('#input-search');
 const clearBtn          = document.querySelector('.clear-btn');
 const resultsContainer  = document.querySelector('.results');
 
+// STATE
+let quickWarehouse = null;
+let quickPartner = null;
+
 //3.  FUNCTIONS ===
 function handleSearch() {
 
@@ -457,6 +544,15 @@ clearBtn.addEventListener('click', function () {
     clearResults();
 });
 
+//WH_Dropdown
+document.getElementById('quick-warehouse').addEventListener('change', (e) => {
+    quickWarehouse = e.target.value;
+});
+//Partner_Dropdown
+document.getElementById('quick-partner').addEventListener('change', (e) => {
+    quickPartner = e.target.value;
+});
+
 // -------------------- FEATURE: SELECT ITEM --------------------
 
 //1.  SELECTORS ===
@@ -481,6 +577,13 @@ function resetDisplay() {
     quantityValue.textContent = '0';
     selectedItem = null;
     tempQuantity = 0;
+
+    // Reset Qucik WH & Partenr Dw
+    quickWarehouse = null;
+    quickPartner = null;
+
+    document.getElementById('quick-warehouse').value = '';
+    document.getElementById('quick-partner').value = '';
 
      // Sakri History dugme
     historyWrapper.classList.add('hidden');
@@ -541,6 +644,16 @@ const saveBtn           = document.querySelector('.save-btn');
 //4.  EVENTS ===
 saveBtn.addEventListener('click', async function () {
 
+    // 0. VALIDACIJA DROPDOWNa
+    if (!quickWarehouse) {
+        showNotification(`⚠ ${t('selectWarehouse')}`, 'error');
+        return;
+    }
+
+    if (!quickPartner) {
+        showNotification(`⚠ ${t('selectPartner')}`, 'error');
+        return;
+    }
     // 1. VALIDACIJA
     if (!selectedItem) {
         showNotification(`❌ ${t('noItemSelected')}`, 'error');
@@ -556,6 +669,9 @@ saveBtn.addEventListener('click', async function () {
     if (diff !== 0) {
 
         const type = diff > 0 ? 'receipt' : 'issue';
+        
+        selectedWarehouse = quickWarehouse;
+        selectedPartner = quickPartner;
 
         await createTransaction(
             [{
@@ -1065,7 +1181,7 @@ function renderTable() {
     nextBtn.disabled = currentPage === totalPages;
 }
 function goToInputTab() {
-    document.querySelector('[data-tab="input"]').click();
+    document.querySelector(`[data-tab="${TAB.ITEM}"]`).click();
     clearBtn.style.display = 'block';
 }
 
@@ -1321,6 +1437,9 @@ function renderLowStockTable() {
 const btnReceive        = document.getElementById('btn-receive');
 const btnIssue          = document.getElementById('btn-issue');
 
+const pdfToggle         = document.getElementById('pdf-toggle');
+
+
 // MODAL
 const transactionModal  = document.querySelector('.transaction-modal');
 const transactionTitle  = document.getElementById('transaction-title');
@@ -1332,7 +1451,7 @@ const transactionSearch  = document.getElementById('transaction-search');
 const transactionResults= document.querySelector('.transaction-results');
 
 // LISTA
-const transactionList   = document.querySelector('.transaction-list');
+const transactionList = document.querySelector('.transaction-modal .transaction-list');
 
 
 //STATE
@@ -1340,6 +1459,9 @@ let transactionMode = null;
 let transactionItems = []; 
 let isCopyMode = false;
 let copiedItemData = null;
+
+let selectedWarehouse   = null;
+let selectedPartner     = null;
 
 //OTVARANJE MODULA
 
@@ -1356,12 +1478,27 @@ btnIssue.addEventListener('click', () => {
 });
 
 
-function openTransactionModal() {
+async function openTransactionModal() {
+
     transactionItems = [];
     transactionList.innerHTML = '';
     transactionSearch.value = '';
     transactionResults.innerHTML = '';
-    
+
+    // UCITAJ PODATKE u PADJUCI MENI
+    await fetchWarehouses();
+    await fetchPartners();
+    populateDropdowns();
+
+    // reset
+    selectedWarehouse = null;
+    selectedPartner = null;
+
+    document.getElementById('tx-warehouse').value = '';
+    document.getElementById('tx-partner').value = '';
+
+    pdfToggle.checked = false;
+
 
     transactionModal.classList.remove('hidden');
     transactionSearch.focus();
@@ -1383,10 +1520,18 @@ transactionSearch.addEventListener('input', function () {
         return;
     }
 
-    const filtered = items.filter(item =>
-        item.name.toLowerCase().includes(value) ||
-        String(item.code).includes(value)
-    );
+    const filtered = items.filter(item => {
+
+        const matchesSearch =
+            item.name.toLowerCase().includes(value) ||
+            String(item.code).includes(value);
+
+        const alreadySelected = transactionItems.some(ti =>
+            !ti.isNew && ti.id === item.id
+        );
+
+        return matchesSearch && !alreadySelected;
+    });
 
     renderTransactionResults(filtered);
 });
@@ -1581,6 +1726,17 @@ transactionConfirm.addEventListener('click', async function () {
         return;
     }
 
+    // OBAVEZAN ODABIR ZA SVAKU TRANSAKCIJU
+    if (!selectedWarehouse) {
+        showNotification('⚠️ Select warehouse', 'error');
+        return;
+    }
+
+    if (!selectedPartner) {
+        showNotification('⚠️ Select partner', 'error');
+        return;
+    }
+
 
     
     // 3. VALIDACIJA – ISSUE (stock check)
@@ -1611,8 +1767,14 @@ transactionConfirm.addEventListener('click', async function () {
     }
 
 
+
+
     // CREATE TRANSACTION (centralized)
-    await createTransaction(transactionItems, transactionMode);
+    // await createTransaction(transactionItems, transactionMode);
+    const tx = await createTransaction(transactionItems, transactionMode);
+    if (pdfToggle.checked) {
+    generatePDF(tx, transactionItems);
+}
 
    
     // not. 
@@ -1650,112 +1812,128 @@ function openCopyModal(item) {
     addOptional.classList.remove('hidden');
 }
 
-// KREIRANJE TRASKCIJE
+
 async function createTransaction(itemsList, type) {
 
-    // =====================================================
-    //  1. CREATE NEW ITEMS (AKO POSTOJE)
-    // =====================================================
-    for (const item of itemsList) {
+    try {
 
-        if (!item.isNew) continue;
+        // =====================================================
+        // 1. CREATE NEW ITEMS (SEQUENTIAL - REQUIRED)
+        // =====================================================
+        for (const item of itemsList) {
 
-        const result = await supabaseClient
-            .from('items')
+            if (!item.isNew) continue;
+
+            const { data, error } = await supabaseClient
+                .from('items')
+                .insert([{
+                    name: item.name,
+                    code: item.code,
+                    status: item.status,
+                    location: item.location,
+                    quantity: 0,
+                    price: item.price,
+                    limit: item.limit,
+                    user_id: currentUser.id,
+                    is_active: true
+                }])
+                .select()
+                .single();
+
+            if (error || !data) {
+                showNotification(`❌ ${t('errCreateItem')} ${item.name}`, 'error');
+                throw new Error('Create item failed');
+            }
+
+            item.id = data.id;
+            item.isNew = false;
+
+            await addLog(item.id, 'created', '', item.name);
+        }
+
+
+        // =====================================================
+        // 2. CREATE TRANSACTION
+        // =====================================================
+        const { data: tx, error: txError } = await supabaseClient
+            .from('transactions')
             .insert([{
-                name: item.name,
-                code: item.code,
-                status: item.status,
-                location: item.location,
-                quantity: 0, // start 0 
-                price: item.price,
-                limit: item.limit,
+                type: type,
                 user_id: currentUser.id,
-                is_active: true
+                warehouse_id: selectedWarehouse,
+                partner_id: selectedPartner
             }])
             .select()
             .single();
 
-        if (!result.data || result.error) {
-            showNotification(`❌ ${t('errCreateItem')} ${item.name}`, 'error');
-            return;
+        if (txError || !tx) {
+            showNotification(`❌ ${t('errCreateTx')}`, 'error');
+            throw new Error('Create transaction failed');
         }
 
-        //  zameni temp ID sa pravim
-        item.id = result.data.id;
-        item.isNew = false;
 
-        //  log
-        await addLog(item.id, 'created', '', item.name);
-    }
+        // =====================================================
+        // 3. PROCESS ITEMS (PARALLEL + SAFE)
+        // =====================================================
+        const operations = itemsList.map(async (item) => {
 
+            // 1. INSERT transaction item
+            const { error: txItemError } = await supabaseClient
+                .from('transaction_items')
+                .insert({
+                    transaction_id: tx.id,
+                    item_id: item.id,
+                    quantity: item.qty
+                });
 
-    // =====================================================
-    //  2. CREATE TRANSACTION
-    // =====================================================
-    const txResult = await supabaseClient
-        .from('transactions')
-        .insert([{
-            type: type,
-            user_id: currentUser.id
-        }])
-        .select()
-        .single();
-
-    if (!txResult.data || txResult.error) {
-        showNotification(`❌ ${t('errCreateTx')}`, 'error');
-        return;
-    }
-
-    const tx = txResult.data;
+            if (txItemError) throw txItemError;
 
 
-    // =====================================================
-    //  3. INSERT ITEMS + UPDATE STOCK
-    // =====================================================
-    for (const item of itemsList) {
+            // 2. ATOMIC UPDATE (KLJUČNO)
+            const qtyChange = type === 'receipt'
+                ? item.qty
+                : -item.qty;
 
-        // INSERT transaction item
-        const { error: txItemError } = await supabaseClient
-            .from('transaction_items')
-            .insert({
-                transaction_id: tx.id,
-                item_id: item.id,
-                quantity: item.qty
+            const { error: updateError } = await supabaseClient.rpc('increment_quantity', {
+                item_id_param: item.id,
+                qty_change_param: qtyChange
             });
 
-        if (txItemError) {
-            showNotification(`❌ ${t('errInsertTxItem')}`, 'error');
-            return;
-        }
+            if (updateError) throw updateError;
 
-        const current = items.find(i => i.id === item.id);
 
-        //  ako je novi item → nema ga u items listi još
-        let currentQty = current ? current.quantity : 0;
+            // 3. LOG
+            const { data: dbItem } = await supabaseClient
+                .from('items')
+                .select('quantity')
+                .eq('id', item.id)
+                .single();
 
-        let newQty;
+            const newQty = dbItem.quantity;
+            const oldQty = newQty - qtyChange;
+            await addLog(item.id, 'quantity', oldQty, newQty, tx.id);
+        });
 
-        if (type === 'receipt') {
-            newQty = currentQty + item.qty;
-        } else {
-            newQty = currentQty - item.qty;
-        }
+        await Promise.all(operations);
 
-        const { error: updateError } = await supabaseClient
-            .from('items')
-            .update({ quantity: newQty })
-            .eq('id', item.id);
 
-        if (updateError) {
-            showNotification(`❌ ${t('errUpdateStock')}`, 'error');
-            return;
-        }
+        return tx;
 
-        //  log quantity
-        await addLog(item.id, 'quantity', currentQty, newQty, tx.id);
+    } catch (err) {
+
+        console.error('TRANSACTION ERROR:', err);
+        showNotification(`❌ ${t('errCreateTx')}`, 'error');
+
+        throw err;
     }
 }
+
+
+
+
+
+
+
 
 // -------------------- FEATURE: TRANSACTION TABLE --------------------
 const transactionsContainer = document.querySelector('.transactions-list');
@@ -1808,15 +1986,309 @@ function renderTransactionsTable() {
             <td>#${txId}</td>
             <td>${type}</td>
             <td>${date}</td>
+            <td class="col-action" >
+
+                <button class="btn-pdf" title="Generate PDF" data-id="${tx.id}">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path fill="currentColor"
+                        d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5L14 3.5zM8 13h2.5a2.5 2.5 0 0 0 0-5H8v5zm2-1.5H9v-2h1a1 1 0 1 1 0 2zm1 1.5h1.5c1.8 0 3-1.2 3-3s-1.2-3-3-3H11v6zm1.5-1.5H12v-3h.5c1 0 1.5.7 1.5 1.5s-.5 1.5-1.5 1.5z"/>
+                    </svg>
+                </button>
+
+            </td>
         `;
 
-        tr.addEventListener('click', () => {
-            console.log('clicked transaction', tx.id);
-        });
+const pdfBtn = tr.querySelector('.btn-pdf');
+
+pdfBtn.addEventListener('click', async (e) => {
+
+    e.stopPropagation(); // da ne klikne row
+
+    try {
+
+        //  Učitaj items za ovu transakciju
+        const { data: items, error } = await supabaseClient
+            .from('transaction_items')
+            .select(`
+                quantity,
+                items (
+                    name,
+                    code,
+                    status,
+                    price
+                )
+            `)
+            .eq('transaction_id', tx.id);
+
+        if (error) {
+            console.error(error);
+            showNotification("❌ Failed to load items", "error");
+            return;
+        }
+
+        //  Prilagodi format za generatePDF
+        const itemsList = items.map(row => ({
+            name: row.items.name,
+            code: row.items.code,
+            status: row.items.status,
+            price: row.items.price,
+            qty: row.quantity
+        }));
+
+        //  Učitaj warehouse & partner
+        await fetchWarehouses();
+        await fetchPartners();
+
+        selectedWarehouse = tx.warehouse_id;
+        selectedPartner = tx.partner_id;
+
+        //  generiši PDF
+        generatePDF(tx, itemsList);
+
+    } catch (err) {
+        console.error(err);
+        showNotification("❌ PDF generation failed", "error");
+    }
+
+});
 
         transactionsBody.appendChild(tr);
     });
 }
+
+
+
+// -------------------------------------- PDF REPORT --------------------------------------
+
+
+//  POPUNJAVNJE PADAJUCIH MENIJA
+function populateDropdowns() {
+
+    const whSelect = document.getElementById('tx-warehouse');
+    const ptSelect = document.getElementById('tx-partner');
+
+    // reset
+    whSelect.innerHTML = `<option value="">${t("selectWarehouse")}</option>`;
+    ptSelect.innerHTML = `<option value="">${t("selectPartner")}</option>`;
+
+    warehouses.forEach(w => {
+        const opt = document.createElement('option');
+        opt.value = w.id;
+        opt.textContent = w.name;
+        whSelect.appendChild(opt);
+    });
+
+    partners.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name;
+        ptSelect.appendChild(opt);
+    });
+}
+
+// EVENTOVI
+document.getElementById('tx-warehouse').addEventListener('change', (e) => {
+    selectedWarehouse = e.target.value;
+});
+
+document.getElementById('tx-partner').addEventListener('change', (e) => {
+    selectedPartner = e.target.value;
+});
+
+// -------------------- GENERISANJE PDF IZVESATJA --------------------
+function generatePDF(tx, itemsList) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const warehouse = warehouses.find(w => w.id == selectedWarehouse);
+    const partner = partners.find(p => p.id == selectedPartner);
+
+    const setBold = () => doc.setFont(undefined, "bold");
+    const setNormal = () => doc.setFont(undefined, "normal");
+
+    let y = 20;
+
+    // ===============================
+    // HEADER
+    // ===============================
+    setBold();
+    doc.setFontSize(22);
+    doc.text(t("invoice"), 150, y);
+
+    doc.setDrawColor(0, 102, 153);
+    doc.line(10, y + 5, 200, y + 5);
+
+    y += 15;
+
+    // ===============================
+    // FROM / BILL TO
+    // ===============================
+    setBold();
+    doc.setFontSize(11);
+
+    doc.text(t("from"), 10, y);
+    doc.text(t("billTo"), 110, y);
+
+    setNormal();
+    doc.setFontSize(9);
+
+    doc.text(warehouse?.name || "-", 10, y + 6);
+    doc.text(warehouse?.address || "-", 10, y + 12);
+    doc.text(`${t("email")}: ${warehouse?.email || "-"}`, 10, y + 18);
+    doc.text(`${t("pib")}: ${warehouse?.pib || "-"}`, 10, y + 24);
+
+    doc.text(partner?.name || "-", 110, y + 6);
+    doc.text(partner?.address || "-", 110, y + 12);
+    doc.text(`${t("email")}: ${partner?.email || "-"}`, 110, y + 18);
+    doc.text(`${t("pib")}: ${partner?.pib || "-"}`, 110, y + 24);
+
+    y += 35;
+
+    // ===============================
+    // TRANSACTION
+    // ===============================
+    setBold();
+    doc.setFontSize(12);
+
+    doc.text(`${t("transaction")} #${tx.id}`, 10, y);
+
+    if (tx.type === "receipt") {
+        doc.setTextColor(0, 130, 0);
+        doc.text(t("receipt"), 150, y);
+    } else {
+        doc.setTextColor(180, 0, 0);
+        doc.text(t("issue"), 150, y);
+    }
+
+    doc.setTextColor(0);
+    doc.line(10, y + 3, 200, y + 3);
+
+    y += 12;
+
+    // ===============================
+    // TABLE HEADER  (manji font)
+    // ===============================
+    doc.setFillColor(0, 70, 120);
+    doc.rect(10, y, 190, 8, "F");
+
+    setBold();
+    doc.setTextColor(255);
+    doc.setFontSize(9); //  smanjeno
+
+    doc.text(t("colName"), 12, y + 5);
+    doc.text(t("colCode"), 65, y + 5);
+    doc.text(t("colQuantity"), 105, y + 5);
+    doc.text(t("colStatus"), 125, y + 5);
+    doc.text(t("colPrice"), 160, y + 5, { align: "right" });
+    doc.text(t("colTotal"), 195, y + 5, { align: "right" });
+
+    doc.setTextColor(0);
+    y += 10;
+
+    // ===============================
+    // ITEMS  (manji font)
+    // ===============================
+    setNormal();
+    doc.setFontSize(9); //  smanjeno
+
+    let grandTotal = 0;
+
+    itemsList.forEach((item, index) => {
+        const total = (item.qty || 0) * (item.price || 0);
+        grandTotal += total;
+
+        if (index % 2 === 0) {
+            doc.setFillColor(245);
+            doc.rect(10, y - 2, 190, 8, "F");
+        }
+
+        doc.text(item.name || "-", 12, y + 3);
+        doc.text(item.code || "-", 65, y + 3);
+        doc.text(String(item.qty ?? 0), 105, y + 3);
+        doc.text(item.status || "-", 125, y + 3);
+
+        doc.text(`${item.price ?? 0} €`, 160, y + 3, { align: "right" });
+        doc.text(`${total} €`, 195, y + 3, { align: "right" });
+
+        y += 8;
+
+        if (y > 270) {
+            doc.addPage();
+            y = 20;
+        }
+    });
+
+    // ===============================
+    // TOTAL
+    // ===============================
+    y += 10;
+
+    const vatPercent = warehouse?.vat || 0;
+    const vatRate = vatPercent / 100;
+
+    const vatAmount = grandTotal * vatRate;
+    const finalTotal = grandTotal + vatAmount;
+
+    setNormal();
+    doc.setFontSize(10);
+
+    doc.text(`${t("subtotal")}: ${grandTotal.toFixed(2)} €`, 140, y);
+    doc.text(`${t("vat")} (${vatPercent}%): ${vatAmount.toFixed(2)} €`, 140, y + 6);
+
+    doc.setFillColor(230);
+    doc.rect(120, y + 12, 80, 18, "F");
+
+    setBold();
+    doc.setFontSize(12);
+    doc.text(t("total"), 125, y + 20);
+
+    doc.setFontSize(14);
+    doc.text(`${finalTotal.toFixed(2)} €`, 195, y + 20, { align: "right" });
+
+    // ===============================
+    // FOOTER
+    // ===============================
+    const pageHeight = doc.internal.pageSize.height;
+    const startY = pageHeight - 35;
+
+    doc.line(10, startY - 5, 200, startY - 5);
+
+    const col1 = 10;
+    const col2 = 70;
+    const col3 = 130;
+
+    setBold();
+    doc.setFontSize(9);
+
+    doc.text(t("ourCompany"), col1, startY);
+    doc.text(t("contact"), col2, startY);
+    doc.text(t("paymentDetails"), col3, startY);
+
+    setNormal();
+    doc.setFontSize(8);
+
+    doc.text(warehouse?.name || "-", col1, startY + 5);
+    doc.text(warehouse?.address || "-", col1, startY + 10);
+    doc.text(`${t("mb")}: ${warehouse?.mb || "-"}`, col1, startY + 15);
+
+    doc.text(`${t("phone")}: ${warehouse?.phone || "-"}`, col2, startY + 5);
+    doc.text(`${t("email")}: ${warehouse?.email || "-"}`, col2, startY + 10);
+    doc.text(`${t("web")}: ${warehouse?.website || "-"}`, col2, startY + 15);
+
+    doc.text(`${t("bank")}: ${warehouse?.bank || "-"}`, col3, startY + 5);
+    doc.text(`IBAN: ${warehouse?.iban || "-"}`, col3, startY + 10);
+    doc.text(`SWIFT: ${warehouse?.swift || "-"}`, col3, startY + 15);
+
+    doc.save(`invoice_${tx.id}.pdf`);
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -1932,14 +2404,19 @@ function renderArchiveItems() {
             <td>${item.code || '-'}</td>
             <td>${item.location || '-'}</td>
             <td>${item.quantity}</td>
-            <td>
-                <button class="btn-restore">${t('restore')}</button>
+            <td class="col-action">
+                <button class="ti-restore" title="${t('restore')}">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path fill="currentColor"
+                        d="M12 5V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/>
+                    </svg>
+                </button>
             </td>
         `;
 
     
         //  RESTORE BUTTON
-        const restoreBtn = tr.querySelector('.btn-restore');
+        const restoreBtn = tr.querySelector('.ti-restore');
 
         restoreBtn.addEventListener('click', async function() {
 
@@ -1998,13 +2475,16 @@ nav.addEventListener('click', function (event) {
     activateTab(selectedTab);
 
 });
+
+
+// PRIKAZ SADRAJA TABA
 function activateTab(tabElement) {
 
     // prvo uzmi tabName
     const tabName = tabElement.dataset.tab;
 
     // Ako se izadje iz INPUT taba resetuj odabtani item
-    if (tabName !== 'input') {
+    if (tabName !== 'item') {
         resetDisplay();
     }
 
@@ -2024,13 +2504,18 @@ function activateTab(tabElement) {
         .getElementById(tabName + '-view')
         .classList.add('active-view');
 
-    if (tabName === 'table') {
+
+    // fallback iako se sve vec azurira putem
+    if (tabName === TAB.INVENTORY) {
         renderTable();
     }
 
-    if (tabName === 'transactions') {
+    if (tabName === TAB.TRANSACTION) {
         renderTransactionsTable(); 
     }
+    
+
+
 
 }
 
@@ -2058,6 +2543,315 @@ document.addEventListener("click", (e) => {
         sidebar.classList.add("hidden");
     }
 });
+
+// ------------- SETTINGS ---------------
+const settingsBtn = document.getElementById('settings-btn');
+const submenu = document.getElementById('settings-submenu');
+
+settingsBtn.addEventListener('click', () => {
+    submenu.classList.toggle('hidden');
+});
+
+
+document.getElementById('open-warehouses').addEventListener('click', async () => {
+    await fetchWarehouses();
+    sidebar.classList.add('hidden');
+    showCustomView('warehouses-view');
+    renderWarehouses();
+});
+
+document.getElementById('open-partners').addEventListener('click', async () => {
+    await fetchPartners();
+    sidebar.classList.add('hidden');
+    showCustomView('partners-view');
+    renderPartners();
+});
+
+
+function renderWarehouses() {
+
+    const container = document.getElementById('warehouses-list');
+    container.innerHTML = '';
+
+    if (!warehouses || warehouses.length === 0) {
+        container.innerHTML = `<p>${t("noWarehouses")}</p>`;
+        return;
+    }
+
+    warehouses.forEach(w => {
+
+        const div = document.createElement('div');
+        div.classList.add('transaction-item');
+
+        div.innerHTML = `
+            <div class="ti-left">
+                <span class="ti-name">${w.name}</span>
+                <span class="ti-stock">${w.address || ''}</span>
+            </div>
+
+            <div class="ti-actions">
+
+                <button class="ti-copy">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path fill="currentColor" d="M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm4 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h12v14z"/>
+                    </svg>
+                </button>
+
+                <button class="ti-delete">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path fill="currentColor"
+                        d="M9 3h6l1 1h4v2H4V4h4l1-1zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM6 9h2v9H6V9z"/>
+                    </svg>
+                </button>
+
+            </div>
+        `;
+
+        //  DELETE
+        const deleteBtn = div.querySelector('.ti-delete');
+        deleteBtn.addEventListener('click', async () => {
+
+            await supabaseClient
+                .from('warehouses')
+                .delete()
+                .eq('id', w.id);
+
+            await fetchWarehouses();
+            renderWarehouses();
+        });
+
+        //  COPY (prefill modal)
+        const copyBtn = div.querySelector('.ti-copy');
+        copyBtn.addEventListener('click', () => {
+
+            document.getElementById('wh-name').value = w.name;
+            document.getElementById('wh-address').value = w.address || '';
+            document.getElementById('wh-email').value = w.email || '';
+            document.getElementById('wh-phone').value = w.phone || '';
+            document.getElementById('wh-website').value = w.website || '';
+            document.getElementById('wh-pib').value = w.pib || '';
+            document.getElementById('wh-mb').value = w.mb || '';
+            document.getElementById('wh-bank').value = w.bank || '';
+            document.getElementById('wh-iban').value = w.iban || '';
+            document.getElementById('wh-swift').value = w.swift || '';
+
+            whModal.classList.remove('hidden');
+        });
+
+        container.appendChild(div);
+    });
+}
+
+function renderPartners() {
+
+    const container = document.getElementById('partners-list');
+    container.innerHTML = '';
+
+    if (!partners || partners.length === 0) {
+        container.innerHTML = `<p>${t("noPartners")}</p>`;
+        return;
+    }
+
+    partners.forEach(p => {
+
+        const div = document.createElement('div');
+        div.classList.add('transaction-item');
+
+        div.innerHTML = `
+            <div class="ti-left">
+                <span class="ti-name">${p.name}</span>
+                <span class="ti-stock">${p.type}</span>
+            </div>
+
+            <div class="ti-actions">
+
+                <button class="ti-copy">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path fill="currentColor" d="M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm4 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h12v14z"/>
+                    </svg>
+                </button>
+
+                <button class="ti-delete">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path fill="currentColor"
+                        d="M9 3h6l1 1h4v2H4V4h4l1-1zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM6 9h2v9H6V9z"/>
+                    </svg>
+                </button>
+
+            </div>
+        `;
+
+        //  DELETE
+        const deleteBtn = div.querySelector('.ti-delete');
+        deleteBtn.addEventListener('click', async () => {
+
+            await supabaseClient
+                .from('partners')
+                .delete()
+                .eq('id', p.id);
+
+            await fetchPartners();
+            renderPartners();
+        });
+
+        //  COPY (prefill modal)
+        const copyBtn = div.querySelector('.ti-copy');
+        copyBtn.addEventListener('click', () => {
+
+            document.getElementById('pt-name').value = p.name;
+            document.getElementById('pt-address').value = p.address || '';
+            document.getElementById('pt-email').value = p.email || '';
+            document.getElementById('pt-phone').value = p.phone || '';
+            document.getElementById('pt-website').value = p.website || '';
+            document.getElementById('pt-type').value = p.type || 'supplier';           
+            document.getElementById('pt-pib').value = p.pib || '';
+            document.getElementById('pt-mb').value = p.mb || '';
+
+
+            ptModal.classList.remove('hidden');
+        });
+
+        container.appendChild(div);
+    });
+}
+
+
+function showCustomView(viewId) {
+
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+
+    document.querySelectorAll('.view').forEach(view => {
+        view.classList.remove('active-view');
+    });
+
+    document.getElementById(viewId).classList.add('active-view');
+}
+
+// ------------------------------------ + ADD ------------------------------------
+
+
+// Otvaranje forme
+const whModal = document.querySelector('.warehouse-modal');
+const ptModal = document.querySelector('.partner-modal');
+
+document.getElementById('add-warehouse-btn').addEventListener('click', () => {
+    whModal.classList.remove('hidden');
+    resetWarehouseForm();
+});
+
+
+document.getElementById('add-partner-btn').addEventListener('click', () => {
+    ptModal.classList.remove('hidden');
+      resetPartnerForm();
+});
+
+// ------------------------------------ SAVE ------------------------------------
+document.getElementById('wh-save').addEventListener('click', async () => {
+
+    const name = document.getElementById('wh-name').value.trim();
+    if (!name) return;
+
+    await supabaseClient.from('warehouses').insert({
+        name,
+        address: document.getElementById('wh-address').value,
+        email: document.getElementById('wh-email').value,
+        phone: document.getElementById('wh-phone').value,
+        website: document.getElementById('wh-website').value,
+        pib: document.getElementById('wh-pib').value,
+        mb: document.getElementById('wh-mb').value,
+
+        bank: document.getElementById('wh-bank').value,
+        iban: document.getElementById('wh-iban').value,
+        swift: document.getElementById('wh-swift').value,
+        vat: parseFloat(document.getElementById('wh-vat').value || 0),
+
+        user_id: currentUser.id
+    });
+
+    whModal.classList.add('hidden');
+
+    resetWarehouseForm();
+
+    await fetchWarehouses();
+    renderWarehouses();
+});
+
+
+document.getElementById('pt-save').addEventListener('click', async () => {
+
+    const name = document.getElementById('pt-name').value.trim();
+    if (!name) return;
+
+    await supabaseClient.from('partners').insert({
+        name,
+        address: document.getElementById('pt-address').value,
+        email: document.getElementById('pt-email').value,
+        phone: document.getElementById('pt-phone').value,
+        website: document.getElementById('pt-website').value,
+        pib: document.getElementById('pt-pib').value,
+        mb: document.getElementById('pt-mb').value,
+
+        type: document.getElementById('pt-type').value,
+        user_id: currentUser.id
+    });
+
+    ptModal.classList.add('hidden');
+
+   resetPartnerForm()
+
+    await fetchPartners();
+    renderPartners();
+});
+
+// ------------------------------------ CANCEl ------------------------------------
+document.getElementById('wh-cancel').addEventListener('click', () => {
+    whModal.classList.add('hidden');
+});
+
+document.getElementById('pt-cancel').addEventListener('click', () => {
+    ptModal.classList.add('hidden');
+});
+
+
+// ------------------------------------ RESET FOMRS ------------------------------------
+function resetWarehouseForm() {
+
+    document.getElementById('wh-name').value = '';
+    document.getElementById('wh-address').value = '';
+    document.getElementById('wh-email').value = '';
+    document.getElementById('wh-phone').value = '';
+    document.getElementById('wh-website').value = '';
+    document.getElementById('wh-pib').value = '';
+    document.getElementById('wh-mb').value = '';
+    document.getElementById('wh-bank').value = "";
+    document.getElementById('wh-iban').value = "";
+    document.getElementById('wh-swift').value = "";
+    document.getElementById('wh-vat').value = ""
+
+}
+
+function resetPartnerForm() {
+
+    document.getElementById('pt-name').value = '';
+    document.getElementById('pt-address').value = '';
+    document.getElementById('pt-email').value = '';
+    document.getElementById('pt-phone').value = '';
+    document.getElementById('pt-website').value = '';
+    document.getElementById('pt-pib').value = '';
+    document.getElementById('pt-mb').value = '';
+    document.getElementById('pt-type').value = 'supplier';
+
+}
+
+
+
+
+
+
+
+
 
 // -------------------- FEATURE: SWIPE --------------------
 //1.  SELECTORS ===
@@ -2135,9 +2929,9 @@ let currentLang = 'en'; // default
 const translations = {
 
     sr: {
-        input: "ULAZ",
-        table: "TABELA",
-        management: "UPRAVLJANJE",
+        item: "ARTIKL",
+        inventory: "INVENTAR",
+        dashboard: "PREGLED",
         transaction: "TRANSAKCIJA",
 
         save: "Sačuvaj",
@@ -2184,7 +2978,7 @@ const translations = {
         colName: "IME",
         colCode: "KOD",
         colLocation: "LOKACIJA",
-        colQuantity: "KOLIČINA",
+        colQuantity: "KOLICINA",
         colStatus: "STATUS",
         colPrice: "CENA",
         colTotal: "UKUPNO",
@@ -2285,6 +3079,8 @@ const translations = {
         sidebar_settings: "Podešavanja",
         sidebar_archive: "Arhiva",
         sidebar_logout: "Odjava",
+        sidebar_WH: "Skladišta",
+        sidebar_Partner: "Partneri",
         
         //SECTION TITLE
         selectedItem: "Izabrani artikal",
@@ -2303,6 +3099,7 @@ const translations = {
         transactionsTitle: "Transakcije",
         txType: "Tip",
         txDate: "Datum",
+        txAction: "Akcija",
 
         //TRANSACTION MODULE
         txNewReceipt: "Nova PRIJEMNICA",
@@ -2310,22 +3107,64 @@ const translations = {
         txSearchPlaceholder: "Pretraži artikal...",
         txSelectedItems: "Izabrani artikli",
         txGeneratePDF: "Generiši PDF",
+        warehouse:"Skladište *",
+        partner:"Partner *",
+
+        selectWarehouse: "Izaberi skladište",
+        selectPartner: "Izaberi partnera",
 
         confirm: "Potvrdi",
         cancel: "Otkaži",
 
         //TRANSACTION ID
-        transactionID: "ID Transakcije:"
+        transactionID: "ID Transakcije:",
 
+        // My WH & My Partner => VIEW
+        whPageTitle: "Moja skladišta",
+        ptPageTitle: "Moji partneri",
 
+        addWarehouse: "+ Dodaj skladište",
+        addPartner: "+ Dodaj partnera",
+        noWarehouses: "Nema skladišta",
+        noPartners: "Nema partnera",
 
+        //My WH & My Partner => FORMs
+        whTitle: "Dodaj Skladište",
+        ptTitle: "Dodaj Partnera",
+
+        whName: "Naziv *",
+        whAddress: "Adresa",
+
+        type: "Tip",
+        supplier: "Dobavljač",
+        customer: "Kupac",
+
+        // INVOICE PDF
+        invoice: "FAKTURA",
+        from: "OD:",
+        billTo: "ZA:",
+        email: "Email",
+        pib: "PIB",
+        mb: "MB:",
+        receipt: "PRIJEM",
+        issue: "OTPREM",
+        subtotal: "Medjuzbir",
+        vat: "PDV",
+        total: "UKUPNO",
+        ourCompany: "NASA FIRMA",
+        contact: "KONTAKT",
+        paymentDetails: "PLACANJE",
+        phone: "Telefon",
+        web: "Web",
+        bank: "Banka"
 
     },
 
     en: {
-        input: "INPUT",
-        table: "TABLE",
-        management: "MANAGEMENT",
+        
+        item: "ITEM",
+        inventory: "INVENTORY",
+        dashboard: "DASHBOARD",
         transaction: "TRANSACTION",
 
         save: "Save",
@@ -2475,6 +3314,8 @@ const translations = {
         sidebar_settings: "Settings",
         sidebar_archive: "Archive",
         sidebar_logout: "Logout",
+        sidebar_WH: "Warehouses",
+        sidebar_Partner: "Partners",
 
         //SECTION TITLE
         selectedItem: "Selected Item",
@@ -2493,6 +3334,7 @@ const translations = {
         transactionsTitle: "Transactions",
         txType: "Type",
         txDate: "Date",
+        txAction: "Action",
 
         //TRANSACTION MODULE
         txNewReceipt: "New RECEIPT",
@@ -2500,12 +3342,59 @@ const translations = {
         txSearchPlaceholder: "Search item...",
         txSelectedItems: "Selected items",
         txGeneratePDF: "Generate PDF",
+        warehouse:"Warehouse *",
+        partner:"Partner *",
+
+        selectWarehouse: "Select warehouse",
+        selectPartner: "Select partner",
 
         confirm: "Confirm",
         cancel: "Cancel",
 
          //TRANSACTION ID
-        transactionID: "Transaction ID:"
+        transactionID: "Transaction ID:",
+
+        // My WH & My Partner => VIEW
+        whPageTitle: "My Warehouses",
+        ptPageTitle: "My Partners",
+
+        addWarehouse: "+ Add Warehouse",
+        addPartner: "+ Add Partner",
+
+        noWarehouses: "No warehouses yet",
+        noPartners: "No partners yet",
+
+        //My WH FORM
+        whTitle: "Add Warehouse",
+        ptTitle: "Add Partner",
+
+        whName: "Name *",
+        whAddress: "Address",
+
+        type: "Type",
+        supplier: "Supplier",
+        customer: "Customer",
+
+        //INVOICE
+        invoice: "INVOICE",
+        from: "FROM:",
+        billTo: "BILL TO:",
+        email: "Email",
+        pib: "PIB",
+        mb: "Company No.",
+        receipt: "RECEIPT",
+        issue: "ISSUE",
+        subtotal: "Subtotal",
+        vat: "VAT",
+        total: "TOTAL",
+        ourCompany: "OUR COMPANY",
+        contact: "CONTACT",
+        paymentDetails: "PAYMENT DETAILS",
+        phone: "Phone",
+        web: "Web",
+        bank: "Bank"
+
+
 
 
       

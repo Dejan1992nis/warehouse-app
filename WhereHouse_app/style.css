@@ -24,7 +24,82 @@ body {
     padding: 16px;
     background: transparent;
 }
+/* ================= STARTING LOADING ================= */
 
+.starting-loading {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #ecf0f3, #dfe6ec);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+/* card u sredini */
+.loading-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+
+    padding: 40px 50px;
+    border-radius: 20px;
+
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+/* logo (isti stil kao app) */
+.loading-logo {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    font-size: 22px;
+}
+
+.loading-logo .logo-main {
+    color: #3498db;
+}
+
+.loading-logo .logo-divider {
+    width: 2px;
+    height: 20px;
+    background: #ccc;
+    margin: 0 6px;
+}
+
+.loading-logo .logo-sub {
+    color: #555;
+}
+
+/* spinner */
+.starting-loading .loader {
+    width: 40px;
+    height: 40px;
+
+    border: 4px solid #e0e0e0;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+
+    animation: spin 0.8s linear infinite;
+}
+.starting-loading.fade-out {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* animacija */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* text */
+.loading-text {
+    font-size: 14px;
+    color: #777;
+}
 /* ================= HEADER ================= */
 
 .header {
@@ -163,6 +238,7 @@ body {
     animation: slideIn 0.2s ease;
 }
 
+
 /* HEADER */
 .sidebar-header {
     display: flex;
@@ -238,7 +314,23 @@ body {
     background: rgba(255,255,255,0.08);
     margin: 14px 0;
 }
+ /*==================== SUBMENI ======================*/
 
+
+.submenu {
+    margin-left: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.submenu button {
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+.submenu button:hover {
+    opacity: 1;
+}
 
  /*====================================== USER ======================================*/
 
@@ -667,7 +759,26 @@ body {
     font-size: 14px;
     font-weight: 500;
 }
+/*========================== WH & P Dropdown*/
+.tx-meta {
+    display: flex;
+    gap: 10px;
+}
 
+.tx-meta .input-group {
+    flex: 1;
+}
+
+.tx-meta label {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.tx-meta select {
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 13px;
+}
 
 
 /* ================= QUANTITY */
@@ -714,6 +825,7 @@ body {
 
 /* ================= SAVE */
 .save-btn {
+    
     width: 100%;
     padding: 14px;
 
@@ -875,6 +987,11 @@ body {
 .table td:nth-child(5) { max-width: 100px; }
 
 
+
+.col-action button {
+    margin: 0 auto;
+}
+
 /* ===========================================================
    ROWS
 =========================================================== */
@@ -952,8 +1069,10 @@ body {
 }
 
 
-/* ============================= ADD EDIT MODAL =================================== */
+/* ===================================  MODAL (Add, Edit, My Werehouse, My Partner) =================================== */
 .modal {
+
+    
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.65);
@@ -963,6 +1082,7 @@ body {
     align-items: center;
 
     z-index: 1000;
+
 }
 
 /* TRANSACTION */
@@ -994,6 +1114,11 @@ body {
     
     box-shadow: 0 20px 50px rgba(0,0,0,0.7);
     animation: fadeModal 0.2s ease;
+
+    
+    max-height: 90vh;     /* OGRANIČAVA VISINU */
+    overflow-y: auto;     /* UBACUJE SCROLL */
+
 }
 
 .input-group {
@@ -1141,6 +1266,23 @@ body {
     opacity: 1;
     transform: translateY(0);
 }
+
+ /* Padjuci meni u formi za My Partner */
+.input-group select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+
+    background-color: #0f172a; /* isto kao input */
+    color: white;
+
+    font-size: 14px;
+}
+
+
+
 
 /* ======================================== HISTORY MODAL ======================================= */
 
@@ -1928,9 +2070,10 @@ body {
 
 /* ITEM ROW */
 .transaction-item {
-    display: grid;
-    grid-template-columns: 1fr 70px 40px; 
+    display: flex;
+    justify-content: space-between;
     align-items: center;
+
 
     padding: 10px 12px;
     border-radius: 10px;
@@ -1988,7 +2131,7 @@ body {
 /* ACTIONS btn */
 .ti-actions {
     display: flex;
-    gap: 8px;
+    gap: 12px;
 }
 
 .ti-delete {
@@ -2031,6 +2174,22 @@ body {
     color: #bbb;
 }
 
+.btn-pdf {
+    background: transparent;   /* ❌ skida belo */
+    border: none;              /* ❌ skida okvir */
+    color:  #94a3b8;         /* ista boja kao ostali */
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+
+
+
+
 /* SWITCH */
 .switch {
     position: relative;
@@ -2042,6 +2201,7 @@ body {
 .switch input {
     display: none;
 }
+
 
 .slider {
     position: absolute;
@@ -2077,30 +2237,13 @@ input:checked + .slider::before {
 
 /* ======================================================= ARCHIVE ========================================================= */
 /* RESTOR btn */
-.btn-restore {
-    padding: 6px 12px;
-    border-radius: 6px;
+.ti-restore {
+    background: transparent;
     border: none;
-
-    background-color: #2ecc71; /* green */
-    color: white;
-
-    font-size: 13px;
-    font-weight: 500;
-
+    color: #94a3b8;
     cursor: pointer;
 
-    transition: all 0.15s ease;
-}
-
-
-/* HOVER (desktop) */
-.btn-restore:hover {
-    background-color: #27ae60;
-}
-
-
-/* PRESS EFFECT (mobile feel) */
-.btn-restore:active {
-    transform: scale(0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
