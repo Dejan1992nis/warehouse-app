@@ -18,6 +18,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     
 </head>
@@ -215,17 +216,18 @@
                 </div>
                 
             </div>
-            <!-- DropDown-->
 
+            <!-- DropDown-->
+            <div class="section-title" >Warehouse & Partner</div>
             <div class="tx-meta">
-                
+
                 <div class="input-group">
-                    <label>Warehouse *</label>
+                    <label data-i18n="sidebar_WH">Warehouse *</label>
                     <select id="quick-warehouse"></select>
                 </div>
 
                 <div class="input-group">
-                    <label>Partner *</label>
+                    <label data-i18n="sidebar_Partner">Partner *</label>
                     <select id="quick-partner"></select>
                 </div>
 
@@ -277,9 +279,9 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th data-i18n="txType">Type</th>
-                            <th data-i18n="txDate">Date</th>
-                            <th data-i18n="txAction">Action</th>
+                            <th data-i18n="txType">TYPE</th>
+                            <th data-i18n="txDate">DATE</th>
+                            <th data-i18n="txAction">ACTION</th>
                         </tr>
                     </thead>
 
@@ -289,6 +291,13 @@
 
                 </table>
 
+            </div>
+
+            <!-- Trasaction-Pagination -->
+            <div class="pagination transaction-pagination">
+                <button class="tx-prev-btn" data-i18n="prev">◀ Prev</button>
+                <span class="tx-page-info"></span>
+                <button class="tx-next-btn" data-i18n="next">Next ▶</button>
             </div>
 
         </section>
@@ -514,6 +523,13 @@
 
             </div>
 
+            <!-- Archive-Pagination -->
+            <div class="pagination archive-pagination">
+                <button class="ar-prev-btn" data-i18n="prev">◀ Prev</button>
+                <span class="ar-page-info"></span>
+                <button class="ar-next-btn" data-i18n="next">Next ▶</button>
+            </div>
+
             <!-- EMPTY STATE -->
             <div class="empty-state archive-empty hidden">
                 <p>No archived items</p>
@@ -696,6 +712,8 @@
 
                 </div>
             </div>
+
+
 
 
 
@@ -935,20 +953,43 @@
 
                 </div>
             </div>
-        
- 
-<!--  ======================================== NAVIGATION ========================================-->
- 
-        <nav class="navigation">
-            <button class="tab active"  data-tab="item"         data-i18n="item">ITEM</button>
-            <button class="tab"         data-tab="transactions" data-i18n="transaction">TRANSACTION</button>
-            <button class="tab"         data-tab="inventory"    data-i18n="inventory">INVENTORY</button>
-            <button class="tab"         data-tab="dashboard"    data-i18n="dashboard">DASHBOARD</button>
-        </nav>
+       
+            
+<!-- MODAL CONFIRM -->
+<div id="confirm-modal" class="modal hidden">
+
+    <div class="modal__content confirm-box">
+
+        <h3 class="modal__title" id="confirm-title"data-i18n="confirmTitle">Confirm action</h3>
+
+        <p id="confirm-text">Are you sure?</p>
+
+        <div class="modal__actions">
+
+            <button id="confirm-ok" class="btn-confirm" data-i18n="confirm">Confirm</button>
+
+            <button id="confirm-cancel" class="btn-cancel" data-i18n="cancel"> Cancel</button>
+
+        </div>
+
+    </div>
+
+</div>
 
 
     </div>
 
+ 
+<!--  ======================================== NAVIGATION ========================================-->
+ 
+        <nav class="navigation">
+            <div class="nav-inner">
+            <button class="tab active"  data-tab="item"         data-i18n="item">ITEM</button>
+            <button class="tab"         data-tab="transactions" data-i18n="transaction">TRANSACTION</button>
+            <button class="tab"         data-tab="inventory"    data-i18n="inventory">INVENTORY</button>
+            <button class="tab"         data-tab="dashboard"    data-i18n="dashboard">DASHBOARD</button>
+            </div>
+        </nav>
 
 
 
@@ -1222,6 +1263,29 @@ ADVANCED INVENTORY MANAGEMENT SYSTEM
 ✔ Multi-language support
 ✔ Performance optimized
 ✔ Mobile-ready UX
+
+
+1. Prfo da defisnemo sat sve ardimo 
+
+
+1. DESIGN SYSTEM (koristimo :root)
+2. REUSABILITY ( primer
+                        .btn {}
+                        .btn--primary {}
+                        .btn--danger {}
+                        .btn--small {}
+                        )
+3. FLUID RESPONSIVENESS (clamp()
+                            %
+                            grid auto-fit
+                            flex)
+
+
+
+
+
+
+
 
 ------------------------------------------------------------
 -->

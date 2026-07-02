@@ -58,7 +58,7 @@ async function fetchItems() {
     items.push(...activeItems);
 
     updateDashboardCards();
-    renderTable();
+    renderInventoryTable();
     renderLowStockTable();
 }
 //  uzima sve logove za jedan item sortira ih (najnoviji prvi)
@@ -152,8 +152,8 @@ let selectedItem        = null;
 let originalQuantity    = null;
 let tempQuantity        = 0;
 
-let currentPage         = 1;
-const itemsPerPage      = 20;
+
+
 
 let warehouses = [];
 let partners = [];
@@ -1061,7 +1061,7 @@ editCancelBtn.addEventListener('click', () => {
 
 
 
-// -------------------- FEATURE: ARCHIVE --------------------
+// -------------------- FEATURE: ARCHIVE-BTN --------------------
 //1.  SELECTORS ===
 const archiveItemBtn     = document.querySelector('.btn-archive');
 const archiveModal       = document.querySelector('.archive-modal');
@@ -1131,24 +1131,36 @@ const optionalFields = document.getElementById('optional-fields');
 
 // -------------------- FEATURE: TABLE VIEW --------------------
 //1.  SELECTORS ===
-const tableWrapper      = document.querySelector('.table-wrapper');
-const tableBody         = document.querySelector('.table-body');
+const tableWrapper = document.querySelector('.table-wrapper');
+const tableBody = document.querySelector('.table-body');
 
 
 //3.  FUNCTIONS ===
-function renderTable() {
+
+
+
+// Render Inventory Table
+function renderInventoryTable() {
 
     tableBody.innerHTML = '';
 
-    const totalPages = Math.ceil(items.length / itemsPerPage) || 1;
+    const totalPages =
+        Math.ceil(
+            items.length /
+            inventoryPagination.itemsPerPage
+        ) || 1;
 
-    const start = (currentPage - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-
-    const pageItems = items.slice(start, end);
+    const pageItems = paginate(
+        items,
+        inventoryPagination.currentPage,
+        inventoryPagination.itemsPerPage
+    );
 
     if (pageItems.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="4">${t('noItems')}</td></tr>`;
+
+        tableBody.innerHTML =
+            `<tr><td colspan="4">${t('noItems')}</td></tr>`;
+
     } else {
 
         pageItems.forEach(item => {
@@ -1163,28 +1175,38 @@ function renderTable() {
                 <td>${item.price} RSD</td>
                 <td>${item.quantity * item.price} RSD</td>
                 <td>${item.status}</td>
-                <td>${item.limit} </td>
+                <td>${item.limit}</td>
             `;
 
             tr.addEventListener('click', function () {
+
                 selectItem(item);
                 goToInputTab();
+
             });
 
             tableBody.appendChild(tr);
         });
     }
 
-    pageinfo.textContent = `Page ${currentPage} / ${totalPages}`;
+    pageinfo.textContent =
+        `Page ${inventoryPagination.currentPage} / ${totalPages}`;
 
-    prevBtn.disabled = currentPage === 1;
-    nextBtn.disabled = currentPage === totalPages;
+    prevBtn.disabled =
+        inventoryPagination.currentPage === 1;
+
+    nextBtn.disabled =
+        inventoryPagination.currentPage === totalPages;
 }
+
 function goToInputTab() {
-    document.querySelector(`[data-tab="${TAB.ITEM}"]`).click();
+
+    document
+        .querySelector(`[data-tab="${TAB.ITEM}"]`)
+        .click();
+
     clearBtn.style.display = 'block';
 }
-
 
 // -------------------- FEATURE: PAGINATION --------------------
 //1.  SELECTORS ===
@@ -1192,27 +1214,49 @@ const prevBtn           = document.querySelector('.prev-btn');
 const nextBtn           = document.querySelector('.next-btn');
 const pageinfo          = document.querySelector('.page-info');
 
+const inventoryPagination = {
+    currentPage: 1,
+    itemsPerPage: 10
+};
+
+
 //3.  FUNCTIONS ===
-function setupPagination() {
+function setupInventoryPagination() {
 
     prevBtn.addEventListener('click', function () {
-        if (currentPage > 1) {
-            currentPage--;
-            renderTable();
+
+        if (inventoryPagination.currentPage > 1) {
+
+            inventoryPagination.currentPage--;
+
+            renderInventoryTable();
         }
     });
 
     nextBtn.addEventListener('click', function () {
 
-        const totalPages = Math.ceil(items.length / itemsPerPage);
+        const totalPages =
+            Math.ceil(
+                items.length /
+                inventoryPagination.itemsPerPage
+            );
 
-        if (currentPage < totalPages) {
-            currentPage++;
-            renderTable();
+        if (inventoryPagination.currentPage < totalPages) {
+
+            inventoryPagination.currentPage++;
+
+            renderInventoryTable();
         }
     });
 }
+// Generička funkcija za pagination
+function paginate(data, currentPage, itemsPerPage) {
 
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+
+    return data.slice(start, end);
+}
 
 
 // ========================================================== MANAGEMENT ==========================================================
@@ -1679,12 +1723,19 @@ function renderTransactionList() {
             input.value = value;
         });
 
-const deleteBtn = div.querySelector('.ti-delete');
+        const deleteBtn = div.querySelector('.ti-delete');
 
-deleteBtn.addEventListener('click', () => {
-    transactionItems = transactionItems.filter(i => i.id !== item.id);
-    renderTransactionList();
-});
+        deleteBtn.addEventListener('click', () => {
+
+            openConfirm({
+                text: t('removeItemQuestion'),
+                onConfirm: () => {
+                    transactionItems = transactionItems.filter(i => i.id !== item.id);
+                    renderTransactionList();
+                }
+            });
+
+        });
 
         
         //  COPY (OVDE TREBA!)
@@ -1939,6 +1990,9 @@ async function createTransaction(itemsList, type) {
 const transactionsContainer = document.querySelector('.transactions-list');
 const transactionsBody = document.querySelector('.transactions-body');
 
+
+
+
 async function fetchTransactions() {
 
     const { data, error } = await supabaseClient
@@ -1962,18 +2016,42 @@ function renderTransactionsTable() {
 
     transactionsBody.innerHTML = '';
 
+    const totalPages =
+        Math.ceil(
+            transactions.length /
+            transactionPagination.itemsPerPage
+        ) || 1;
+
+    const pageTransactions = paginate(
+        transactions,
+        transactionPagination.currentPage,
+        transactionPagination.itemsPerPage
+    );
+
     if (!transactions || transactions.length === 0) {
+
         transactionsBody.innerHTML =
-            `<tr><td colspan="2" data-i18n="NoTransactions">${t('NoTransactions')}</td></tr>`;
+            `<tr><td colspan="4" data-i18n="NoTransactions">${t('NoTransactions')}</td></tr>`;
+
+        txPageInfo.textContent = `Page 1 / 1`;
+
+        txPrevBtn.disabled = true;
+        txNextBtn.disabled = true;
+
         return;
     }
 
-    transactions.forEach(tx => {
+    pageTransactions.forEach(tx => {
 
         const tr = document.createElement('tr');
-    
-        const txId = tx.id
-        const type = tx.type === 'receipt' ? t('receiveBtn') : t('issueBtn');
+
+        const txId = tx.id;
+
+        const type =
+            tx.type === 'receipt'
+                ? t('receiveBtn')
+                : t('issueBtn');
+
         const date = new Date(tx.created_at).toLocaleString('sr-RS', {
             day: '2-digit',
             month: '2-digit',
@@ -1986,7 +2064,7 @@ function renderTransactionsTable() {
             <td>#${txId}</td>
             <td>${type}</td>
             <td>${date}</td>
-            <td class="col-action" >
+            <td class="col-action">
 
                 <button class="btn-pdf" title="Generate PDF" data-id="${tx.id}">
                     <svg viewBox="0 0 24 24" width="18" height="18">
@@ -1998,65 +2076,111 @@ function renderTransactionsTable() {
             </td>
         `;
 
-const pdfBtn = tr.querySelector('.btn-pdf');
+        const pdfBtn = tr.querySelector('.btn-pdf');
 
-pdfBtn.addEventListener('click', async (e) => {
+        pdfBtn.addEventListener('click', async (e) => {
 
-    e.stopPropagation(); // da ne klikne row
+            e.stopPropagation();
 
-    try {
+            try {
 
-        //  Učitaj items za ovu transakciju
-        const { data: items, error } = await supabaseClient
-            .from('transaction_items')
-            .select(`
-                quantity,
-                items (
-                    name,
-                    code,
-                    status,
-                    price
-                )
-            `)
-            .eq('transaction_id', tx.id);
+                const { data: items, error } = await supabaseClient
+                    .from('transaction_items')
+                    .select(`
+                        quantity,
+                        items (
+                            name,
+                            code,
+                            status,
+                            price
+                        )
+                    `)
+                    .eq('transaction_id', tx.id);
 
-        if (error) {
-            console.error(error);
-            showNotification("❌ Failed to load items", "error");
-            return;
-        }
+                if (error) {
+                    console.error(error);
+                    showNotification("❌ Failed to load items", "error");
+                    return;
+                }
 
-        //  Prilagodi format za generatePDF
-        const itemsList = items.map(row => ({
-            name: row.items.name,
-            code: row.items.code,
-            status: row.items.status,
-            price: row.items.price,
-            qty: row.quantity
-        }));
+                const itemsList = items.map(row => ({
+                    name: row.items.name,
+                    code: row.items.code,
+                    status: row.items.status,
+                    price: row.items.price,
+                    qty: row.quantity
+                }));
 
-        //  Učitaj warehouse & partner
-        await fetchWarehouses();
-        await fetchPartners();
+                await fetchWarehouses();
+                await fetchPartners();
 
-        selectedWarehouse = tx.warehouse_id;
-        selectedPartner = tx.partner_id;
+                selectedWarehouse = tx.warehouse_id;
+                selectedPartner = tx.partner_id;
 
-        //  generiši PDF
-        generatePDF(tx, itemsList);
+                generatePDF(tx, itemsList);
 
-    } catch (err) {
-        console.error(err);
-        showNotification("❌ PDF generation failed", "error");
-    }
+            } catch (err) {
 
-});
+                console.error(err);
+                showNotification("❌ PDF generation failed", "error");
+
+            }
+
+        });
 
         transactionsBody.appendChild(tr);
     });
+
+    txPageInfo.textContent =
+        `Page ${transactionPagination.currentPage} / ${totalPages}`;
+
+    txPrevBtn.disabled =
+        transactionPagination.currentPage === 1;
+
+    txNextBtn.disabled =
+        transactionPagination.currentPage === totalPages;
 }
 
 
+// ---------  TRASACTION - PAGINATION -----------------
+// tx-Pagination
+const txPrevBtn = document.querySelector('.tx-prev-btn');
+const txNextBtn = document.querySelector('.tx-next-btn');
+const txPageInfo = document.querySelector('.tx-page-info');
+
+const transactionPagination = {
+    currentPage: 1,
+    itemsPerPage: 10
+};
+
+function setupTransactionPagination() {
+
+    txPrevBtn.addEventListener('click', function () {
+
+        if (transactionPagination.currentPage > 1) {
+
+            transactionPagination.currentPage--;
+
+            renderTransactionsTable();
+        }
+    });
+
+    txNextBtn.addEventListener('click', function () {
+
+        const totalPages =
+            Math.ceil(
+                transactions.length /
+                transactionPagination.itemsPerPage
+            );
+
+        if (transactionPagination.currentPage < totalPages) {
+
+            transactionPagination.currentPage++;
+
+            renderTransactionsTable();
+        }
+    });
+}
 
 // -------------------------------------- PDF REPORT --------------------------------------
 
@@ -2375,27 +2499,39 @@ function renderArchiveItems() {
     // reset
     archiveBody.innerHTML = '';
 
-    // Filtriramo samo obrisane
+    // Filtriramo samo arhivirane
     const archived = itemsAll.filter(function(item) {
         return item.is_active === false;
     });
 
+    const totalPages =
+        Math.ceil(
+            archived.length /
+            archivePagination.itemsPerPage
+        ) || 1;
 
+    const pageArchived = paginate(
+        archived,
+        archivePagination.currentPage,
+        archivePagination.itemsPerPage
+    );
 
-    //  EMPTY STATE
+    // EMPTY STATE
     if (archived.length === 0) {
-        // archiveEmpty.classList.remove('hidden');
-         archiveBody.innerHTML =
-            `<tr><td colspan="4" data-i18n="NoArchivetems">${t('NoArchivetems')}</td></tr>`;
+
+        archiveBody.innerHTML =
+            `<tr><td colspan="5" data-i18n="NoArchivetems">${t('NoArchivetems')}</td></tr>`;
+
+        arPageInfo.textContent = `Page 1 / 1`;
+
+        arPrevBtn.disabled = true;
+        arNextBtn.disabled = true;
+
         return;
     }
 
-    // archiveEmpty.classList.add('hidden');
-
-
-   
     // RENDER LIST
-    archived.forEach(function(item) {
+    pageArchived.forEach(function(item) {
 
         const tr = document.createElement('tr');
 
@@ -2414,8 +2550,7 @@ function renderArchiveItems() {
             </td>
         `;
 
-    
-        //  RESTORE BUTTON
+        // RESTORE BUTTON
         const restoreBtn = tr.querySelector('.ti-restore');
 
         restoreBtn.addEventListener('click', async function() {
@@ -2431,25 +2566,74 @@ function renderArchiveItems() {
                 return;
             }
 
-            showNotification(`✔ ${item.name} ${t('itemRestored')}`, 'success');
+            showNotification(
+                `✔ ${item.name} ${t('itemRestored')}`,
+                'success'
+            );
 
             // refresh podataka
-            await fetchItems();     // aktivni
-            await fetchAllItems(); // svi
+            await fetchItems();
+            await fetchAllItems();
 
-            // ponovo render
             renderArchiveItems();
         });
 
         archiveBody.appendChild(tr);
     });
+
+    arPageInfo.textContent =
+        `Page ${archivePagination.currentPage} / ${totalPages}`;
+
+    arPrevBtn.disabled =
+        archivePagination.currentPage === 1;
+
+    arNextBtn.disabled =
+        archivePagination.currentPage === totalPages;
 }
 
 
+//--------------- ARCHIVE - PAGINATION --------------- 
+const arPrevBtn = document.querySelector('.ar-prev-btn');
+const arNextBtn = document.querySelector('.ar-next-btn');
+const arPageInfo = document.querySelector('.ar-page-info');
 
+const archivePagination = {
+    currentPage: 1,
+    itemsPerPage: 10
+};
 
+function setupArchivePagination() {
 
+    arPrevBtn.addEventListener('click', function () {
 
+        if (archivePagination.currentPage > 1) {
+
+            archivePagination.currentPage--;
+
+            renderArchiveItems();
+        }
+    });
+
+    arNextBtn.addEventListener('click', function () {
+
+        const archived = itemsAll.filter(function(item) {
+            return item.is_active === false;
+        });
+
+        const totalPages =
+            Math.ceil(
+                archived.length /
+                archivePagination.itemsPerPage
+            );
+
+        if (archivePagination.currentPage < totalPages) {
+
+            archivePagination.currentPage++;
+
+            renderArchiveItems();
+        }
+    });
+}
 
 
 
@@ -2507,7 +2691,7 @@ function activateTab(tabElement) {
 
     // fallback iako se sve vec azurira putem
     if (tabName === TAB.INVENTORY) {
-        renderTable();
+        renderInventoryTable();
     }
 
     if (tabName === TAB.TRANSACTION) {
@@ -2609,15 +2793,25 @@ function renderWarehouses() {
 
         //  DELETE
         const deleteBtn = div.querySelector('.ti-delete');
-        deleteBtn.addEventListener('click', async () => {
 
-            await supabaseClient
-                .from('warehouses')
-                .delete()
-                .eq('id', w.id);
+        deleteBtn.addEventListener('click', () => {
 
-            await fetchWarehouses();
-            renderWarehouses();
+            openConfirm({
+                text: t('removeItemQuestion'),
+                onConfirm: async () => {
+
+                    await supabaseClient
+                        .from('warehouses')
+                        .delete()
+                        .eq('id', w.id);
+
+                    await fetchWarehouses();
+                    renderWarehouses();
+
+                    showNotification(`✔ ${w.name} removed`, 'success');
+                }
+            });
+
         });
 
         //  COPY (prefill modal)
@@ -2683,15 +2877,24 @@ function renderPartners() {
 
         //  DELETE
         const deleteBtn = div.querySelector('.ti-delete');
-        deleteBtn.addEventListener('click', async () => {
+        deleteBtn.addEventListener('click', () => {
 
-            await supabaseClient
-                .from('partners')
-                .delete()
-                .eq('id', p.id);
+            openConfirm({
+                text: t('removeItemQuestion'),
+                onConfirm: async () => {
 
-            await fetchPartners();
-            renderPartners();
+                    await supabaseClient
+                        .from('partners')
+                        .delete()
+                        .eq('id', p.id);
+
+                    await fetchPartners();
+                    renderPartners();
+
+                    showNotification(`✔ ${p.name} deleted`, 'success');
+                }
+            });
+
         });
 
         //  COPY (prefill modal)
@@ -3097,9 +3300,9 @@ const translations = {
 
         //TRANSACTION
         transactionsTitle: "Transakcije",
-        txType: "Tip",
-        txDate: "Datum",
-        txAction: "Akcija",
+        txType: "TIP",
+        txDate: "DATUM",
+        txAction: "AKCIJA",
 
         //TRANSACTION MODULE
         txNewReceipt: "Nova PRIJEMNICA",
@@ -3113,6 +3316,10 @@ const translations = {
         selectWarehouse: "Izaberi skladište",
         selectPartner: "Izaberi partnera",
 
+        // CONFIRM MODAL
+        confirmTitle: "Potvrda akcije",
+        confirmQuestion: "Da li ste sigurni?",
+        removeItemQuestion: "Da li ste sigurni da želite da uklonite ovu stavku?",
         confirm: "Potvrdi",
         cancel: "Otkaži",
 
@@ -3332,9 +3539,9 @@ const translations = {
 
         //TRANSACTION
         transactionsTitle: "Transactions",
-        txType: "Type",
-        txDate: "Date",
-        txAction: "Action",
+        txType: "TYPE",
+        txDate: "DATE",
+        txAction: "ACTION",
 
         //TRANSACTION MODULE
         txNewReceipt: "New RECEIPT",
@@ -3348,6 +3555,11 @@ const translations = {
         selectWarehouse: "Select warehouse",
         selectPartner: "Select partner",
 
+        //CONFIRM MODAL
+        
+        confirmTitle: "Confirm Action",
+        confirmQuestion: "Are you sure?",
+        removeItemQuestion: "Are you sure you want to remove this item?",
         confirm: "Confirm",
         cancel: "Cancel",
 
@@ -3458,7 +3670,7 @@ async function setLang(lang){
     //Tabele
     
     renderTransactionsTable();
-    renderTable();
+    renderInventoryTable();
     renderLowStockTable();
 
 }
@@ -3511,13 +3723,50 @@ setTimeout(() => {
 }
 
 
+// -------------------- FEATURE: CONFIRM MODAL --------------------
+const confirmModal = document.getElementById('confirm-modal');
+const confirmText  = document.getElementById('confirm-text');
+const confirmOk    = document.getElementById('confirm-ok');
+const confirmCancel= document.getElementById('confirm-cancel');
 
+let confirmCallback = null;
 
+function openConfirm({
+    text = t('confirmQuestion'),
+    onConfirm = () => {}
+}) {
+
+    confirmText.textContent = text;
+
+    confirmCallback = onConfirm;
+
+    confirmModal.classList.remove('hidden');
+}
+
+function closeConfirm() {
+    confirmModal.classList.add('hidden');
+    confirmCallback = null;
+}
+
+// dugmad
+confirmOk.addEventListener('click', () => {
+    if (confirmCallback) confirmCallback();
+    closeConfirm();
+});
+
+confirmCancel.addEventListener('click', closeConfirm);
+
+// klik outside
+confirmModal.addEventListener('click', (e) => {
+    if (e.target === confirmModal) closeConfirm();
+});
 
 // ========================================================== INICIALISATION ==========================================================
 
 // PAGINATION INIT
-setupPagination();
+setupInventoryPagination();
+setupTransactionPagination();
+setupArchivePagination();
 
 updateAuthUI();
 
