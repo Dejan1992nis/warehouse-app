@@ -59,6 +59,7 @@ async function fetchItems() {
 
     updateDashboardCards();
     renderInventoryTable();
+    updateInventoryStats();
     renderLowStockTable();
 }
 //  uzima sve logove za jedan item sortira ih (najnoviji prvi)
@@ -99,14 +100,14 @@ async function addLog(itemId, field, oldVal, newVal, transactionId = null) {
     }
 }
 
-//-------------- My W & My Partners --------------
-async function fetchWarehouses() {
+//-------------- My Cy & My Partners --------------
+async function fetchCompanies() {
     const { data, error } = await supabaseClient
-        .from('warehouses')
+        .from('companies')
         .select('*')
         .eq('user_id', currentUser.id);
 
-    if (!error) warehouses = data || [];
+    if (!error) companies = data || [];
 }
 
 async function fetchPartners() {
@@ -119,16 +120,20 @@ async function fetchPartners() {
 }
 function populateDropdownsQuick() {
 
-    const wSelect = document.getElementById('quick-warehouse');
+    const wSelect = document.getElementById('quick-company');
     const pSelect = document.getElementById('quick-partner');
 
+    //Refres
+ wSelect.innerHTML =
+`<option value="" selected disabled>${t("sidebar_Cy")}</option>`;
+
+pSelect.innerHTML =
+`<option value="" selected disabled>${t("sidebar_Partner")}</option>`;
     if (!wSelect || !pSelect) return;
 
-    // reset
-    wSelect.innerHTML = `<option value="">${t("selectWarehouse")}</option>`;
-    pSelect.innerHTML = `<option value="">${t("selectPartner")}</option>`;
 
-    warehouses.forEach(w => {
+
+    companies.forEach(w => {
         const opt = document.createElement('option');
         opt.value = w.id;
         opt.textContent = w.name;
@@ -155,7 +160,7 @@ let tempQuantity        = 0;
 
 
 
-let warehouses = [];
+let companies = [];
 let partners = [];
 
 // ========================================================== USER SETTING ==========================================================
@@ -365,7 +370,7 @@ async function startApp() {
     await fetchItems();
     await fetchTransactions();
 
-    await fetchWarehouses();
+    await fetchCompanies();
     await fetchPartners();
     populateDropdownsQuick();
 }
@@ -459,7 +464,7 @@ const clearBtn          = document.querySelector('.clear-btn');
 const resultsContainer  = document.querySelector('.results');
 
 // STATE
-let quickWarehouse = null;
+let quickCompany = null;
 let quickPartner = null;
 
 //3.  FUNCTIONS ===
@@ -544,9 +549,9 @@ clearBtn.addEventListener('click', function () {
     clearResults();
 });
 
-//WH_Dropdown
-document.getElementById('quick-warehouse').addEventListener('change', (e) => {
-    quickWarehouse = e.target.value;
+//CY_Dropdown
+document.getElementById('quick-company').addEventListener('change', (e) => {
+    quickCompany = e.target.value;
 });
 //Partner_Dropdown
 document.getElementById('quick-partner').addEventListener('change', (e) => {
@@ -578,15 +583,13 @@ function resetDisplay() {
     selectedItem = null;
     tempQuantity = 0;
 
-    // Reset Qucik WH & Partenr Dw
-    quickWarehouse = null;
+    // Reset Qucik CY & Partenr Dw
+    quickCompany = null;
     quickPartner = null;
 
-    document.getElementById('quick-warehouse').value = '';
+    document.getElementById('quick-company').value = '';
     document.getElementById('quick-partner').value = '';
 
-     // Sakri History dugme
-    historyWrapper.classList.add('hidden');
 }
 function selectItem(item) {
 
@@ -604,7 +607,6 @@ function selectItem(item) {
 
     selectedItem = item;
 
-    historyWrapper.classList.remove('hidden');
 
     originalQuantity = item.quantity;
 
@@ -645,8 +647,8 @@ const saveBtn           = document.querySelector('.save-btn');
 saveBtn.addEventListener('click', async function () {
 
     // 0. VALIDACIJA DROPDOWNa
-    if (!quickWarehouse) {
-        showNotification(`⚠ ${t('selectWarehouse')}`, 'error');
+    if (!quickCompany) {
+        showNotification(`⚠ ${t('selectCompany')}`, 'error');
         return;
     }
 
@@ -670,7 +672,7 @@ saveBtn.addEventListener('click', async function () {
 
         const type = diff > 0 ? 'receipt' : 'issue';
         
-        selectedWarehouse = quickWarehouse;
+        selectedCompany = quickCompany;
         selectedPartner = quickPartner;
 
         await createTransaction(
@@ -705,7 +707,6 @@ saveBtn.addEventListener('click', async function () {
 const historyModal      = document.querySelector('.history-modal');
 const historyBtn        = document.querySelector('.btn-history');
 const historyClose      = document.querySelector('.history-close');
-const historyWrapper    = document.querySelector('.history-wrapper');
 const ItemLog           = document.querySelector('.history-modal_itemLog')
 //2.  STATE ===
 //3.  FUNCTIONS ===
@@ -831,13 +832,187 @@ const addPrice = document.getElementById('add-price');
 const addLimit = document.getElementById('add-limit');
 const addCode = document.getElementById('add-code');
 const addStatus = document.getElementById('add-status');
-const addLocation = document.getElementById('add-location');
 
 const addToggleBtn = document.getElementById('add-toggle-more');
 const addOptional = document.getElementById('add-optional-fields');
 
+// LOACTION INPUT
+const addLocationSelector = document.getElementById('add-location-selector');
 
+let locationState = {
 
+    warehouse: null,
+    zone: null,
+    rack: null,
+    shelf: null
+};
+
+let activeLocationStep = 'warehouse';
+function updateLocationInfo() {
+
+    const title =
+        document.getElementById('location-step-title');
+
+    const desc =
+        document.getElementById('location-step-desc');
+
+    switch (activeLocationStep) {
+
+        case 'warehouse':
+
+            title.textContent = 'Warehouse';
+            desc.textContent = 'Select warehouse location';
+            break;
+
+        case 'zone':
+
+            title.textContent = 'Zona';
+            desc.textContent = 'Odaberi zonu u skladištu';
+            break;
+
+        case 'rack':
+
+            title.textContent = 'Regala (broj u zoni)';
+            desc.textContent = 'Broj regale konstrukcije unutar odabrane zone';
+            break;
+
+        case 'shelf':
+
+            title.textContent = 'Polica (nivo visine)';
+            desc.textContent = 'Nivo police od dna prema vrhu';
+            break;
+    }
+
+}
+// REDER LOACTION F
+function renderLocationSelector() {
+
+    addLocationSelector.innerHTML = '';
+
+    const grid = document.createElement('div');
+    grid.className = 'location-option-grid';
+
+    let options = [];
+
+    switch (activeLocationStep) {
+
+        case 'warehouse':
+
+            options = Array.from(
+                { length: 10 },
+                (_, i) => `W${i + 1}`
+            );
+
+            break;
+
+        case 'zone':
+
+            options = [
+                'A','B','C',
+                'D','E','F',
+                'G','H'
+            ];
+
+            break;
+
+        case 'rack':
+
+            options = Array.from(
+                { length: 20 },
+                (_, i) =>
+                    String(i + 1)
+                        .padStart(2, '0')
+            );
+
+            break;
+
+        case 'shelf':
+
+            options = [
+                '1','2','3',
+                '4','5','6'
+            ];
+
+            break;
+    }
+
+    options.forEach(value => {
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'location-option';
+        btn.textContent = value;
+
+        if (locationState[activeLocationStep] === value) {
+            btn.classList.add('selected');
+        }
+        btn.addEventListener('click', () => {
+
+            locationState[activeLocationStep] = value;
+
+            document
+                .querySelector(`[data-step="${activeLocationStep}"] .segment-value`)
+                .textContent = value;
+
+            const nextStep = {
+                warehouse: 'zone',
+                zone: 'rack',
+                rack: 'shelf'
+            };
+
+            const next = nextStep[activeLocationStep];
+
+            if (next) {
+
+                document
+                    .querySelectorAll('.location-segment')
+                    .forEach(btn =>
+                        btn.classList.remove('active')
+                    );
+
+                activeLocationStep = next;
+
+                document
+                    .querySelector(`[data-step="${next}"]`)
+                    .classList.add('active');
+
+                updateLocationInfo();
+            }
+
+            renderLocationSelector();
+        });
+
+            
+
+        grid.appendChild(btn);
+
+    });
+
+    addLocationSelector.appendChild(grid);
+}
+
+document
+    .querySelectorAll('.location-segment')
+    .forEach(segment => {
+
+        segment.addEventListener('click', () => {
+
+            document
+                .querySelectorAll('.location-segment')
+                .forEach(btn =>
+                    btn.classList.remove('active')
+                );
+
+            segment.classList.add('active');
+
+            activeLocationStep =
+                segment.dataset.step;
+
+            updateLocationInfo();
+            renderLocationSelector();
+        });
+
+    });
 
 // SAVE → IDE SAMO U TRANSACTION 
 addSaveBtn.addEventListener('click', () => {
@@ -870,17 +1045,33 @@ addSaveBtn.addEventListener('click', () => {
         return;
     }
 
-    addToTransaction({
-        id: 'tmp_' + Date.now(), 
-        name,
-        code: addCode.value.trim(),
-        status: addStatus.value.trim(),
-        location: addLocation.value.trim(),
-        price,
-        limit,
-        isNew: true,
-        qty
-    });
+    //VALIDACIJA za Location
+
+        if (
+        !locationState.warehouse ||
+        !locationState.zone ||
+        !locationState.rack ||
+        !locationState.shelf
+    ) {
+        showNotification('❌ Select location', 'error');
+        return;
+    }
+
+addToTransaction({
+    id: 'tmp_' + Date.now(),
+    name,
+    code: addCode.value.trim(),
+    status: addStatus.value.trim(),
+    location:`${locationState.warehouse}-${locationState.zone}-${locationState.rack}-${locationState.shelf}`,
+    warehouse_code:locationState.warehouse,
+    zone_code:locationState.zone,
+    rack_code:locationState.rack,
+    shelf_code:locationState.shelf,
+    price,
+    limit,
+    isNew: true,
+    qty
+});
 
     showNotification(`✔ ${t('itemAddedTx')}`, 'success');
 
@@ -910,7 +1101,6 @@ function resetForm() {
     addLimit.value = '';
     addCode.value = '';
     addStatus.value = '';
-    addLocation.value = '';
 
     addOptional.classList.add('hidden');
     modal.classList.remove('child-modal');
@@ -946,7 +1136,224 @@ const editCancelBtn = document.getElementById('edit-cancel');
 const editToggleBtn = document.getElementById('edit-toggle-more');
 const editOptional = document.getElementById('edit-optional-fields');
 
+const editLocationSelector = document.getElementById('edit-location-selector');
+
+let editActiveLocationStep =
+    'warehouse';
+
 let editItem = null;
+
+let editLocationState = {
+    warehouse: null,
+    zone: null,
+    rack: null,
+    shelf: null
+};
+
+// Redenreovanje Location segemnta
+function renderEditLocationSelector() {
+
+    editLocationSelector.innerHTML = '';
+
+    const grid =
+        document.createElement('div');
+
+    grid.className =
+        'location-option-grid';
+
+    let options = [];
+
+    switch (editActiveLocationStep) {
+
+        case 'warehouse':
+
+            options = Array.from(
+                { length: 10 },
+                (_, i) => `W${i + 1}`
+            );
+
+            break;
+
+        case 'zone':
+
+            options = [
+                'A','B','C',
+                'D','E','F',
+                'G','H'
+            ];
+
+            break;
+
+        case 'rack':
+
+            options = Array.from(
+                { length: 20 },
+                (_, i) =>
+                    String(i + 1)
+                        .padStart(2, '0')
+            );
+
+            break;
+
+        case 'shelf':
+
+            options = [
+                '1','2','3',
+                '4','5','6'
+            ];
+
+            break;
+    }
+
+    options.forEach(value => {
+
+        const btn =
+            document.createElement('button');
+
+        btn.type = 'button';
+        btn.className = 'location-option';
+        btn.textContent = value;
+
+        if (
+            editLocationState[
+                editActiveLocationStep
+            ] === value
+        ) {
+            btn.classList.add('selected');
+        }
+
+        btn.addEventListener('click', () => {
+
+            editLocationState[
+                editActiveLocationStep
+            ] = value;
+
+            document
+                .querySelector(
+                    `[data-edit-step="${editActiveLocationStep}"] .segment-value`
+                )
+                .textContent = value;
+
+            const nextStep = {
+                warehouse: 'zone',
+                zone: 'rack',
+                rack: 'shelf'
+            };
+
+            const next =
+                nextStep[
+                    editActiveLocationStep
+                ];
+
+            if (next) {
+
+                document
+                    .querySelectorAll(
+                        '[data-edit-step]'
+                    )
+                    .forEach(btn =>
+                        btn.classList.remove('active')
+                    );
+
+                editActiveLocationStep =
+                    next;
+
+                document
+                    .querySelector(
+                        `[data-edit-step="${next}"]`
+                    )
+                    .classList.add('active');
+
+                updateEditLocationInfo();
+            }
+
+            renderEditLocationSelector();
+        });
+
+        grid.appendChild(btn);
+    });
+
+    editLocationSelector.appendChild(grid);
+}
+
+function updateEditLocationInfo() {
+
+    const title =
+        document.getElementById(
+            'edit-location-step-title'
+        );
+
+    const desc =
+        document.getElementById(
+            'edit-location-step-desc'
+        );
+
+    switch (editActiveLocationStep) {
+
+        case 'warehouse':
+
+            title.textContent =
+                'Warehouse';
+
+            desc.textContent =
+                'Select warehouse location';
+
+            break;
+
+        case 'zone':
+
+            title.textContent =
+                'Zona';
+
+            desc.textContent =
+                'Odaberi zonu u skladištu';
+
+            break;
+
+        case 'rack':
+
+            title.textContent =
+                'Regala';
+
+            desc.textContent =
+                'Broj regale u zoni';
+
+            break;
+
+        case 'shelf':
+
+            title.textContent =
+                'Polica';
+
+            desc.textContent =
+                'Nivo police';
+
+            break;
+    }
+
+}
+document
+    .querySelectorAll('[data-edit-step]')
+    .forEach(segment => {
+
+        segment.addEventListener('click', () => {
+
+            document
+                .querySelectorAll('[data-edit-step]')
+                .forEach(btn =>
+                    btn.classList.remove('active')
+                );
+
+            segment.classList.add('active');
+
+            editActiveLocationStep =
+                segment.dataset.editStep;
+
+            updateEditLocationInfo();
+            renderEditLocationSelector();
+        });
+
+    });
 
 
 // TOGGLE
@@ -980,11 +1387,35 @@ editBtn.addEventListener('click', () => {
     document.getElementById('edit-limit').value = selectedItem.limit;
     document.getElementById('edit-code').value = selectedItem.code;
     document.getElementById('edit-status').value = selectedItem.status;
-    document.getElementById('edit-location').value = selectedItem.location;
+
+    
+  
+    // LOcation segment
+    const [warehouse, zone, rack, shelf] = (selectedItem.location || '').split('-');
+
+    editLocationState = {
+        warehouse: warehouse || null,
+        zone: zone || null,
+        rack: rack || null,
+        shelf: shelf || null
+    };
+
+
+    refreshEditLocationSegments();
+    renderEditLocationSelector();
+
 
     editModal.classList.remove('hidden');
 });
 
+
+function refreshEditLocationSegments() {
+
+    document.querySelector('[data-edit-step="warehouse"] .segment-value').textContent = editLocationState.warehouse || '-';
+    document.querySelector('[data-edit-step="zone"] .segment-value').textContent = editLocationState.zone || '-';
+    document.querySelector('[data-edit-step="rack"] .segment-value').textContent = editLocationState.rack || '-';
+    document.querySelector('[data-edit-step="shelf"] .segment-value').textContent =editLocationState.shelf || '-';
+}
 
 // SAVE → IDE DIREKTNO U DB 
 editSaveBtn.addEventListener('click', async () => {
@@ -992,10 +1423,22 @@ editSaveBtn.addEventListener('click', async () => {
     const name = document.getElementById('edit-name').value.trim();
     const code = document.getElementById('edit-code').value.trim();
     const status = document.getElementById('edit-status').value.trim();
-    const location = document.getElementById('edit-location').value.trim();
     const price = Number(document.getElementById('edit-price').value);
     const limit = Number(document.getElementById('edit-limit').value);
+    const location =`${editLocationState.warehouse}-${editLocationState.zone}-${editLocationState.rack}-${editLocationState.shelf}`;
 
+    // Vlaidacija Location
+        if (
+        !editLocationState.warehouse ||
+        !editLocationState.zone ||
+        !editLocationState.rack ||
+        !editLocationState.shelf
+    ) {
+        showNotification(`❌ ${t('invalidInput')}`, 'error');
+        return;
+    }
+
+    // Vlaidacija  ostalog
     if (!name || isNaN(price) || isNaN(limit)) {
         showNotification(`❌ ${t('invalidInput')}`, 'error')
         return;
@@ -1127,12 +1570,160 @@ const optionalFields = document.getElementById('optional-fields');
 
 
 
-// ========================================================== TABLE ==========================================================
+// ========================================================== INVENTORY CARDS ==========================================================
 
 // -------------------- FEATURE: TABLE VIEW --------------------
 //1.  SELECTORS ===
 const tableWrapper = document.querySelector('.table-wrapper');
-const tableBody = document.querySelector('.table-body');
+const inventoryList = document.querySelector('.inventory-list');
+
+// INVENTORY HEADER
+
+const inventorySearch       = document.getElementById('inventory-search');
+const inventoryTotalCount   = document.getElementById('inventory-total-count');
+const criticalPill          = document.querySelector('.summary-pill.critical .pill-value');
+const lowPill               = document.querySelector('.summary-pill.low .pill-value');
+const okPill                = document.querySelector('.summary-pill.ok .pill-value');
+const excessPill            = document.querySelector('.summary-pill.excess .pill-value');
+
+let inventorySearchTerm = '';
+
+function updateInventoryStats() {
+
+    if (!items) return;
+
+    let critical = 0;
+    let low = 0;
+    let ok = 0;
+    let empty = 0;
+
+    items.forEach(item => {
+
+        const status =
+            getStockStatus(item);
+
+        switch (status) {
+
+            case 'empty':
+
+                empty++;
+
+                break;
+
+            case 'critical':
+
+                critical++;
+
+                break;
+
+            case 'low':
+
+                low++;
+
+                break;
+
+            case 'ok':
+
+                ok++;
+
+                break;
+        }
+
+    });
+
+    inventoryTotalCount.textContent =
+        items.length;
+
+    criticalPill.textContent =
+        critical;
+
+    lowPill.textContent =
+        low;
+
+    okPill.textContent =
+        ok;
+
+    excessPill.textContent =
+        empty;
+}
+
+// SEARCH F
+function getFilteredInventoryItems() {
+
+    let filtered = [...items];
+
+    if (inventorySearchTerm.trim()) {
+
+        const search =
+            inventorySearchTerm.toLowerCase();
+
+        filtered = filtered.filter(item => {
+
+            return (
+
+                item.name
+                    ?.toLowerCase()
+                    .includes(search)
+
+                ||
+
+                item.code
+                    ?.toLowerCase()
+                    .includes(search)
+
+                ||
+
+                item.location
+                    ?.toLowerCase()
+                    .includes(search)
+
+            );
+
+        });
+
+    }
+
+    return filtered;
+}
+
+function getStockStatus(item) {
+
+    const qty =
+        Number(item.quantity || 0);
+
+    const limit =
+        Number(item.limit || 0);
+
+    if (qty === 0) {
+
+        return 'empty';
+    }
+
+    if (qty < limit) {
+
+        return 'critical';
+    }
+
+    if (qty <= limit * 1.2) {
+
+        return 'low';
+    }
+
+    return 'ok';
+}
+//Search EVENt
+inventorySearch.addEventListener('input', function () {
+
+    inventorySearchTerm = this.value;
+
+    inventoryPagination.currentPage = 1;
+
+    renderInventoryTable();
+
+});
+
+
+
 
 
 //3.  FUNCTIONS ===
@@ -1142,51 +1733,144 @@ const tableBody = document.querySelector('.table-body');
 // Render Inventory Table
 function renderInventoryTable() {
 
-    tableBody.innerHTML = '';
+    inventoryList.innerHTML = '';
+
+    const filteredItems =
+        getFilteredInventoryItems();
 
     const totalPages =
         Math.ceil(
-            items.length /
+            filteredItems.length /
             inventoryPagination.itemsPerPage
         ) || 1;
 
     const pageItems = paginate(
-        items,
+        filteredItems,
         inventoryPagination.currentPage,
         inventoryPagination.itemsPerPage
     );
 
     if (pageItems.length === 0) {
 
-        tableBody.innerHTML =
-            `<tr><td colspan="4">${t('noItems')}</td></tr>`;
+        inventoryList.innerHTML = `
+            <div class="inventory-empty">
+                ${t('noItems')}
+            </div>
+        `;
 
     } else {
 
         pageItems.forEach(item => {
 
-            const tr = document.createElement('tr');
+            const card = document.createElement('div');
 
-            tr.innerHTML = `
-                <td>${item.name}</td>
-                <td>${item.code}</td>
-                <td>${item.location}</td>
-                <td>${item.quantity} pcs</td>
-                <td>${item.price} RSD</td>
-                <td>${item.quantity * item.price} RSD</td>
-                <td>${item.status}</td>
-                <td>${item.limit}</td>
+            card.classList.add('inventory-card');
+let stockIndicator = '';
+
+const status = getStockStatus(item);
+
+switch (status) {
+
+    case 'empty':
+
+        stockIndicator = `
+            <div class="stock-indicator stock-empty">
+                <div class="stock-icon">
+                    <svg
+                        class="stock-svg danger-icon"
+                        viewBox="0 0 24 24">
+
+                        <path
+                            fill="currentColor"
+                            d="M18.3 5.7L12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3z"/>
+                    </svg>
+                </div>
+            </div>
+        `;
+
+        break;
+
+    case 'critical':
+
+        stockIndicator = `
+            <div class="stock-indicator stock-critical">
+                <div class="stock-icon">
+                    <svg
+                        class="stock-svg warning-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2L1 21h22L12 2zm0 5l1 8h-2l1-8zm0 11a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/>
+                    </svg>
+                </div>
+            </div>
+        `;
+
+        break;
+
+    case 'low':
+
+        stockIndicator = `
+            <div class="stock-indicator stock-low">
+                <div class="stock-bars">
+                    <span class="filled"></span>
+                    <span class="filled"></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        `;
+
+        break;
+
+    case 'ok':
+
+        stockIndicator = `
+            <div class="stock-indicator stock-good">
+                <div class="stock-bars">
+                    <span class="filled"></span>
+                    <span class="filled"></span>
+                    <span class="filled"></span>
+                    <span class="filled"></span>
+                </div>
+            </div>
+        `;
+
+        break;
+}
+
+            card.innerHTML = `
+                <div class="inventory-left">
+                    <div class="inventory-name">
+                        ${item.name}
+                    </div>
+
+                    <div class="inventory-meta">
+                        ${item.code || '-'} • ${item.location || '-'}
+                    </div>
+
+                </div>
+
+                <div class="inventory-right">
+
+                    <div class="inventory-qty">
+                        ${item.quantity}
+                    </div>
+
+                    ${stockIndicator}
+
+                </div>
+
             `;
 
-            tr.addEventListener('click', function () {
+            card.addEventListener('click', function () {
 
                 selectItem(item);
+
                 goToInputTab();
 
             });
 
-            tableBody.appendChild(tr);
+            inventoryList.appendChild(card);
+
         });
+
     }
 
     pageinfo.textContent =
@@ -1257,6 +1941,28 @@ function paginate(data, currentPage, itemsPerPage) {
 
     return data.slice(start, end);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // ========================================================== MANAGEMENT ==========================================================
@@ -1504,7 +2210,7 @@ let transactionItems = [];
 let isCopyMode = false;
 let copiedItemData = null;
 
-let selectedWarehouse   = null;
+let selectedCompany   = null;
 let selectedPartner     = null;
 
 //OTVARANJE MODULA
@@ -1530,15 +2236,15 @@ async function openTransactionModal() {
     transactionResults.innerHTML = '';
 
     // UCITAJ PODATKE u PADJUCI MENI
-    await fetchWarehouses();
+    await fetchCompanies();
     await fetchPartners();
     populateDropdowns();
 
     // reset
-    selectedWarehouse = null;
+    selectedCompany = null;
     selectedPartner = null;
 
-    document.getElementById('tx-warehouse').value = '';
+    document.getElementById('tx-company').value = '';
     document.getElementById('tx-partner').value = '';
 
     pdfToggle.checked = false;
@@ -1654,18 +2360,21 @@ function addToTransaction(item) {
     }
 
 
-    transactionItems.push({
-        id: item.id || 'tmp_' + Date.now(),
-        name: item.name,
-        code: item.code || '',
-        status: item.status || '',
-        location: item.location || '',
-        price: item.price || 0,
-        limit: item.limit || 0,
-
-        isNew: item.isNew || false,   // KLJUČNO
-        qty: item.qty || ''      // auto popuni qty za NEW item
-    });
+transactionItems.push({
+    id: item.id || 'tmp_' + Date.now(),
+    name: item.name,
+    code: item.code || '',
+    status: item.status || '',
+    location: item.location || '',
+    warehouse_code:item.warehouse_code || '',
+    zone_code:item.zone_code || '',
+    rack_code:item.rack_code || '',
+    shelf_code:item.shelf_code || '',
+    price: item.price || 0,
+    limit: item.limit || 0,
+    isNew: item.isNew || false,
+    qty: item.qty || ''
+});
 
     renderTransactionList();
 }
@@ -1778,13 +2487,13 @@ transactionConfirm.addEventListener('click', async function () {
     }
 
     // OBAVEZAN ODABIR ZA SVAKU TRANSAKCIJU
-    if (!selectedWarehouse) {
-        showNotification('⚠️ Select warehouse', 'error');
+    if (!selectedCompany) {
+        showNotification(`❌ ${t('selectCompany')}`, 'error');
         return;
     }
 
     if (!selectedPartner) {
-        showNotification('⚠️ Select partner', 'error');
+        showNotification(`❌ ${t('selectPartner')}`, 'error');
         return;
     }
 
@@ -1851,11 +2560,9 @@ function openCopyModal(item) {
     copiedItemData = item;
 
     modal.classList.remove('hidden');
-
     addName.value = item.name + ' copy';
     addCode.value = item.code || '';
     addStatus.value = item.status || '';
-    addLocation.value = item.location || '';
     addPrice.value = item.price || '';
     addLimit.value = item.limit || '';
     addQty.value = '';
@@ -1882,6 +2589,10 @@ async function createTransaction(itemsList, type) {
                     code: item.code,
                     status: item.status,
                     location: item.location,
+                    warehouse_code:item.warehouse_code,
+                    zone_code:item.zone_code,
+                    rack_code:item.rack_code,
+                    shelf_code:item.shelf_code,
                     quantity: 0,
                     price: item.price,
                     limit: item.limit,
@@ -1911,7 +2622,7 @@ async function createTransaction(itemsList, type) {
             .insert([{
                 type: type,
                 user_id: currentUser.id,
-                warehouse_id: selectedWarehouse,
+                company_id: selectedCompany,
                 partner_id: selectedPartner
             }])
             .select()
@@ -2099,7 +2810,7 @@ function renderTransactionsTable() {
 
                 if (error) {
                     console.error(error);
-                    showNotification("❌ Failed to load items", "error");
+                    showNotification(t('pdfLoadError'), 'error');
                     return;
                 }
 
@@ -2111,10 +2822,10 @@ function renderTransactionsTable() {
                     qty: row.quantity
                 }));
 
-                await fetchWarehouses();
+                await fetchCompanies();
                 await fetchPartners();
 
-                selectedWarehouse = tx.warehouse_id;
+                selectedCompany = tx.company_id;
                 selectedPartner = tx.partner_id;
 
                 generatePDF(tx, itemsList);
@@ -2122,7 +2833,7 @@ function renderTransactionsTable() {
             } catch (err) {
 
                 console.error(err);
-                showNotification("❌ PDF generation failed", "error");
+                showNotification(`❌ ${t('pdfGenerationFailed')}`, "error");
 
             }
 
@@ -2188,18 +2899,18 @@ function setupTransactionPagination() {
 //  POPUNJAVNJE PADAJUCIH MENIJA
 function populateDropdowns() {
 
-    const whSelect = document.getElementById('tx-warehouse');
+    const cyhSelect = document.getElementById('tx-company');
     const ptSelect = document.getElementById('tx-partner');
 
     // reset
-    whSelect.innerHTML = `<option value="">${t("selectWarehouse")}</option>`;
+    cyhSelect.innerHTML = `<option value="">${t("selectCompany")}</option>`;
     ptSelect.innerHTML = `<option value="">${t("selectPartner")}</option>`;
 
-    warehouses.forEach(w => {
+    companies.forEach(w => {
         const opt = document.createElement('option');
         opt.value = w.id;
         opt.textContent = w.name;
-        whSelect.appendChild(opt);
+        cyhSelect.appendChild(opt);
     });
 
     partners.forEach(p => {
@@ -2211,8 +2922,8 @@ function populateDropdowns() {
 }
 
 // EVENTOVI
-document.getElementById('tx-warehouse').addEventListener('change', (e) => {
-    selectedWarehouse = e.target.value;
+document.getElementById('tx-company').addEventListener('change', (e) => {
+    selectedCompany = e.target.value;
 });
 
 document.getElementById('tx-partner').addEventListener('change', (e) => {
@@ -2224,7 +2935,7 @@ function generatePDF(tx, itemsList) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
-    const warehouse = warehouses.find(w => w.id == selectedWarehouse);
+    const company = companies.find(w => w.id == selectedCompany);
     const partner = partners.find(p => p.id == selectedPartner);
 
     const setBold = () => doc.setFont(undefined, "bold");
@@ -2256,10 +2967,10 @@ function generatePDF(tx, itemsList) {
     setNormal();
     doc.setFontSize(9);
 
-    doc.text(warehouse?.name || "-", 10, y + 6);
-    doc.text(warehouse?.address || "-", 10, y + 12);
-    doc.text(`${t("email")}: ${warehouse?.email || "-"}`, 10, y + 18);
-    doc.text(`${t("pib")}: ${warehouse?.pib || "-"}`, 10, y + 24);
+    doc.text(company?.name || "-", 10, y + 6);
+    doc.text(company?.address || "-", 10, y + 12);
+    doc.text(`${t("email")}: ${company?.email || "-"}`, 10, y + 18);
+    doc.text(`${t("pib")}: ${company?.pib || "-"}`, 10, y + 24);
 
     doc.text(partner?.name || "-", 110, y + 6);
     doc.text(partner?.address || "-", 110, y + 12);
@@ -2347,7 +3058,7 @@ function generatePDF(tx, itemsList) {
     // ===============================
     y += 10;
 
-    const vatPercent = warehouse?.vat || 0;
+    const vatPercent = company?.vat || 0;
     const vatRate = vatPercent / 100;
 
     const vatAmount = grandTotal * vatRate;
@@ -2369,9 +3080,8 @@ function generatePDF(tx, itemsList) {
     doc.setFontSize(14);
     doc.text(`${finalTotal.toFixed(2)} €`, 195, y + 20, { align: "right" });
 
-    // ===============================
-    // FOOTER
-    // ===============================
+    // ======= FOOTER
+
     const pageHeight = doc.internal.pageSize.height;
     const startY = pageHeight - 35;
 
@@ -2391,17 +3101,17 @@ function generatePDF(tx, itemsList) {
     setNormal();
     doc.setFontSize(8);
 
-    doc.text(warehouse?.name || "-", col1, startY + 5);
-    doc.text(warehouse?.address || "-", col1, startY + 10);
-    doc.text(`${t("mb")}: ${warehouse?.mb || "-"}`, col1, startY + 15);
+    doc.text(company?.name || "-", col1, startY + 5);
+    doc.text(company?.address || "-", col1, startY + 10);
+    doc.text(`${t("mb")}: ${company?.mb || "-"}`, col1, startY + 15);
 
-    doc.text(`${t("phone")}: ${warehouse?.phone || "-"}`, col2, startY + 5);
-    doc.text(`${t("email")}: ${warehouse?.email || "-"}`, col2, startY + 10);
-    doc.text(`${t("web")}: ${warehouse?.website || "-"}`, col2, startY + 15);
+    doc.text(`${t("phone")}: ${company?.phone || "-"}`, col2, startY + 5);
+    doc.text(`${t("email")}: ${company?.email || "-"}`, col2, startY + 10);
+    doc.text(`${t("web")}: ${company?.website || "-"}`, col2, startY + 15);
 
-    doc.text(`${t("bank")}: ${warehouse?.bank || "-"}`, col3, startY + 5);
-    doc.text(`IBAN: ${warehouse?.iban || "-"}`, col3, startY + 10);
-    doc.text(`SWIFT: ${warehouse?.swift || "-"}`, col3, startY + 15);
+    doc.text(`${t("bank")}: ${company?.bank || "-"}`, col3, startY + 5);
+    doc.text(`IBAN: ${company?.iban || "-"}`, col3, startY + 10);
+    doc.text(`SWIFT: ${company?.swift || "-"}`, col3, startY + 15);
 
     doc.save(`invoice_${tx.id}.pdf`);
 }
@@ -2737,11 +3447,11 @@ settingsBtn.addEventListener('click', () => {
 });
 
 
-document.getElementById('open-warehouses').addEventListener('click', async () => {
-    await fetchWarehouses();
+document.getElementById('open-company').addEventListener('click', async () => {
+    await fetchCompanies();
     sidebar.classList.add('hidden');
-    showCustomView('warehouses-view');
-    renderWarehouses();
+    showCustomView('company-view');
+    renderCompanies();
 });
 
 document.getElementById('open-partners').addEventListener('click', async () => {
@@ -2752,17 +3462,17 @@ document.getElementById('open-partners').addEventListener('click', async () => {
 });
 
 
-function renderWarehouses() {
+function renderCompanies() {
 
-    const container = document.getElementById('warehouses-list');
+    const container = document.getElementById('company-list');
     container.innerHTML = '';
 
-    if (!warehouses || warehouses.length === 0) {
-        container.innerHTML = `<p>${t("noWarehouses")}</p>`;
+    if (!companies || companies.length === 0) {
+        container.innerHTML = `<p>${t("noCompany")}</p>`;
         return;
     }
 
-    warehouses.forEach(w => {
+    companies.forEach(w => {
 
         const div = document.createElement('div');
         div.classList.add('transaction-item');
@@ -2801,14 +3511,14 @@ function renderWarehouses() {
                 onConfirm: async () => {
 
                     await supabaseClient
-                        .from('warehouses')
+                        .from('companies')
                         .delete()
                         .eq('id', w.id);
 
-                    await fetchWarehouses();
-                    renderWarehouses();
+                    await fetchCompanies();
+                    renderCompanies();
 
-                    showNotification(`✔ ${w.name} removed`, 'success');
+                    showNotification(`✔ ${w.name} ${t('companyRemoved')}`, 'success');
                 }
             });
 
@@ -2818,16 +3528,16 @@ function renderWarehouses() {
         const copyBtn = div.querySelector('.ti-copy');
         copyBtn.addEventListener('click', () => {
 
-            document.getElementById('wh-name').value = w.name;
-            document.getElementById('wh-address').value = w.address || '';
-            document.getElementById('wh-email').value = w.email || '';
-            document.getElementById('wh-phone').value = w.phone || '';
-            document.getElementById('wh-website').value = w.website || '';
-            document.getElementById('wh-pib').value = w.pib || '';
-            document.getElementById('wh-mb').value = w.mb || '';
-            document.getElementById('wh-bank').value = w.bank || '';
-            document.getElementById('wh-iban').value = w.iban || '';
-            document.getElementById('wh-swift').value = w.swift || '';
+            document.getElementById('cy-name').value = w.name;
+            document.getElementById('cy-address').value = w.address || '';
+            document.getElementById('cy-email').value = w.email || '';
+            document.getElementById('cy-phone').value = w.phone || '';
+            document.getElementById('cy-website').value = w.website || '';
+            document.getElementById('cy-pib').value = w.pib || '';
+            document.getElementById('cy-mb').value = w.mb || '';
+            document.getElementById('cy-bank').value = w.bank || '';
+            document.getElementById('cy-iban').value = w.iban || '';
+            document.getElementById('cy-swift').value = w.swift || '';
 
             whModal.classList.remove('hidden');
         });
@@ -2891,7 +3601,7 @@ function renderPartners() {
                     await fetchPartners();
                     renderPartners();
 
-                    showNotification(`✔ ${p.name} deleted`, 'success');
+                    showNotification(`✔ ${p.name} ${t('partnerDeleted')}`, 'success');
                 }
             });
 
@@ -2936,12 +3646,12 @@ function showCustomView(viewId) {
 
 
 // Otvaranje forme
-const whModal = document.querySelector('.warehouse-modal');
+const whModal = document.querySelector('.company-modal');
 const ptModal = document.querySelector('.partner-modal');
 
-document.getElementById('add-warehouse-btn').addEventListener('click', () => {
+document.getElementById('add-company-btn').addEventListener('click', () => {
     whModal.classList.remove('hidden');
-    resetWarehouseForm();
+    resetCompanyForm();
 });
 
 
@@ -2951,34 +3661,34 @@ document.getElementById('add-partner-btn').addEventListener('click', () => {
 });
 
 // ------------------------------------ SAVE ------------------------------------
-document.getElementById('wh-save').addEventListener('click', async () => {
+document.getElementById('cy-save').addEventListener('click', async () => {
 
-    const name = document.getElementById('wh-name').value.trim();
+    const name = document.getElementById('cy-name').value.trim();
     if (!name) return;
 
-    await supabaseClient.from('warehouses').insert({
+    await supabaseClient.from('companies').insert({
         name,
-        address: document.getElementById('wh-address').value,
-        email: document.getElementById('wh-email').value,
-        phone: document.getElementById('wh-phone').value,
-        website: document.getElementById('wh-website').value,
-        pib: document.getElementById('wh-pib').value,
-        mb: document.getElementById('wh-mb').value,
+        address: document.getElementById('cy-address').value,
+        email: document.getElementById('cy-email').value,
+        phone: document.getElementById('cy-phone').value,
+        website: document.getElementById('cy-website').value,
+        pib: document.getElementById('cy-pib').value,
+        mb: document.getElementById('cy-mb').value,
 
-        bank: document.getElementById('wh-bank').value,
-        iban: document.getElementById('wh-iban').value,
-        swift: document.getElementById('wh-swift').value,
-        vat: parseFloat(document.getElementById('wh-vat').value || 0),
+        bank: document.getElementById('cy-bank').value,
+        iban: document.getElementById('cy-iban').value,
+        swift: document.getElementById('cy-swift').value,
+        vat: parseFloat(document.getElementById('cy-vat').value || 0),
 
         user_id: currentUser.id
     });
 
     whModal.classList.add('hidden');
 
-    resetWarehouseForm();
+    resetCompanyForm();
 
-    await fetchWarehouses();
-    renderWarehouses();
+    await fetchCompanies();
+    renderCompanies();
 });
 
 
@@ -3009,7 +3719,7 @@ document.getElementById('pt-save').addEventListener('click', async () => {
 });
 
 // ------------------------------------ CANCEl ------------------------------------
-document.getElementById('wh-cancel').addEventListener('click', () => {
+document.getElementById('cy-cancel').addEventListener('click', () => {
     whModal.classList.add('hidden');
 });
 
@@ -3019,19 +3729,19 @@ document.getElementById('pt-cancel').addEventListener('click', () => {
 
 
 // ------------------------------------ RESET FOMRS ------------------------------------
-function resetWarehouseForm() {
+function resetCompanyForm() {
 
-    document.getElementById('wh-name').value = '';
-    document.getElementById('wh-address').value = '';
-    document.getElementById('wh-email').value = '';
-    document.getElementById('wh-phone').value = '';
-    document.getElementById('wh-website').value = '';
-    document.getElementById('wh-pib').value = '';
-    document.getElementById('wh-mb').value = '';
-    document.getElementById('wh-bank').value = "";
-    document.getElementById('wh-iban').value = "";
-    document.getElementById('wh-swift').value = "";
-    document.getElementById('wh-vat').value = ""
+    document.getElementById('cy-name').value = '';
+    document.getElementById('cy-address').value = '';
+    document.getElementById('cy-email').value = '';
+    document.getElementById('cy-phone').value = '';
+    document.getElementById('cy-website').value = '';
+    document.getElementById('cy-pib').value = '';
+    document.getElementById('cy-mb').value = '';
+    document.getElementById('cy-bank').value = "";
+    document.getElementById('cy-iban').value = "";
+    document.getElementById('cy-swift').value = "";
+    document.getElementById('cy-vat').value = ""
 
 }
 
@@ -3139,13 +3849,14 @@ const translations = {
 
         save: "Sačuvaj",
         edit: "Izmeni",
-        archive: "Arhiviraj",
+        archive: "Arhiva",
         cancel: "Otkaži",
         add: "+Dodaj",
         receiveBtn: "+ Prijem",
         issueBtn: "- Otprem",
         restore: "Vrati",
         addNewItem: "+ Dodaj novi artikal",
+        pcs: "kom",
 
 
         prev: "◀ Nazad",
@@ -3197,7 +3908,7 @@ const translations = {
         addModuleQuantity: "Količina *",
         addModuleStatus:"Status",
         addModulePrice: 'Cena *',
-        historyLog: "Istorija Dela",
+        historyLog: "Istorija",
         noHistoryYet:"Bez izmena...",
         //Placeholders
         phName: "Unesi naziv artikla...",
@@ -3282,11 +3993,11 @@ const translations = {
         sidebar_settings: "Podešavanja",
         sidebar_archive: "Arhiva",
         sidebar_logout: "Odjava",
-        sidebar_WH: "Skladišta",
-        sidebar_Partner: "Partneri",
+        sidebar_Cy: "Kompanija",
+        sidebar_Partner: "Partner",
         
         //SECTION TITLE
-        selectedItem: "Izabrani artikal",
+        itemDetails: "Detalji artikla",
         adjustQuantity: "Izmena količine",
         lowStockItems: "Artikli sa malim zalihama",
 
@@ -3310,11 +4021,13 @@ const translations = {
         txSearchPlaceholder: "Pretraži artikal...",
         txSelectedItems: "Izabrani artikli",
         txGeneratePDF: "Generiši PDF",
-        warehouse:"Skladište *",
+        company:"Kompanija *",
         partner:"Partner *",
 
-        selectWarehouse: "Izaberi skladište",
+        selectCompany: "Izaberi kompaniju",
         selectPartner: "Izaberi partnera",
+
+        quickTransaction: "Brza transakcija",
 
         // CONFIRM MODAL
         confirmTitle: "Potvrda akcije",
@@ -3326,21 +4039,24 @@ const translations = {
         //TRANSACTION ID
         transactionID: "ID Transakcije:",
 
-        // My WH & My Partner => VIEW
-        whPageTitle: "Moja skladišta",
+        // My CY & My Partner => VIEW
+        cyPageTitle: "Moja kompanija",
         ptPageTitle: "Moji partneri",
 
-        addWarehouse: "+ Dodaj skladište",
+        addCompany: "+ Dodaj kompaniju",
         addPartner: "+ Dodaj partnera",
-        noWarehouses: "Nema skladišta",
+        noCompany: "Nema kompanije",
         noPartners: "Nema partnera",
+        companyRemoved: "Kompanija uklonjena",
+        partnerDeleted: "Partner uklonjen",
+        CyPartenr: "Kompanija & Partner",
 
         //My WH & My Partner => FORMs
-        whTitle: "Dodaj Skladište",
+        cyTitle: "Dodaj Kompaniju",
         ptTitle: "Dodaj Partnera",
 
-        whName: "Naziv *",
-        whAddress: "Adresa",
+        cyName: "Naziv *",
+        cyAddress: "Adresa",
 
         type: "Tip",
         supplier: "Dobavljač",
@@ -3363,7 +4079,9 @@ const translations = {
         paymentDetails: "PLACANJE",
         phone: "Telefon",
         web: "Web",
-        bank: "Banka"
+        bank: "Banka",
+        pdfLoadError: "Greška pri učitavanju stavki",
+        pdfGenerationFailed: "Greška pri generisanju PDF-a"
 
     },
 
@@ -3383,6 +4101,7 @@ const translations = {
         issueBtn: "- Issue",
         restore: "Restore",
         addNewItem: "+ Add new item",
+        pcs: "pcs",
 
 
         prev: "◀ Back",
@@ -3433,7 +4152,7 @@ const translations = {
         addModuleQuantity: "Quantity *",
         addModuleStatus:"Status",
         addModulePrice: 'Price *',
-        historyLog: "History Log",
+        historyLog: "History",
         noHistoryYet:"No History yet...",
 
         addModuleLimit: "Limit *",
@@ -3521,11 +4240,11 @@ const translations = {
         sidebar_settings: "Settings",
         sidebar_archive: "Archive",
         sidebar_logout: "Logout",
-        sidebar_WH: "Warehouses",
-        sidebar_Partner: "Partners",
+        sidebar_Cy: "Company",
+        sidebar_Partner: "Partner",
 
         //SECTION TITLE
-        selectedItem: "Selected Item",
+        itemDetails: "Item Details",
         adjustQuantity: "Adjust Quantity",
         lowStockItems: "Low Stock Items",
 
@@ -3549,11 +4268,13 @@ const translations = {
         txSearchPlaceholder: "Search item...",
         txSelectedItems: "Selected items",
         txGeneratePDF: "Generate PDF",
-        warehouse:"Warehouse *",
+        company:"Company *",
         partner:"Partner *",
 
-        selectWarehouse: "Select warehouse",
+        selectCompany: "Select company",
         selectPartner: "Select partner",
+
+        quickTransaction: "Quick Transaction",
 
         //CONFIRM MODAL
         
@@ -3566,22 +4287,26 @@ const translations = {
          //TRANSACTION ID
         transactionID: "Transaction ID:",
 
-        // My WH & My Partner => VIEW
-        whPageTitle: "My Warehouses",
+        // My CY & My Partner => VIEW
+        cyPageTitle: "My Company",
         ptPageTitle: "My Partners",
 
-        addWarehouse: "+ Add Warehouse",
+        addCompany: "+ Add Comapny",
         addPartner: "+ Add Partner",
 
-        noWarehouses: "No warehouses yet",
+        noCompany: "No company yet",
         noPartners: "No partners yet",
 
-        //My WH FORM
-        whTitle: "Add Warehouse",
+        companyRemoved: "Company removed",
+        partnerDeleted: "Partner removed",
+        CyPartenr: "Company & Partner",
+
+        //My CY FORM
+        cyTitle: "Add Company",
         ptTitle: "Add Partner",
 
-        whName: "Name *",
-        whAddress: "Address",
+        cyName: "Name *",
+        cyAddress: "Address",
 
         type: "Type",
         supplier: "Supplier",
@@ -3604,7 +4329,9 @@ const translations = {
         paymentDetails: "PAYMENT DETAILS",
         phone: "Phone",
         web: "Web",
-        bank: "Bank"
+        bank: "Bank",
+        pdfLoadError: "Failed to load items",
+        pdfGenerationFailed: "PDF generation failed"
 
 
 
@@ -3667,12 +4394,13 @@ async function setLang(lang){
     applyTranslations();
     updateActiveLang();
 
-    //Tabele
-    
+    // refresh dropdowna
+    populateDropdownsQuick();
+    populateDropdowns();
+
     renderTransactionsTable();
     renderInventoryTable();
     renderLowStockTable();
-
 }
 // Postavlja koji jezik je aktivan (UI)
 function updateActiveLang(){
@@ -3773,3 +4501,4 @@ updateAuthUI();
 //UMESTO fetchItems
 initUser();
 
+renderLocationSelector();

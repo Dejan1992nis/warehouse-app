@@ -13,6 +13,14 @@
     <!-- ICON -->
     <link rel="apple-touch-icon" href="icon-192.png">
 
+    
+    <!-- Bootstrap Icons -->
+     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+
+
+    
+
     <!-- SETTINGS -->
     <meta name="theme-color" content="#3498db">
     <meta name="mobile-web-app-capable" content="yes">
@@ -24,32 +32,26 @@
 </head>
 <body>
         <!-- LOADING -->
+        <div id="starting-loading" class="starting-loading">
+            
+            <div class="loading-card">
 
-    <div id="boot-screen" class="boot-screen">
-        <div class="loader"></div>
-    </div>
-    
-    <!-- STARTING LOADING -->
-<div id="starting-loading" class="starting-loading">
-    
-    <div class="loading-card">
+                <!-- LOGO -->
+                <div class="loading-logo">
+                    <span class="logo-main">W</span>
+                    <span class="logo-divider"></span>
+                    <span class="logo-sub">Manager</span>
+                </div>
 
-        <!-- LOGO -->
-        <div class="loading-logo">
-            <span class="logo-main">W</span>
-            <span class="logo-divider"></span>
-            <span class="logo-sub">Manager</span>
+                <!-- SPINNER -->
+                <div class="loader"></div>
+
+                <!-- TEXT -->
+                <p class="loading-text">Loading your workspace...</p>
+
+            </div>
+
         </div>
-
-        <!-- SPINNER -->
-        <div class="loader"></div>
-
-        <!-- TEXT -->
-        <p class="loading-text">Loading your workspace...</p>
-
-    </div>
-
-</div>
 
 
         <!-- LOG IN / REGISTARTION -->
@@ -59,14 +61,6 @@
 
                 <div class="auth-header">
                     <h2 id="auth-title" data-i18n="auth_title">Create Account</h2>
-                    
-                    <!-- Promena jezika (en/sr) obrisano sa Auth stranice.
-                    Reason: language is user-specific and managed via Supabase after login -->
-
-                    <!-- <div class="auth-lang-switch">
-                        <button class="lang-btn" data-lang="sr"><img src="https://flagcdn.com/w20/rs.png" alt="SR"></button>
-                        <button class="lang-btn" data-lang="en"><img src="https://flagcdn.com/w20/gb.png" alt="EN"></button>
-                    </div> -->
 
                 </div>
 
@@ -156,7 +150,7 @@
                         <button id="settings-btn" data-i18n="sidebar_settings">Settings</button>
 
                             <div id="settings-submenu" class="submenu hidden">
-                                <button id="open-warehouses"    data-i18n="sidebar_WH">Warehouses</button>
+                                <button id="open-company"    data-i18n="sidebar_Cy">Company</button>
                                 <button id="open-partners"      data-i18n="sidebar_Partner">Partners</button>
                             </div>
 
@@ -180,72 +174,169 @@
         <!-- ARTICLE VIEW -->
         <section id="item-view" class="view active-view">
 
-
-
             <header class="view-actions">
-                <h2 class="title" data-i18n="searchTitle" >Item search</h2>
-            </header>       
-                <div class="header-actions">
-                    <button class="btn-edit headerBtn"  data-i18n="edit">Edit</button>
-                    <button class="btn-archive headerBtn" data-i18n="archive">Archive</button>
-                </div>
-                      
+                <h2 class="title" data-i18n="searchTitle">Item search</h2>
+            </header>
 
-            <!-- search -->
+            <!-- SEARCH -->
             <div class="search">
-                <input type="text" id="input-search" placeholder="Enter name or code..." data-i18n-placeholder="searchPlaceholder"/>
-                <!-- x -->
-                <button class="clear-btn">X</button>
-                <!-- results -->
-                <div class="results"></div>
-            </div> 
+                <input type="text" id="input-search" placeholder="Enter name or code..."data-i18n-placeholder="searchPlaceholder"/>
 
-            <!-- item csrd -->
-            <div class="section-title" data-i18n="selectedItem">Selected Item</div>
+                <button class="clear-btn">
+                     <i class="bi bi-x-lg"></i> <!--X -->
+                </button>
+
+                <div class="results"></div>
+            </div>
+
+
+
+            <!-- ITEM -->
+            <div class="section-title" >
+                <i class="bi bi-box-seam"></i>
+                <span data-i18n="itemDetails">Item Details</span>
+            </div>
+
             <div class="item-card">
 
-                <p><strong data-i18n="itemName"     >Name:</strong> <span id="item-name">-</span></p>
-                <p><strong data-i18n="ItemCode"     >Code:</strong> <span id="item-code">-</span></p>
-                <p><strong data-i18n="ItemStatus"   >Status:</strong> <span id="item-status">-</span></p>
-                <p><strong data-i18n="ItemPrice"    >Price:</strong> <span id="item-price">-</span></p>
-                <p><strong data-i18n="ItemLocation" >Location:</strong> <span id="item-location">-</span></p>
-                <p><strong >Limit:</strong> <span id="item-limit">-</span></p>
+                <!-- ARTICLE HEADER -->
 
-                <div class="history-wrapper hidden">
-                    <button class="btn-history" data-i18n="historyLog">History Log</button>
+                <div class="item-card-header">
+
+
+                    <div class="item-data">
+
+                        <div class="item-title-wrapper">
+                            <span id="item-name">-</span>
+                        </div>
+
+                        <div class="item-info-list">
+
+                            <div class="item-info-row">
+                                <div class="left-side">
+                                    <i class="bi bi-upc-scan"></i>
+                                    <strong data-i18n="ItemCode">Code:</strong>
+                                </div>
+                                <span id="item-code">-</span>
+                            </div>
+
+                            <div class="item-info-row">
+                                <div class="left-side">
+                                    <i class="bi bi-shield-check"></i>
+                                    <strong data-i18n="ItemStatus">Status:</strong>
+                                </div>
+                                <span id="item-status">-</span>
+                            </div>
+
+                            <div class="item-info-row">
+                                <div class="left-side">
+                                    <i class="bi bi-currency-euro"></i>
+                                    <strong data-i18n="ItemPrice">Price:</strong>
+                                </div>
+                                <span id="item-price">-</span>
+                            </div>
+
+                            <div class="item-info-row">
+                                <div class="left-side">
+                                    <i class="bi bi-geo-alt"></i>
+                                    <strong data-i18n="ItemLocation">Location:</strong>
+                                </div>
+                                <span id="item-location">-</span>
+                            </div>
+
+                            <div class="item-info-row">
+                                <div class="left-side">
+                                    <i class="bi bi-bell"></i>
+                                    <strong>Limit:</strong>
+                                </div>
+                    
+                                <span id="item-limit">-</span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+            </div>
+
+
+
+            <!-- ACTIONS -->
+
+            <div class="btn-actions">
+                <!-- EDIT -->
+                <button class="btn-edit headerBtn" ><i class="bi bi-pencil"></i><span data-i18n="edit">Edit</span> </button>
+                <!-- ARCHIVE -->
+                <button class="btn-archive headerBtn"> <i class="bi bi-archive"></i><span data-i18n="archive">Archive</span> </button>
+                <!-- HISTORY -->
+                <button class="btn-history headerBtn" ><i class="bi bi-clock-history"></i><span data-i18n="historyLog">History</span></button>
+            </div>
+
                 </div>
+
+
+
+
+
+
+
+            <!-- QUCIK TRANSACTION -->
+             
+            <div class="section-title" >
+                <i class="bi bi-arrow-left-right"></i>
+                <span data-i18n="quickTransaction">Quick Transaction</span>
+            </div>
+
+            <div class="transaction-card">
                 
-            </div>
+                <div class="subsection-title" data-i18n="WhPartenr">Warehouse & Partner</div>
 
-            <!-- DropDown-->
-            <div class="section-title" >Warehouse & Partner</div>
-            <div class="tx-meta">
+                <div class="tx-meta">
 
-                <div class="input-group">
-                    <label data-i18n="sidebar_WH">Warehouse *</label>
-                    <select id="quick-warehouse"></select>
+                    <div class="input-group warehouse-group">
+
+                        <select id="quick-company">
+                            <option value="" >Skladište</option>
+                        </select>
+
+                    </div>
+
+                    <div class="input-group partner-group">
+
+                        <select id="quick-partner">
+                            <option value="" >Partner</option>
+                        </select>
+
+                    </div>
+
                 </div>
 
-                <div class="input-group">
-                    <label data-i18n="sidebar_Partner">Partner *</label>
-                    <select id="quick-partner"></select>
+
+
+                <div class="subsection-title" data-i18n="adjustQuantity">Adjust Quantity</div>
+                <div class="quantity-control">
+
+                    <button class="btn-minus">-</button>
+
+                        <div class="quantity-display">
+                            <span id="quantity-value">0</span>
+                            <small data-i18n="pcs">pcs</small>
+                        </div>
+
+                    <button class="btn-plus">+</button>
+
                 </div>
 
+
+
+                <button class="save-btn">
+                    <i class="bi bi-floppy"></i>
+                    <span data-i18n="save">Sačuvaj</span>
+                </button>
+
             </div>
 
-
-
-            <!-- quantity control -->
-             <div class="section-title" data-i18n="adjustQuantity">Adjust Quantity</div>
-            <div class="quantity-control">
-
-                <button class="btn-minus">-</button>
-                <span id="quantity-value">0</span>
-                <button class="btn-plus">+</button>
-            </div>
-
-            <!-- save -->
-            <button class="save-btn" data-i18n="save">SAVE</button>
         </section>
 
 
@@ -259,7 +350,7 @@
             </header>
 
             <!-- ACTION BUTTONS -->
-            <div class="header-actions">
+            <div class="btn-actions">
 
                 <button id="btn-receive" class="headerBtn" data-i18n="receiveBtn">
                     + Receive
@@ -306,7 +397,7 @@
 
 
 
-        <!-- TABLE VIEW -->
+        <!-- INVENTORY VIEW -->
         <section id="inventory-view" class="view">
 
             <header class="view-actions">
@@ -316,29 +407,173 @@
 
 
 
-            <!-- Tabela -->
-            <div class="table-wrapper">
 
-                <table class="table">
+            <!-- INVENTORY TOOLBAR -->
 
-                    <thead>
-                        <tr>
-                            <th data-i18n="colName">NAME</th>
-                            <th data-i18n="colCode">CODE</th>
-                            <th data-i18n="colLocation">LOCATION</th>
-                            <th data-i18n="colQuantity">QUANTITY</th>
-                            <th data-i18n="colPrice">PRICE</th>
-                            <th data-i18n="colTotal">TOTAL</th>
-                            <th data-i18n="colStatus">STATUS</th>
-                            <th>LIMIT</th>
-                        </tr>
-                    </thead>
+            <div class="inventory-toolbar">
 
-                    <tbody class="table-body">
-                        <!-- JS ubacuje -->
-                    </tbody>
-                </table>
+                <!-- SEARCH -->
+
+                <div class="inventory-search-wrapper">
+
+                    <svg
+                        class="search-icon"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 16 16">
+
+                        <path
+                            fill="currentColor"
+                            d="M11.742 10.344a6.5 6.5 0 1 0-1.398
+                            1.398h-.001q.044.06.098.115l3.85
+                            3.85a1 1 0 0 0 1.415-1.414l-3.85
+                            -3.85a1 1 0 0 0-.114-.1zM12
+                            6.5a5.5 5.5 0 1 1-11
+                            0 5.5 5.5 0 0 1 11 0"/>
+
+                    </svg>
+
+                    <input
+                        id="inventory-search"
+                        class="inventory-search"
+                        type="text"
+                        placeholder="Pretraži artikal, šifru ili lokaciju..." />
+
+                </div>
+
+                <!-- FILTER -->
+
+                <button
+                    id="inventory-filter-btn"
+                    class="inventory-filter-btn">
+
+                    <svg
+                        class="filter-icon"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 16 16">
+
+                        <path
+                            fill="currentColor"
+                            d="M1.5 1.5A.5.5 0 0 1
+                            2 1h12a.5.5 0 0 1
+                            .39.812L10 7.333V13.5a.5.5
+                            0 0 1-.757.429l-2-1.2A.5.5
+                            0 0 1 7 12.3V7.333L1.61
+                            1.812A.5.5 0 0 1 1.5 1.5"/>
+
+                    </svg>
+
+                    <span data-i18n="filter">
+                        Filter
+                    </span>
+
+                </button>
+
             </div>
+
+
+<!-- INVENTORY SUMMARY -->
+
+<div class="inventory-stats">
+
+    <span class="inventory-total">
+
+        <span id="inventory-total-count">
+            0
+        </span>
+
+        <span data-i18n="items">
+            Items
+        </span>
+
+    </span>
+
+</div>
+
+
+<!-- STATUS OVERVIEW -->
+
+<div class="inventory-status-summary">
+
+    <button class="summary-pill critical">
+
+        <svg
+            class="summary-icon warning-icon"
+            viewBox="0 0 24 24">
+
+            <path
+                fill="currentColor"
+                d="M12 2L1 21h22L12 2zm0 5l1 8h-2l1-8zm0 11a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/>
+
+        </svg>
+
+        <span class="pill-value">0</span>
+
+    </button>
+
+
+    <button class="summary-pill low">
+
+        <div class="summary-stock-bars low-bars">
+
+            <span class="filled"></span>
+            <span class="filled"></span>
+
+            <span></span>
+            <span></span>
+
+        </div>
+
+        <span class="pill-value">0</span>
+
+    </button>
+
+
+    <button class="summary-pill ok">
+
+        <div class="summary-stock-bars good-bars">
+
+            <span class="filled"></span>
+            <span class="filled"></span>
+            <span class="filled"></span>
+            <span class="filled"></span>
+
+        </div>
+
+        <span class="pill-value">0</span>
+
+    </button>
+
+
+    <button class="summary-pill excess">
+
+        <svg
+            class="summary-icon empty-icon"
+            viewBox="0 0 24 24">
+
+            <path
+                fill="currentColor"
+                d="M18.3 5.7L12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3z"/>
+
+        </svg>
+
+        <span class="pill-value">0</span>
+
+    </button>
+
+</div>
+
+
+<!-- INVENTORY LIST -->
+
+<div class="inventory-list-wrapper">
+
+    <div class="inventory-list">
+
+        <!-- JS -->
+
+    </div>
+
+</div>
 
              <!-- Pagination -->
             <div class="pagination">
@@ -538,17 +773,17 @@
         </section>
 
         <!-- WEREHUSE VIEW -->
-        <section id="warehouses-view" class="view">
+        <section id="company-view" class="view">
 
             <header class="view-actions">
-                <h2 class="title" data-i18n="whPageTitle"></h2>
+                <h2 class="title" data-i18n="cyPageTitle"></h2>
             </header>
 
             <div class="header-actions">
-                <button id="add-warehouse-btn" class="headerBtn" data-i18n="addWarehouse"></button>
+                <button id="add-company-btn" class="headerBtn" data-i18n="addCompany"></button>
             </div>
 
-            <div id="warehouses-list" class="transaction-list settings-list"></div>
+            <div id="company-list" class="transaction-list settings-list"></div>
 
         </section>
 
@@ -635,10 +870,69 @@
                             <label data-i18n="addModuleStatus">Status</label>
                             <input type="text" id="add-status" data-i18n-placeholder="phStatus">
                         </div>
-
+                             
+                        <!-- LOCATION ADD -->
                         <div class="input-group">
-                            <label data-i18n="addModuleLocation">Location</label>
-                            <input type="text" id="add-location" data-i18n-placeholder="phLocation">
+
+                            <label data-i18n="addModuleLocation">
+                                Location 
+                            </label>
+
+                            <div class="location-shell">
+
+                                <div class="location-toolbar">
+
+                                    <div class="location-picker">
+
+                                        <button type="button" class="location-segment active" data-step="warehouse">
+                                            <span class="segment-value">-</span>
+                                            <span class="segment-label">Warehouse</span>
+                                        </button>
+
+                                        <button type="button" class="location-segment" data-step="zone">
+                                            <span class="segment-value">-</span>
+                                            <span class="segment-label">Zona</span>
+                                        </button>
+
+                                        <button type="button" class="location-segment" data-step="rack">
+                                            <span class="segment-value">-</span>
+                                            <span class="segment-label">Regala</span>
+                                        </button>
+
+                                        <button type="button" class="location-segment" data-step="shelf">
+                                            <span class="segment-value">-</span>
+                                            <span class="segment-label">Polica</span>
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="location-selector-card">
+
+                                    <div id="location-step-title" class="location-step-title">
+                                        Warehouse
+                                    </div>
+
+                                    <div id="location-step-desc" class="location-step-desc">
+                                        Select warehouse location.
+                                    </div>
+
+                                    <div id="add-location-selector" class="location-selector"></div>
+
+                                </div>
+
+                                <div class="location-hint">
+                                    Odaberi lokaciju →
+                                </div>
+
+                                <div class="location-preview">
+                                    Format lokacije: W1-A-01-1
+                                </div>
+
+                            </div>
+
                         </div>
 
                     </div>
@@ -697,9 +991,78 @@
                             <input type="text" id="edit-status" data-i18n-placeholder="phStatus">
                         </div>
 
+                        <!-- LOCATION EDIT -->
                         <div class="input-group">
+
                             <label data-i18n="addModuleLocation">Location</label>
-                            <input type="text" id="edit-location" data-i18n-placeholder="phLocation">
+
+                            <div class="location-shell">
+
+                                <div class="location-toolbar">
+
+                                    <div class="location-picker">
+
+                                        <button
+                                            type="button"
+                                            class="location-segment active"
+                                            data-edit-step="warehouse">
+
+                                            <span class="segment-value">-</span>
+                                            <span class="segment-label">Warehouse</span>
+
+                                        </button>
+
+                                        <button type="button" class="location-segment"data-edit-step="zone">
+                                            <span class="segment-value">-</span>
+                                            <span class="segment-label">Zona</span>
+                                        </button>
+
+                                        <button type="button" class="location-segment" data-edit-step="rack">
+                                            <span class="segment-value">-</span>
+                                            <span class="segment-label">Regala</span>
+                                        </button>
+
+                                        <button type="button" class="location-segment" data-edit-step="shelf">
+                                            <span class="segment-value">-</span>
+                                            <span class="segment-label">Polica</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="location-selector-card">
+                                    <div
+                                        id="edit-location-step-title"
+                                        class="location-step-title">
+
+                                        Warehouse
+
+                                    </div>
+
+                                    <div
+                                        id="edit-location-step-desc"
+                                        class="location-step-desc">
+
+                                        Select warehouse location.
+
+                                    </div>
+
+                                    <div
+                                        id="edit-location-selector"
+                                        class="location-selector">
+
+                                    </div>
+
+                                </div>
+
+                                <div class="location-hint">
+                                    Odaberi lokaciju →
+                                </div>
+
+                                <div class="location-preview">
+                                    Format lokacije: W1-A-01-1
+                                </div>
+
+                            </div>
+
                         </div>
 
                     </div>
@@ -791,8 +1154,8 @@
 
                     <!-- DROPDOWNs -->
                     <div class="input-group">
-                        <label data-i18n="warehouse">Warehouse *</label>
-                        <select id="tx-warehouse"></select>
+                        <label data-i18n="company">Company *</label>
+                        <select id="tx-company"></select>
                     </div>
 
                     <div class="input-group">
@@ -826,71 +1189,71 @@
 
 
 
-            <!-- MODAL MY WAREHOUSE -->
-            <div class="modal warehouse-modal hidden">
+            <!-- MODAL MY COMPANY -->
+            <div class="modal company-modal hidden">
 
                 <div class="modal__content">
 
-                    <h3 class="modal__title" data-i18n="whTitle"></h3>
+                    <h3 class="modal__title" data-i18n="cyTitle"></h3>
 
                     <div class="input-group">
-                        <label data-i18n="whName"></label>
-                        <input type="text" id="wh-name">
+                        <label data-i18n="cyName"></label>
+                        <input type="text" id="cy-name">
                     </div>
 
                     <div class="input-group">
-                        <label data-i18n="whAddress"></label>
-                        <input type="text" id="wh-address">
+                        <label data-i18n="cyAddress"></label>
+                        <input type="text" id="cy-address">
                     </div>
 
                     <div class="input-group">
                         <label data-i18n="email"></label>
-                        <input type="text" id="wh-email">
+                        <input type="text" id="cy-email">
                     </div>
 
                     <div class="input-group">
                         <label data-i18n="phone"></label>
-                        <input type="text" id="wh-phone">
+                        <input type="text" id="cy-phone">
                     </div>
 
                     <div class="input-group">
                         <label data-i18n="web"></label>
-                        <input type="text" id="wh-website">
+                        <input type="text" id="cy-website">
                     </div>
 
                     <div class="input-group">
                         <label data-i18n="pib"></label>
-                        <input type="text" id="wh-pib">
+                        <input type="text" id="cy-pib">
                     </div>
 
                     <div class="input-group">
                         <label data-i18n="mb"></label>
-                        <input type="text" id="wh-mb">
+                        <input type="text" id="cy-mb">
                     </div>
 
                     <div class="input-group">
                         <label data-i18n="vat"></label>
-                        <input type="number" id="wh-vat" placeholder="20">
+                        <input type="number" id="cy-vat" placeholder="20">
                     </div>
 
                     <div class="input-group">
                         <label data-i18n="bank"></label>
-                        <input type="text" id="wh-bank">
+                        <input type="text" id="cy-bank">
                     </div>
 
                     <div class="input-group">
                         <label>IBAN</label>
-                        <input type="text" id="wh-iban">
+                        <input type="text" id="cy-iban">
                     </div>
 
                     <div class="input-group">
                         <label>SWIFT / BIC</label>
-                        <input type="text" id="wh-swift">
+                        <input type="text" id="cy-swift">
                     </div>
 
                     <div class="modal__actions">
-                        <button id="wh-save" class="btn-save" data-i18n="save"></button>
-                        <button id="wh-cancel" class="btn-cancel" data-i18n="cancel"></button>
+                        <button id="cy-save" class="btn-save" data-i18n="save"></button>
+                        <button id="cy-cancel" class="btn-cancel" data-i18n="cancel"></button>
                     </div>
 
                 </div>
@@ -904,12 +1267,12 @@
                     <h3 class="modal__title" data-i18n="ptTitle"></h3>
 
                     <div class="input-group">
-                        <label data-i18n="whName"></label>
+                        <label data-i18n="cyName"></label>
                         <input type="text" id="pt-name">
                     </div>
 
                     <div class="input-group">
-                        <label data-i18n="whAddress"></label>
+                        <label data-i18n="cyAddress"></label>
                         <input type="text" id="pt-address">
                     </div>
 
@@ -955,26 +1318,26 @@
             </div>
        
             
-<!-- MODAL CONFIRM -->
-<div id="confirm-modal" class="modal hidden">
+        <!-- MODAL CONFIRM -->
+        <div id="confirm-modal" class="modal hidden">
 
-    <div class="modal__content confirm-box">
+            <div class="modal__content confirm-box">
 
-        <h3 class="modal__title" id="confirm-title"data-i18n="confirmTitle">Confirm action</h3>
+                <h3 class="modal__title" id="confirm-title"data-i18n="confirmTitle">Confirm action</h3>
 
-        <p id="confirm-text">Are you sure?</p>
+                <p id="confirm-text">Are you sure?</p>
 
-        <div class="modal__actions">
+                <div class="modal__actions">
 
-            <button id="confirm-ok" class="btn-confirm" data-i18n="confirm">Confirm</button>
+                    <button id="confirm-ok" class="btn-confirm" data-i18n="confirm">Confirm</button>
 
-            <button id="confirm-cancel" class="btn-cancel" data-i18n="cancel"> Cancel</button>
+                    <button id="confirm-cancel" class="btn-cancel" data-i18n="cancel"> Cancel</button>
+
+                </div>
+
+            </div>
 
         </div>
-
-    </div>
-
-</div>
 
 
     </div>
