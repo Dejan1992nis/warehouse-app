@@ -866,9 +866,24 @@
                             <input type="text" id="add-code" data-i18n-placeholder="phCode">
                         </div>
 
+
+                        <!-- STATUS ADD -->
                         <div class="input-group">
-                            <label data-i18n="addModuleStatus">Status</label>
-                            <input type="text" id="add-status" data-i18n-placeholder="phStatus">
+
+                            <label data-i18n="addModuleStatus">
+                                Status
+                            </label>
+
+                            <div id="add-status-selector" class="status-selector">
+
+                                <button type="button" class="status-option selected" data-status="NOV">Nov</button>
+                                <button type="button" class="status-option" data-status="NOV AK">Nov akt</button>
+                                <button type="button" class="status-option" data-status="NOV NEAKT">Nov neakt</button>
+                                <button type="button" class="status-option" data-status="POL">Pol</button>
+                                <button type="button" class="status-option" data-status="REGENER">Reg</button>
+                                <button type="button" class="status-option" data-status="POL/REG AK">Pol/Reg akt</button>
+                            </div>
+
                         </div>
                              
                         <!-- LOCATION ADD -->
@@ -986,9 +1001,24 @@
                             <input type="text" id="edit-code" data-i18n-placeholder="phCode">
                         </div>
 
+                        <!-- STATUS EDIT -->
                         <div class="input-group">
-                            <label data-i18n="addModuleStatus">Status</label>
-                            <input type="text" id="edit-status" data-i18n-placeholder="phStatus">
+
+                            <label data-i18n="addModuleStatus">
+                                Status
+                            </label>
+
+                            <div id="edit-status-selector" class="status-selector">
+
+                                <button type="button" class="status-option selected" data-edit-status="NOV">Nov</button>
+                                <button type="button" class="status-option" data-edit-status="NOV AK">Nov akt</button>
+                                <button type="button" class="status-option" data-edit-status="NOV NEAKT">Nov neakt</button>
+                                <button type="button" class="status-option" data-edit-status="POL">Pol</button>
+                                <button type="button" class="status-option" data-edit-status="REGENER">Reg</button>
+                                <button type="button" class="status-option" data-edit-status="POL/REG AK">Pol/Reg akt</button>
+
+                            </div>
+
                         </div>
 
                         <!-- LOCATION EDIT -->
@@ -1318,26 +1348,26 @@
             </div>
        
             
-        <!-- MODAL CONFIRM -->
-        <div id="confirm-modal" class="modal hidden">
+            <!-- MODAL CONFIRM -->
+            <div id="confirm-modal" class="modal hidden">
 
-            <div class="modal__content confirm-box">
+                <div class="modal__content confirm-box">
 
-                <h3 class="modal__title" id="confirm-title"data-i18n="confirmTitle">Confirm action</h3>
+                    <h3 class="modal__title" id="confirm-title"data-i18n="confirmTitle">Confirm action</h3>
 
-                <p id="confirm-text">Are you sure?</p>
+                    <p id="confirm-text">Are you sure?</p>
 
-                <div class="modal__actions">
+                    <div class="modal__actions">
 
-                    <button id="confirm-ok" class="btn-confirm" data-i18n="confirm">Confirm</button>
+                        <button id="confirm-ok" class="btn-confirm" data-i18n="confirm">Confirm</button>
 
-                    <button id="confirm-cancel" class="btn-cancel" data-i18n="cancel"> Cancel</button>
+                        <button id="confirm-cancel" class="btn-cancel" data-i18n="cancel"> Cancel</button>
+
+                    </div>
 
                 </div>
 
             </div>
-
-        </div>
 
 
     </div>

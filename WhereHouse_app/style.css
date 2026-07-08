@@ -1878,7 +1878,29 @@ body {
 .btn-cancel:active {
     transform: scale(0.97);
 }
+/*--------------------------------------- STATUS INPUT -------------------------------------*/
+.status-selector{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
 
+.status-option{
+    border:1px solid rgba(255,255,255,.08);
+    background:#1f2937;
+    color:#d1d5db;
+    border-radius:12px;
+    padding:10px 14px;
+    font-size:13px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.status-option.selected{
+    background:linear-gradient(135deg,#6d5dfc,#5b4cf5);
+    color:#fff;
+    border-color:transparent;
+}
 /*--------------------------------------- LOCATION INPUT -------------------------------------*/
 
 .location-shell {

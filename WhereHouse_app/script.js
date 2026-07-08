@@ -823,20 +823,44 @@ historyClose.addEventListener('click', function () {
 // ===== ADD MODAL =====
 const modal = document.querySelector('.add-modal');
 
-const addSaveBtn = document.getElementById('add-save');
-const addCancelBtn = document.getElementById('add-cancel');
+const addSaveBtn    = document.getElementById('add-save');
+const addCancelBtn  = document.getElementById('add-cancel');
 
-const addName = document.getElementById('add-name');
-const addQty = document.getElementById('add-quantity');
-const addPrice = document.getElementById('add-price');
-const addLimit = document.getElementById('add-limit');
-const addCode = document.getElementById('add-code');
-const addStatus = document.getElementById('add-status');
+const addName   = document.getElementById('add-name');
+const addQty    = document.getElementById('add-quantity');
+const addPrice  = document.getElementById('add-price');
+const addLimit  = document.getElementById('add-limit');
+const addCode   = document.getElementById('add-code');
 
-const addToggleBtn = document.getElementById('add-toggle-more');
-const addOptional = document.getElementById('add-optional-fields');
 
-// LOACTION INPUT
+
+
+
+
+// -------------------- FEATURE: ADD STATUS INPUT --------------------
+
+const addToggleBtn  = document.getElementById('add-toggle-more');
+const addOptional   = document.getElementById('add-optional-fields');
+
+// STATUS
+let selectedStatus = 'NOV';
+
+document.querySelectorAll('.status-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+
+            document.querySelectorAll('.status-option').forEach(x =>
+                    x.classList.remove('selected')
+                );
+
+            btn.classList.add('selected');
+            selectedStatus = btn.dataset.status;
+        });
+
+    });
+
+
+// -------------------- FEATURE: ADD LOCATION INPUT --------------------
+
 const addLocationSelector = document.getElementById('add-location-selector');
 
 let locationState = {
@@ -991,28 +1015,25 @@ function renderLocationSelector() {
     addLocationSelector.appendChild(grid);
 }
 
-document
-    .querySelectorAll('.location-segment')
-    .forEach(segment => {
+document.querySelectorAll('.location-segment').forEach(segment => {
 
         segment.addEventListener('click', () => {
 
-            document
-                .querySelectorAll('.location-segment')
-                .forEach(btn =>
+            document.querySelectorAll('.location-segment').forEach(btn =>
                     btn.classList.remove('active')
                 );
 
             segment.classList.add('active');
-
-            activeLocationStep =
-                segment.dataset.step;
+            activeLocationStep = segment.dataset.step;
 
             updateLocationInfo();
             renderLocationSelector();
         });
 
     });
+
+
+
 
 // SAVE → IDE SAMO U TRANSACTION 
 addSaveBtn.addEventListener('click', () => {
@@ -1061,7 +1082,7 @@ addToTransaction({
     id: 'tmp_' + Date.now(),
     name,
     code: addCode.value.trim(),
-    status: addStatus.value.trim(),
+    status: selectedStatus,
     location:`${locationState.warehouse}-${locationState.zone}-${locationState.rack}-${locationState.shelf}`,
     warehouse_code:locationState.warehouse,
     zone_code:locationState.zone,
@@ -1093,14 +1114,23 @@ addCancelBtn.addEventListener('click', () => {
 });
 
 
-
+// RSETOVANJE FORME
 function resetForm() {
     addName.value = '';
     addQty.value = '';
     addPrice.value = '';
     addLimit.value = '';
     addCode.value = '';
-    addStatus.value = '';
+  
+    //Status Reset
+    selectedStatus = 'NOV';
+
+    document.querySelectorAll('.status-option').forEach(btn =>
+            btn.classList.remove('selected')
+        );
+
+    document.querySelector('.status-option[data-status="NOV"]')
+        ?.classList.add('selected');
 
     addOptional.classList.add('hidden');
     modal.classList.remove('child-modal');
@@ -1127,21 +1157,41 @@ addToggleBtn.addEventListener('click', () => {
 
 
 // ===== EDIT MODAL =====
-const editBtn           = document.querySelector('.btn-edit');
-const editModal = document.querySelector('.edit-modal');
+const editBtn       = document.querySelector('.btn-edit');
+const editModal     = document.querySelector('.edit-modal');
 
-const editSaveBtn = document.getElementById('edit-save');
+const editSaveBtn   = document.getElementById('edit-save');
 const editCancelBtn = document.getElementById('edit-cancel');
 
 const editToggleBtn = document.getElementById('edit-toggle-more');
-const editOptional = document.getElementById('edit-optional-fields');
+const editOptional  = document.getElementById('edit-optional-fields');
 
-const editLocationSelector = document.getElementById('edit-location-selector');
-
-let editActiveLocationStep =
-    'warehouse';
 
 let editItem = null;
+
+
+
+// -------------------- FEATURE: EDIT STATUS INPUT --------------------
+let selectedEditStatus = 'NOV';
+
+document.querySelectorAll('#edit-status-selector .status-option').forEach(btn => {
+
+        btn.addEventListener('click', () => {
+
+            document.querySelectorAll('#edit-status-selector .status-option').forEach(x =>
+                    x.classList.remove('selected')
+                );
+
+            btn.classList.add('selected');
+            selectedEditStatus = btn.dataset.editStatus;
+        });
+
+    });
+
+// -------------------- FEATURE: EDIT LOACTION INPUT --------------------
+const editLocationSelector = document.getElementById('edit-location-selector');
+
+let editActiveLocationStep ='warehouse';
 
 let editLocationState = {
     warehouse: null,
@@ -1150,16 +1200,11 @@ let editLocationState = {
     shelf: null
 };
 
-// Redenreovanje Location segemnta
 function renderEditLocationSelector() {
 
     editLocationSelector.innerHTML = '';
-
-    const grid =
-        document.createElement('div');
-
-    grid.className =
-        'location-option-grid';
+    const grid = document.createElement('div');
+    grid.className ='location-option-grid';
 
     let options = [];
 
@@ -1167,21 +1212,15 @@ function renderEditLocationSelector() {
 
         case 'warehouse':
 
-            options = Array.from(
-                { length: 10 },
-                (_, i) => `W${i + 1}`
-            );
-
+            options = Array.from({ length: 10 },(_, i) => `W${i + 1}`);
             break;
 
         case 'zone':
-
             options = [
                 'A','B','C',
                 'D','E','F',
                 'G','H'
             ];
-
             break;
 
         case 'rack':
@@ -1278,82 +1317,55 @@ function renderEditLocationSelector() {
 
 function updateEditLocationInfo() {
 
-    const title =
-        document.getElementById(
-            'edit-location-step-title'
-        );
-
-    const desc =
-        document.getElementById(
-            'edit-location-step-desc'
-        );
+    const title =document.getElementById('edit-location-step-title');
+    const desc = document.getElementById('edit-location-step-desc');
 
     switch (editActiveLocationStep) {
 
         case 'warehouse':
 
-            title.textContent =
-                'Warehouse';
-
-            desc.textContent =
-                'Select warehouse location';
-
+            title.textContent ='Warehouse';
+            desc.textContent ='Select warehouse location';
             break;
 
         case 'zone':
-
-            title.textContent =
-                'Zona';
-
-            desc.textContent =
-                'Odaberi zonu u skladištu';
-
+            title.textContent ='Zona';
+            desc.textContent ='Odaberi zonu u skladištu';
             break;
 
         case 'rack':
-
-            title.textContent =
-                'Regala';
-
-            desc.textContent =
-                'Broj regale u zoni';
-
+            title.textContent ='Regala';
+            desc.textContent ='Broj regale u zoni';
             break;
 
         case 'shelf':
 
-            title.textContent =
-                'Polica';
-
-            desc.textContent =
-                'Nivo police';
-
+            title.textContent ='Polica';
+            desc.textContent ='Nivo police';
             break;
     }
 
 }
-document
-    .querySelectorAll('[data-edit-step]')
-    .forEach(segment => {
+document.querySelectorAll('[data-edit-step]').forEach(segment => {
 
         segment.addEventListener('click', () => {
 
-            document
-                .querySelectorAll('[data-edit-step]')
-                .forEach(btn =>
+            document.querySelectorAll('[data-edit-step]').forEach(btn =>
                     btn.classList.remove('active')
                 );
 
             segment.classList.add('active');
 
-            editActiveLocationStep =
-                segment.dataset.editStep;
+            editActiveLocationStep =segment.dataset.editStep;
 
             updateEditLocationInfo();
             renderEditLocationSelector();
         });
 
     });
+
+
+
 
 
 // TOGGLE
@@ -1386,7 +1398,21 @@ editBtn.addEventListener('click', () => {
     document.getElementById('edit-price').value = selectedItem.price;
     document.getElementById('edit-limit').value = selectedItem.limit;
     document.getElementById('edit-code').value = selectedItem.code;
-    document.getElementById('edit-status').value = selectedItem.status;
+    
+    // Status
+    selectedEditStatus = selectedItem.status || 'NOV';
+
+        document
+            .querySelectorAll('#edit-status-selector .status-option')
+            .forEach(btn =>
+                btn.classList.remove('selected')
+            );
+
+        document
+            .querySelector(
+                `#edit-status-selector .status-option[data-edit-status="${selectedEditStatus}"]`
+            )
+            ?.classList.add('selected');
 
     
   
@@ -1422,7 +1448,7 @@ editSaveBtn.addEventListener('click', async () => {
 
     const name = document.getElementById('edit-name').value.trim();
     const code = document.getElementById('edit-code').value.trim();
-    const status = document.getElementById('edit-status').value.trim();
+    const status = selectedEditStatus;
     const price = Number(document.getElementById('edit-price').value);
     const limit = Number(document.getElementById('edit-limit').value);
     const location =`${editLocationState.warehouse}-${editLocationState.zone}-${editLocationState.rack}-${editLocationState.shelf}`;
@@ -1480,27 +1506,6 @@ editCancelBtn.addEventListener('click', () => {
     editModal.classList.add('hidden');
     editItem = null;
 });
-
-
-
-
-
-// --------------------------------------------------------- TEST ----------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2562,10 +2567,24 @@ function openCopyModal(item) {
     modal.classList.remove('hidden');
     addName.value = item.name + ' copy';
     addCode.value = item.code || '';
-    addStatus.value = item.status || '';
     addPrice.value = item.price || '';
     addLimit.value = item.limit || '';
     addQty.value = '';
+
+    //Status Copy
+    selectedStatus = item.status || 'NOV';
+
+    document
+        .querySelectorAll('.status-option')
+        .forEach(btn =>
+            btn.classList.remove('selected')
+        );
+
+    document
+        .querySelector(
+            `.status-option[data-status="${selectedStatus}"]`
+        )
+        ?.classList.add('selected');
 
     addOptional.classList.remove('hidden');
 }
