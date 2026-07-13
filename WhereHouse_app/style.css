@@ -96,7 +96,7 @@
     padding:0 16px;
     border-radius:var(--radius-md);
     cursor:pointer;
-    font-size:var(--font-sm);
+    font-size:var(--font-md);
     font-weight:var(--fw-semibold);
     transition:var(--transition);
     border:1px solid transparent;
@@ -1369,7 +1369,7 @@ body {
     margin-top:2px;
 
     font-size:18px;
-    font-weight:700;
+    font-weight:500;
     line-height:1;
 
     color:var(--color-text-main);
@@ -2297,16 +2297,7 @@ color:var(--color-text-main);
     letter-spacing:.08em;
 }
 
-.inventory-status-summary .pill-value{
-    margin-top:2px;
 
-    font-size:18px;
-    font-weight:700;
-
-    line-height:1;
-
-    color:var(--color-text-main);
-}
 .stock-icon{
     display:flex;
     align-items:center;
