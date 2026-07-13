@@ -2231,7 +2231,7 @@ inventoryFilterReset.addEventListener('click', function () {
 
 
 
-// ========================================================== #MANAGEMENT TAB ==========================================================
+// ========================================================== #DASHBOARD TAB ==========================================================
 
 // -------------------- FEATURE: CARDS - TOTALS -------------------
 //1.  SELECTORS ===
@@ -2269,6 +2269,11 @@ function updateDashboardCards() {
     const lowStock = items.filter(item => {
         return Number(item.quantity) < Number(item.limit);
     });
+
+    const totalPages = Math.ceil(
+        lowStock.length /
+        lowStockPagination.itemsPerPage
+    ) || 1;
 
     const lowStockCount = lowStock.length;
     lowStockCard.textContent = lowStockCount;
@@ -2396,7 +2401,6 @@ function formatDate(date) {
 
 // -------------------- FEATURE: LOW STOCK LIST -------------------
 //1.  SELECTORS ===
-// const tableBodyDash     = document.querySelector('.table-body-dashboard');
 const lowStockList = document.querySelector('.low-stock-list');
 
 //3.  FUNCTIONS ===
@@ -2412,6 +2416,18 @@ function renderLowStockList() {
 
     lowStockList.innerHTML = '';
 
+    const totalPages =
+        Math.ceil(
+            lowStock.length /
+            lowStockPagination.itemsPerPage
+        ) || 1;
+
+    const pageItems = paginate(
+        lowStock,
+        lowStockPagination.currentPage,
+        lowStockPagination.itemsPerPage
+    );
+
     if (lowStock.length === 0) {
 
         lowStockList.innerHTML = `
@@ -2420,10 +2436,16 @@ function renderLowStockList() {
             </div>
         `;
 
+        lowStockPageInfo.textContent =
+            'Page 1 / 1';
+
+        lowStockPrevBtn.disabled = true;
+        lowStockNextBtn.disabled = true;
+
         return;
     }
 
-    lowStock.forEach(item => {
+    pageItems.forEach(item => {
 
         const card = document.createElement('div');
 
@@ -2475,10 +2497,64 @@ function renderLowStockList() {
 
     });
 
+    lowStockPageInfo.textContent =
+        `Page ${lowStockPagination.currentPage} / ${totalPages}`;
+
+    lowStockPrevBtn.disabled =
+        lowStockPagination.currentPage === 1;
+
+    lowStockNextBtn.disabled =
+        lowStockPagination.currentPage === totalPages;
 }
 
+// ---------  LowStock - PAGINATION -----------------
+// tx-Pagination
+const lowStockPrevBtn = document.querySelector('.lowStock-prev-btn');
+const lowStockNextBtn = document.querySelector('.lowStock-next-btn');
+const lowStockPageInfo = document.querySelector('.lowStock-page-info');
 
+const lowStockPagination = {
+    currentPage: 1,
+    itemsPerPage: 10
+};
 
+function setupLowStockPagination() {
+
+    lowStockPrevBtn.addEventListener('click', () => {
+
+        if (lowStockPagination.currentPage > 1) {
+
+            lowStockPagination.currentPage--;
+
+            renderLowStockList();
+
+        }
+
+    });
+
+    lowStockNextBtn.addEventListener('click', () => {
+
+        const lowStock = items.filter(item =>
+            Number(item.quantity) < Number(item.limit)
+        );
+
+        const totalPages =
+            Math.ceil(
+                lowStock.length /
+                lowStockPagination.itemsPerPage
+            ) || 1;
+
+        if (lowStockPagination.currentPage < totalPages) {
+
+            lowStockPagination.currentPage++;
+
+            renderLowStockList();
+
+        }
+
+    });
+
+}
 
 
 
@@ -5556,6 +5632,7 @@ confirmModal.addEventListener('click', (e) => {
 setupInventoryPagination();
 setupTransactionPagination();
 setupArchivePagination();
+setupLowStockPagination();
 
 updateAuthUI();
 
