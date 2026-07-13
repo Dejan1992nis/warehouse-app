@@ -260,8 +260,56 @@
 
     </div>
 
+        <!-- TRANSACTIONS VIEW -->
+        <section id="transactions-view" class="view">
 
+            <header class="view-actions">
+                <h2 class="title" data-i18n="transactionsTitle">Transactions</h2>
+            </header>
 
+            <!-- ACTION BUTTONS -->
+            <div class="btn-actions">
+
+                <button id="btn-receive" class="headerBtn" data-i18n="receiveBtn">
+                    + Receive
+                </button>
+
+                <button id="btn-issue" class="headerBtn" data-i18n="issueBtn">
+                    - Issue
+                </button>
+
+            </div>
+
+            <!-- TABLE -->
+            <div class="table-wrapper">
+
+                <table class="table">
+
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th data-i18n="txType">TYPE</th>
+                            <th data-i18n="txDate">DATE</th>
+                            <th data-i18n="txAction">ACTION</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="transactions-body">
+                        <!-- JS -->
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <!-- Trasaction-Pagination -->
+            <div class="pagination transaction-pagination">
+                <button class="tx-prev-btn" data-i18n="prev">◀ Prev</button>
+                <span class="tx-page-info"></span>
+                <button class="tx-next-btn" data-i18n="next">Next ▶</button>
+            </div>
+
+        </section>
 
    <script src="script2.js"></script> 
 </body>

@@ -60,7 +60,7 @@ async function fetchItems() {
     updateDashboardCards();
     renderInventoryTable();
     updateInventoryStats();
-    renderLowStockList();
+    renderLowStockTable();
 }
 //  uzima sve logove za jedan item sortira ih (najnoviji prvi)
 async function fetchLogs(itemId) {
@@ -706,14 +706,13 @@ saveBtn.addEventListener('click', async function () {
 //1.  SELECTORS ===
 const historyModal      = document.querySelector('.history-modal');
 const historyBtn        = document.querySelector('.btn-history');
-// const historyClose      = document.querySelector('.history-close');
-const historyClose      = document.querySelector('.modal__close');
+const historyClose      = document.querySelector('.history-close');
 const ItemLog           = document.querySelector('.history-modal_itemLog')
 //2.  STATE ===
 //3.  FUNCTIONS ===
 function renderLogs(logs) {
 
-    const container = document.querySelector('.history-modal .dialog__body');
+    const container = document.querySelector('.history-modal__body');
     //Naziv Item za koji geldamo LogHistory
     ItemLog.textContent = selectedItem ? selectedItem.name : t('noItems');
 
@@ -1515,7 +1514,7 @@ editCancelBtn.addEventListener('click', () => {
 const archiveItemBtn     = document.querySelector('.btn-archive');
 const archiveModal       = document.querySelector('.archive-modal');
 const confirmArchiveBtn  = document.querySelector('.btn-confirm-archive');
-const cancelArchiveBtn   = document.querySelector('.archive-modal .btn-cancel');
+const cancelArchiveBtn   = document.querySelector('.btn-cancel-archive');
 
 //3.  FUNCTIONS ===
 function openArchiveModal() {
@@ -1576,20 +1575,21 @@ const optionalFields = document.getElementById('optional-fields');
 
 
 
-// ========================================================== #INVENTORY TAB ==========================================================
+// ========================================================== INVENTORY TAB ==========================================================
 
 // -------------------- FEATURE: INVENTORY VIEW --------------------
 //1.  SELECTORS ===
+const tableWrapper = document.querySelector('.table-wrapper');
 const inventoryList = document.querySelector('.inventory-list');
 
 // INVENTORY HEADER
 
 const inventorySearch       = document.getElementById('inventory-search');
 const inventoryTotalCount   = document.getElementById('inventory-total-count');
-const criticalPill          = document.querySelector('.inventory-status-summary .summary-pill.critical .pill-value');
-const lowPill               = document.querySelector('.inventory-status-summary .summary-pill.low .pill-value');
-const okPill                = document.querySelector('.inventory-status-summary .summary-pill.ok .pill-value');
-const excessPill            = document.querySelector('.inventory-status-summary .summary-pill.excess .pill-value');
+const criticalPill          = document.querySelector('.summary-pill.critical .pill-value');
+const lowPill               = document.querySelector('.summary-pill.low .pill-value');
+const okPill                = document.querySelector('.summary-pill.ok .pill-value');
+const excessPill            = document.querySelector('.summary-pill.excess .pill-value');
 
 let inventorySearchTerm = '';
 
@@ -1882,51 +1882,66 @@ const status = getStockStatus(item);
 card.classList.add(`status-${status}`);
 
 switch (status) {
-case 'empty':
 
-    stockIndicator = `
-        <div class="stock-indicator stock-empty">
-            <div class="stock-icon">
-                <i class="bi bi-x-circle"></i>
+    case 'empty':
+
+        stockIndicator = `
+            <div class="stock-indicator stock-empty">
+                <div class="stock-icon">
+                    <svg
+                        class="stock-svg danger-icon"
+                        viewBox="0 0 24 24">
+
+                        <path
+                            fill="currentColor"
+                            d="M18.3 5.7L12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3z"/>
+                    </svg>
+                </div>
             </div>
-        </div>
-    `;
-    break;
+        `;
 
-case 'critical':
+        break;
 
-    stockIndicator = `
-        <div class="stock-indicator stock-critical">
-            <div class="stock-icon">
-                <i class="bi bi-exclamation-triangle"></i>
+    case 'critical':
+
+        stockIndicator = `
+            <div class="stock-indicator stock-critical">
+                <div class="stock-icon">
+                    <svg
+                        class="stock-svg warning-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2L1 21h22L12 2zm0 5l1 8h-2l1-8zm0 11a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/>
+                    </svg>
+                </div>
             </div>
-        </div>
-    `;
-    break;
+        `;
 
-case 'low':
+        break;
 
-    stockIndicator = `
-        <div class="stock-indicator stock-low">
-            <div class="stock-icon">
-                <i class="bi bi-exclamation-circle"></i>
-            </div>
-        </div>
-    `;
-    break;
+    case 'low':
 
-case 'ok':
+        stockIndicator = `
+                    <svg class="stock-bars-icon stock-low-icon" viewBox="0 0 16 16">4 5        
+                        <rect class="filled" x="1" y="10" width="2" height="5"/>6 7        
+                        <rect class="filled" x="5" y="8" width="2" height="7"/>8 9        
+                        <rect x="9" y="5" width="2" height="10"/>10 11        
+                        <rect x="13" y="2" width="2" height="13"/>12 13    
+                    </svg>
+        `;
 
-    stockIndicator = `
-        <div class="stock-indicator stock-ok">
-            <div class="stock-icon">
-                <i class="bi bi-check-circle"></i>
-            </div>
-        </div>
-    `;
-    break;
+        break;
 
-    }
+    case 'ok':
+
+        stockIndicator = `
+                <svg class="stock-bars-icon stock-good-icon" viewBox="0 0 16 16">
+                    <rect class="filled" x="1" y="10" width="2" height="5"/>
+                    <rect class="filled" x="5" y="8" width="2" height="7"/>
+                    <rect class="filled" x="9" y="5" width="2" height="10"/>
+                    <rect class="filled" x="13" y="2" width="2" height="13"/>
+                </svg>
+        `;
+
+        break;
+}
 
             card.innerHTML = `
                 <div class="inventory-left">
@@ -2040,12 +2055,12 @@ function paginate(data, currentPage, itemsPerPage) {
 }
 
 // -------------------- FEATURE: INVENTORy FILTER -------------------
-const inventoryFilterBtn    = document.getElementById('inventory-filter-btn');
-const inventoryFilterCount  = document.getElementById('inventory-filter-count');
-const inventoryFilterModal  = document.querySelector('.inventory-filter-modal');
-const inventoryFilterClose  = document.getElementById('inventory-filter-close');
-const inventoryFilterApply  = document.getElementById('inventory-filter-apply');
-const inventoryFilterReset  = document.getElementById('inventory-filter-reset');
+const inventoryFilterBtn        = document.getElementById('inventory-filter-btn');
+const inventoryFilterCount      = document.getElementById('inventory-filter-count');
+const inventoryFilterOverlay    = document.getElementById('inventory-filter-overlay');
+const inventoryFilterClose      = document.getElementById('inventory-filter-close');
+const inventoryFilterApply      = document.getElementById('inventory-filter-apply');
+const inventoryFilterReset      = document.getElementById('inventory-filter-reset');
 
 
 const inventoryFilters = {
@@ -2054,133 +2069,70 @@ const inventoryFilters = {
     warehouse: [],
     minQty: '',
     maxQty: '',
-    sort: null
+    sort: 'priority'
 };
 
 
 let appliedFilterCount = 0;
+let appliedFilterState = [];
 
-
-// Brojimo aktivne filtere
+// Brojimo aktivne filtera
 function getActiveFilterCount() {
     return document.querySelectorAll('.filter-chip.active').length;
 }
 
-// OPEN
+//OPNE / CLOSE
 inventoryFilterBtn.addEventListener('click', () => {
+    inventoryFilterOverlay.classList.add('open');
+});
 
-    syncFilterUI();
-
-    inventoryFilterModal.classList.remove('hidden');
+inventoryFilterClose.addEventListener('click', () => {
+    restoreAppliedFilters();
+    inventoryFilterOverlay.classList.remove('open');
 
 });
 
-//Sinhronizacija Filter UI (izgleda) sa odabranim filterima
-function syncFilterUI() {
+inventoryFilterOverlay.addEventListener('click', e => {
 
-    document.querySelectorAll('.filter-chip').forEach(chip => chip.classList.remove('active'));
+    if (e.target === inventoryFilterOverlay) {
+        restoreAppliedFilters();
+        inventoryFilterOverlay.classList.remove('open');
 
-    document.querySelectorAll('[data-filter-stock]').forEach(chip => {
+    }
+});
 
-            if (
-                inventoryFilters.stock.includes(
-                    chip.dataset.filterStock
-                )
-            ) {
-                chip.classList.add('active');
-            }
 
-        });
 
-    document.querySelectorAll('[data-filter-item-status]').forEach(chip => {
 
-            if (
-                inventoryFilters.itemStatus.includes(
-                    chip.dataset.filterItemStatus
-                )
-            ) {
-                chip.classList.add('active');
-            }
+document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', function () {
+        this.classList.toggle('active');
+    });
 
-        });
-
-    document.querySelectorAll('[data-filter-warehouse]').forEach(chip => {
-
-            if (
-                inventoryFilters.warehouse.includes(
-                    chip.dataset.filterWarehouse
-                )
-            ) {
-                chip.classList.add('active');
-            }
-
-        });
-
-    document.querySelectorAll('.sort-chip')
-        .forEach(chip => {
-
-            if (
-                chip.dataset.sort ===
-                inventoryFilters.sort
-            ) {
-                chip.classList.add('active');
-            }
-
-        });
-
-}
-
-//Registruje Inventory filter clickove
-function setupInventoryFilterChips() {
-
-    inventoryFilterModal.querySelectorAll('.filter-chip').forEach(chip => {
-
-            chip.addEventListener('click', function () {
-                this.classList.toggle('active');
-
-            });
-
-        });
-
-}
+});
 
 // (Badge)Brojac aktivnih Filtera
 function updateFilterBadge() {
-
-    if (appliedFilterCount > 0) {
-
-        inventoryFilterCount.textContent = appliedFilterCount;
-        inventoryFilterCount.classList.remove('hidden');
-
-    } else {
-        inventoryFilterCount.classList.add('hidden');
-    }
+    inventoryFilterCount.textContent = appliedFilterCount;
+    inventoryFilterCount.classList.toggle('hidden', appliedFilterCount === 0);
 
 }
 
-
 // Primeni btn
-inventoryFilterApply.addEventListener('click', () => {
+inventoryFilterApply.addEventListener('click', function () {
 
-    inventoryFilters.stock =
-        [...document.querySelectorAll('[data-filter-stock].active')]
-            .map(btn => btn.dataset.filterStock);
+    inventoryFilters.stock =[...document.querySelectorAll('[data-filter-stock].active')].map(btn => btn.dataset.filterStock);
+    inventoryFilters.itemStatus =[...document.querySelectorAll('[data-filter-item-status].active')].map(btn => btn.dataset.filterItemStatus);
+    inventoryFilters.warehouse =[...document.querySelectorAll('[data-filter-warehouse].active')].map(btn => btn.dataset.filterWarehouse);
 
-    inventoryFilters.itemStatus =
-        [...document.querySelectorAll('[data-filter-item-status].active')]
-            .map(btn => btn.dataset.filterItemStatus);
-
-    inventoryFilters.warehouse =
-        [...document.querySelectorAll('[data-filter-warehouse].active')]
-            .map(btn => btn.dataset.filterWarehouse);
-
-    const activeSort =
-        document.querySelector('.sort-chip.active');
+    const activeSort = document.querySelector('.sort-chip.active');
 
     inventoryFilters.sort =
         activeSort
             ? activeSort.dataset.sort
-            : null;
+            : 'priority';
+
+    appliedFilterState =[...document.querySelectorAll('.filter-chip.active')].map(chip => chip.dataset);
 
     appliedFilterCount = getActiveFilterCount();
 
@@ -2188,32 +2140,32 @@ inventoryFilterApply.addEventListener('click', () => {
 
     inventoryPagination.currentPage = 1;
 
-    inventoryFilterModal.classList.add('hidden');
+    inventoryFilterOverlay.classList.remove('open');
 
     renderInventoryTable();
 
 });
 
-// function restoreAppliedFilters() {
+function restoreAppliedFilters() {
 
-//     document.querySelectorAll('.filter-chip').forEach(chip => {
-//         chip.classList.remove('active');
-//     });
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+        chip.classList.remove('active');
+    });
 
-//     document.querySelectorAll('.filter-chip').forEach(chip => {
+    document.querySelectorAll('.filter-chip').forEach(chip => {
 
-//         const isSaved = appliedFilterState.some(saved => {
-//                 return JSON.stringify(saved) ===
-//                        JSON.stringify(chip.dataset);
-//             });
+        const isSaved = appliedFilterState.some(saved => {
+                return JSON.stringify(saved) ===
+                       JSON.stringify(chip.dataset);
+            });
 
-//         if (isSaved) {
-//             chip.classList.add('active');
-//         }
+        if (isSaved) {
+            chip.classList.add('active');
+        }
 
-//     });
+    });
 
-// }
+}
 
 // Reset btn
 inventoryFilterReset.addEventListener('click', function () {
@@ -2231,7 +2183,7 @@ inventoryFilterReset.addEventListener('click', function () {
 
 
 
-// ========================================================== #MANAGEMENT TAB ==========================================================
+// ========================================================== MANAGEMENT TAB ==========================================================
 
 // -------------------- FEATURE: CARDS - TOTALS -------------------
 //1.  SELECTORS ===
@@ -2394,87 +2346,49 @@ function formatDate(date) {
     });
 }
 
-// -------------------- FEATURE: LOW STOCK LIST -------------------
+// -------------------- FEATURE: LOW STOCK TABLE -------------------
 //1.  SELECTORS ===
-// const tableBodyDash     = document.querySelector('.table-body-dashboard');
-const lowStockList = document.querySelector('.low-stock-list');
+const tableBodyDash     = document.querySelector('.table-body-dashboard');
 
 //3.  FUNCTIONS ===
 // Reder Low stock Tabele
-function renderLowStockList() {
+function renderLowStockTable() {
 
-    const lowStock = items.filter(item =>
-        Number(item.quantity) < Number(item.limit)
-    );
+    // koristimo LIMIT PO ITEMU
+    const lowStock = items.filter(item => {
+        return Number(item.quantity) < Number(item.limit);
+    });
 
-    lowStockCard.textContent =
-        lowStock.length;
+    // kartica (Low Stock)
+    lowStockCard.textContent = lowStock.length ;
 
-    lowStockList.innerHTML = '';
+    tableBodyDash.innerHTML = '';
 
     if (lowStock.length === 0) {
-
-        lowStockList.innerHTML = `
-            <div class="low-stock-empty">
-                ${t('NoLowStockItems')}
-            </div>
-        `;
-
+        tableBodyDash.innerHTML =
+            `<tr><td colspan="4" data-i18n="NoLowStockItems">${t('NoLowStockItems')}</td></tr>`;
         return;
     }
 
     lowStock.forEach(item => {
 
-        const card = document.createElement('div');
+        const tr = document.createElement('tr');
 
-        card.classList.add('low-stock-card');
-
-        card.innerHTML = `
-
-            <div class="low-stock-left">
-
-                <div class="low-stock-name">
-                    ${item.name}
-                </div>
-
-                <div class="low-stock-meta">
-
-                    <span>${item.code || '-'}</span>
-
-                    <span class="inventory-separator">•</span>
-
-                    <span>${item.location || '-'}</span>
-
-                </div>
-
-            </div>
-
-            <div class="low-stock-right">
-
-                <div class="low-stock-qty">
-                    ${item.quantity}
-                </div>
-
-                <div class="low-stock-limit">
-                    Limit ${item.limit}
-                </div>
-
-            </div>
-
+        tr.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.code}</td>
+            <td>${item.location}</td>
+            <td>${item.quantity}</td>
+            <td>${item.limit}</td>
         `;
 
-        card.addEventListener('click', () => {
-
+        tr.addEventListener('click', function () {
             selectItem(item);
-
             goToInputTab();
-
         });
 
-        lowStockList.appendChild(card);
-
+        tableBodyDash.appendChild(tr);
     });
-
 }
 
 
@@ -2484,7 +2398,7 @@ function renderLowStockList() {
 
 
 
-// ========================================================== #TRANSACTION TAB ==========================================================
+// ========================================================== TRANSACTION TAB ==========================================================
 // -------------------- FEATURE: TRANSACTIONS --------------------
 
 // BUTTONS
@@ -2680,10 +2594,10 @@ transactionItems.push({
     qty: item.qty || ''
 });
 
-    renderTransactionItems();
+    renderTransactionList();
 }
 // KREIRAMO TRANSACTION LISTU
-function renderTransactionItems() {
+function renderTransactionList() {
 
     transactionList.innerHTML = '';
 
@@ -2744,7 +2658,7 @@ function renderTransactionItems() {
                 text: t('removeItemQuestion'),
                 onConfirm: () => {
                     transactionItems = transactionItems.filter(i => i.id !== item.id);
-                    renderTransactionItems();
+                    renderTransactionList();
                 }
             });
 
@@ -2940,7 +2854,6 @@ async function createTransaction(itemsList, type) {
             .insert([{
                 type: type,
                 user_id: currentUser.id,
-                creator_email: currentUser.email,
                 company_id: selectedCompany,
                 partner_id: selectedPartner
             }])
@@ -3016,183 +2929,11 @@ async function createTransaction(itemsList, type) {
 
 
 
-// -------------------- FEATURE: TRANSACTION LIST --------------------
-// const transactionsContainer = document.querySelector('.transactions-list');
-// const transactionsBody = document.querySelector('.transactions-body');
+// -------------------- FEATURE: TRANSACTION TABLE --------------------
+const transactionsContainer = document.querySelector('.transactions-list');
+const transactionsBody = document.querySelector('.transactions-body');
 
-const transactionsList          = document.querySelector('.transaction-records-list');
-const transactionSearchInput    = document.getElementById('transaction-list-search');
-const transactionsTotalCount    = document.getElementById('transactions-total-count');
-const txReceiveCount            = document.querySelector('.transaction-status-summary .summary-pill.ok .pill-value');
-const txIssueCount              = document.querySelector('.transaction-status-summary .summary-pill.excess .pill-value');
-const txTodayCount              = document.querySelector('.transaction-status-summary .summary-pill.low .pill-value');
-const txTotalCount              = document.querySelector('.transaction-status-summary .summary-pill.critical .pill-value');
 
-
-let transactionSearchTerm = '';
-let currentTransactionForPdf = null;
-
-transactionSearchInput.addEventListener('input', function () {
-
-    transactionSearchTerm = this.value;
-
-    transactionPagination.currentPage = 1;
-
-    renderTransactionHistory();
-
-});
-
-
-function getFilteredTransactions() {
-
-    let filtered = [...transactions];
-
-    // SEARCH
-
-    if (transactionSearchTerm.trim()) {
-
-        const search =
-            transactionSearchTerm.toLowerCase();
-
-        filtered = filtered.filter(tx => {
-
-            const type =
-                tx.type === 'receipt'
-                    ? 'prijem'
-                    : 'otprem';
-
-            const date =
-                new Date(tx.created_at)
-                    .toLocaleString('sr-RS')
-                    .toLowerCase();
-
-            return (
-
-                String(tx.id).includes(search)
-
-                ||
-
-                type.includes(search)
-
-                ||
-
-                date.includes(search)
-
-            );
-
-        });
-
-    }
-// DATE FROM
-
-if (transactionFilters.dateFrom) {
-
-    filtered = filtered.filter(tx =>
-
-        new Date(tx.created_at) >=
-        new Date(transactionFilters.dateFrom)
-
-    );
-
-}
-
-    // DATE TO
-    if (transactionFilters.dateTo) {
-
-        const endDate =new Date(
-                transactionFilters.dateTo +
-                'T23:59:59'
-            );
-
-        filtered = filtered.filter(tx =>
-            new Date(tx.created_at) <= endDate
-        );
-
-    }
-
-    // TYPE FILTER
-    if (transactionFilters.type.length) {
-
-        filtered = filtered.filter(tx =>
-
-            transactionFilters.type.includes(
-                tx.type
-            )
-
-        );
-
-    }
-
-    // SORT
-
-    if (transactionFilters.sort === 'newest') {
-
-        filtered.sort((a, b) =>
-            new Date(b.created_at) -
-            new Date(a.created_at)
-        );
-
-    }
-
-    if (transactionFilters.sort === 'oldest') {
-
-        filtered.sort((a, b) =>
-            new Date(a.created_at) -
-            new Date(b.created_at)
-        );
-
-    }
-
-    return filtered;
-}
-
-
-function updateTransactionStats() {
-
-    let receipt = 0;
-    let issue = 0;
-    let today = 0;
-
-    const todayDate =
-        new Date().toDateString();
-
-    transactions.forEach(tx => {
-
-        if (tx.type === 'receipt') {
-
-            receipt++;
-
-        } else {
-
-            issue++;
-
-        }
-
-        if (
-            new Date(tx.created_at).toDateString()
-            === todayDate
-        ) {
-
-            today++;
-        }
-
-    });
-
-    transactionsTotalCount.textContent =
-        transactions.length;
-
-    txReceiveCount.textContent =
-        receipt;
-
-    txIssueCount.textContent =
-        issue;
-
-    txTodayCount.textContent =
-        today;
-
-    txTotalCount.textContent =
-        transactions.length;
-}
 
 
 async function fetchTransactions() {
@@ -3210,39 +2951,32 @@ async function fetchTransactions() {
     }
 
     transactions = data;
-    updateTransactionStats();
-    renderTransactionHistory();
+    renderTransactionsTable();
 }
 
 
-function renderTransactionHistory() {
+function renderTransactionsTable() {
 
-    transactionsList.innerHTML = '';
-
-    const filteredTransactions =
-        getFilteredTransactions();
+    transactionsBody.innerHTML = '';
 
     const totalPages =
         Math.ceil(
-            filteredTransactions.length /
+            transactions.length /
             transactionPagination.itemsPerPage
         ) || 1;
 
     const pageTransactions = paginate(
-        filteredTransactions,
+        transactions,
         transactionPagination.currentPage,
         transactionPagination.itemsPerPage
     );
 
-    if (pageTransactions.length === 0) {
+    if (!transactions || transactions.length === 0) {
 
-        transactionsList.innerHTML = `
-            <div class="inventory-empty">
-                ${t('NoTransactions')}
-            </div>
-        `;
+        transactionsBody.innerHTML =
+            `<tr><td colspan="4" data-i18n="NoTransactions">${t('NoTransactions')}</td></tr>`;
 
-        txPageInfo.textContent = 'Page 1 / 1';
+        txPageInfo.textContent = `Page 1 / 1`;
 
         txPrevBtn.disabled = true;
         txNextBtn.disabled = true;
@@ -3252,61 +2986,92 @@ function renderTransactionHistory() {
 
     pageTransactions.forEach(tx => {
 
-        const card = document.createElement('div');
+        const tr = document.createElement('tr');
 
-        card.classList.add('transaction-records-card');
+        const txId = tx.id;
 
         const type =
             tx.type === 'receipt'
                 ? t('receiveBtn')
                 : t('issueBtn');
 
-        const typeClass =
-            tx.type === 'receipt'
-                ? 'receipt'
-                : 'issue';
+        const date = new Date(tx.created_at).toLocaleString('sr-RS', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
 
-        const date = new Date(tx.created_at)
-            .toLocaleString('sr-RS', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+        tr.innerHTML = `
+            <td>#${txId}</td>
+            <td>${type}</td>
+            <td>${date}</td>
+            <td class="col-action">
 
-        card.innerHTML = `
+                <button class="btn-pdf" title="Generate PDF" data-id="${tx.id}">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path fill="currentColor"
+                        d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5L14 3.5zM8 13h2.5a2.5 2.5 0 0 0 0-5H8v5zm2-1.5H9v-2h1a1 1 0 1 1 0 2zm1 1.5h1.5c1.8 0 3-1.2 3-3s-1.2-3-3-3H11v6zm1.5-1.5H12v-3h.5c1 0 1.5.7 1.5 1.5s-.5 1.5-1.5 1.5z"/>
+                    </svg>
+                </button>
 
-            <div class="transaction-card-left">
-
-                <div class="transaction-id">
-                    #${tx.id}
-                </div>
-
-                <div class="transaction-date">
-                    ${date}
-                </div>
-
-            </div>
-
-            <div class="transaction-card-right">
-
-                <div class="transaction-type ${typeClass}">
-                    ${type}
-                </div>
-
-            </div>
-
+            </td>
         `;
 
-        card.addEventListener('click', () => {
+        const pdfBtn = tr.querySelector('.btn-pdf');
 
-            openTransactionDetails(tx);
+        pdfBtn.addEventListener('click', async (e) => {
+
+            e.stopPropagation();
+
+            try {
+
+                const { data: items, error } = await supabaseClient
+                    .from('transaction_items')
+                    .select(`
+                        quantity,
+                        items (
+                            name,
+                            code,
+                            status,
+                            price
+                        )
+                    `)
+                    .eq('transaction_id', tx.id);
+
+                if (error) {
+                    console.error(error);
+                    showNotification(t('pdfLoadError'), 'error');
+                    return;
+                }
+
+                const itemsList = items.map(row => ({
+                    name: row.items.name,
+                    code: row.items.code,
+                    status: row.items.status,
+                    price: row.items.price,
+                    qty: row.quantity
+                }));
+
+                await fetchCompanies();
+                await fetchPartners();
+
+                selectedCompany = tx.company_id;
+                selectedPartner = tx.partner_id;
+
+                generatePDF(tx, itemsList);
+
+            } catch (err) {
+
+                console.error(err);
+                showNotification(`❌ ${t('pdfGenerationFailed')}`, "error");
+
+            }
 
         });
 
-        transactionsList.appendChild(card);
-
+        transactionsBody.appendChild(tr);
     });
 
     txPageInfo.textContent =
@@ -3318,293 +3083,6 @@ function renderTransactionHistory() {
     txNextBtn.disabled =
         transactionPagination.currentPage === totalPages;
 }
-
-async function openTransactionDetails(tx) {
-
-    currentTransactionForPdf = tx;
-
-    try {
-
-        const modal = document.getElementById('transaction-details-modal');
-        const body = document.getElementById('transaction-details-body');
-
-        const { data: transactionItems, error } = await supabaseClient
-            .from('transaction_items')
-            .select(`
-                quantity,
-                items (
-                    name,
-                    code,
-                    status,
-                    price
-                )
-            `)
-            .eq('transaction_id', tx.id);
-
-        if (error) {
-
-            console.error(error);
-
-            showNotification('Error loading transaction details', 'error');
-
-            return;
-        }
-
-        await fetchCompanies();
-        await fetchPartners();
-
-        const company = companies.find(c => c.id === tx.company_id);
-        const partner = partners.find(p => p.id === tx.partner_id);
-
-        const date = new Date(tx.created_at).toLocaleDateString('sr-RS');
-
-        const totalQty = transactionItems.reduce(
-            (sum, item) => sum + Number(item.quantity || 0),
-            0
-        );
-
-        const totalAmount = transactionItems.reduce(
-            (sum, item) => sum + (
-                Number(item.quantity || 0) *
-                Number(item.items?.price || 0)
-            ),
-            0
-        );
-
-        const creatorName = tx.creator_email?.split('@')[0] || '-';
-
-        const vatRate = Number(company?.vat || 0);
-        const vatAmount = totalAmount * (vatRate / 100);
-        const grandTotal = totalAmount + vatAmount;
-
-        const typeLabel = tx.type === 'receipt'
-            ? t('receiveBtn')
-            : t('issueBtn');
-
-        const typeClass = tx.type === 'receipt'
-            ? 'receipt'
-            : 'issue';
-
-        document.querySelector(
-            '#transaction-details-modal .modal__title'
-        ).textContent = `Transaction #${tx.id}`;
-
-        const badge = document.getElementById('transaction-details-type');
-
-        if (badge) {
-
-            badge.textContent = typeLabel;
-            badge.className = `tx-sheet-badge ${typeClass}`;
-
-        }
-
-const itemsHtml = transactionItems.map(item => `
-
-    <div class="tx-sheet-item">
-
-        <div class="tx-item-top">
-
-            <div class="tx-item-name">
-                ${item.items?.name || '-'}
-            </div>
-
-            <div class="tx-item-price">
-                ${Number(item.items?.price || 0).toFixed(0)} €
-            </div>
-
-        </div>
-
-        <div class="tx-item-bottom">
-
-            <span class="tx-item-code">
-                ${item.items?.code || '-'}
-            </span>
-
-            <span class="tx-item-qty">
-                ${item.quantity} pcs
-            </span>
-
-            <span class="tx-status-badge">
-                ${item.items?.status || '-'}
-            </span>
-
-        </div>
-
-    </div>
-
-`).join('');
-
-        body.innerHTML = `
-
-            <div class="tx-sheet-section">
-
-                <div class="tx-sheet-section-title">
-                    Summary
-                </div>
-
-                <div class="tx-sheet-summary">
-
-                    <div class="tx-summary-item">
-                        <span>Company</span>
-                        <strong>${company?.name || '-'}</strong>
-                    </div>
-
-                    <div class="tx-summary-item">
-                        <span>Partner</span>
-                        <strong>${partner?.name || '-'}</strong>
-                    </div>
-
-                    <div class="tx-summary-item">
-                        <span>Date</span>
-                        <strong>${date}</strong>
-                    </div>
-
-                    <div class="tx-summary-item">
-                        <span>Created By</span>
-                        <strong>${creatorName}</strong>
-                    </div>
-
-                    <div class="tx-summary-item">
-                        <span>Items</span>
-                        <strong>${transactionItems.length}</strong>
-                    </div>
-
-                    <div class="tx-summary-item">
-                        <span>Total Qty</span>
-                        <strong>${totalQty}</strong>
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="tx-sheet-section">
-
-                <div class="tx-sheet-section-title">
-                    Items
-                </div>
-
-                <div class="tx-sheet-items">
-                    ${itemsHtml}
-                </div>
-
-            </div>
-
-            <div class="tx-sheet-sum-row">
-                <span>Međuzbir:</span>
-                <strong>${totalAmount.toFixed(2)} €</strong>
-            </div>
-
-            <div class="tx-sheet-sum-row">
-                <span>PDV (${vatRate}%):</span>
-                <strong>${vatAmount.toFixed(2)} €</strong>
-            </div>
-
-            <div class="tx-sheet-total">
-
-                <span>Total Amount</span>
-
-                <strong>
-                    ${grandTotal.toFixed(2)} €
-                </strong>
-
-            </div>
-
-        `;
-
-        modal.classList.remove('hidden');
-
-    } catch (err) {
-
-        console.error(err);
-
-        showNotification('Failed to load details', 'error');
-
-    }
-
-}
-
-
-
-
-async function downloadTransactionPdf() {
-
-    try {
-
-        if (!currentTransactionForPdf) {
-            return;
-        }
-
-        const tx = currentTransactionForPdf;
-
-        const { data: items, error } =
-            await supabaseClient
-                .from('transaction_items')
-                .select(`
-                    quantity,
-                    items (
-                        name,
-                        code,
-                        status,
-                        price
-                    )
-                `)
-                .eq('transaction_id', tx.id);
-
-        if (error) {
-
-            console.error(error);
-
-            showNotification(
-                t('pdfLoadError'),
-                'error'
-            );
-
-            return;
-        }
-
-        const itemsList = items.map(row => ({
-
-            name: row.items.name,
-            code: row.items.code,
-            status: row.items.status,
-            price: row.items.price,
-            qty: row.quantity
-
-        }));
-
-        await fetchCompanies();
-        await fetchPartners();
-
-        selectedCompany = tx.company_id;
-        selectedPartner = tx.partner_id;
-
-        generatePDF(tx, itemsList);
-
-    } catch (err) {
-
-        console.error(err);
-
-        showNotification(
-            `❌ ${t('pdfGenerationFailed')}`,
-            'error'
-        );
-
-    }
-
-}
-
-//EVENT
-// Klik na DownLoad btn
-document.getElementById('transaction-download-pdf').addEventListener('click', downloadTransactionPdf);
-
-
-
-
-
-
-
-
 
 
 // ---------  TRASACTION - PAGINATION -----------------
@@ -3626,7 +3104,7 @@ function setupTransactionPagination() {
 
             transactionPagination.currentPage--;
 
-            renderTransactionHistory();
+            renderTransactionsTable();
         }
     });
 
@@ -3642,236 +3120,10 @@ function setupTransactionPagination() {
 
             transactionPagination.currentPage++;
 
-            renderTransactionHistory();
+            renderTransactionsTable();
         }
     });
 }
-
-
-
-// -------------------- FEATURE: TRANSACTION FILTER -------------------
-// SELECTORS 
-const transactionFilterBtn      = document.getElementById('transaction-filter-btn');
-const transactionFilterCount    = document.getElementById('transaction-filter-count');
-const transactionFilterModal    = document.querySelector('.transaction-filter-modal');
-const transactionFilterClose    = document.getElementById('transaction-filter-close');
-const transactionFilterApply    = document.getElementById('transaction-filter-apply');
-const transactionFilterReset    = document.getElementById('transaction-filter-reset');
-//DateFilter
-const transactionDateFrom = document.getElementById('transaction-date-from');
-const transactionDateTo = document.getElementById('transaction-date-to');
-
-// SATTE 
-const transactionFilters = {
-    type: [],
-    dateFrom: '',
-    dateTo: '',
-    sort: null
-};
-
-let appliedTransactionFilterCount = 0;
-
-
-//ACTIVE FILTER COUNT
-function getActiveTransactionFilterCount() {
-
-    let count = 0;
-
-    // TYPE + SORT
-
-    count += transactionFilterModal
-        .querySelectorAll('.filter-chip.active')
-        .length;
-
-    // DATE FROM
-
-    if (transactionDateFrom.value) {
-        count++;
-    }
-
-    // DATE TO
-
-    if (transactionDateTo.value) {
-        count++;
-    }
-
-    return count;
-
-}
-
-//OPEN MODAL
-transactionFilterBtn.addEventListener('click', () => {
-    syncTransactionFilterUI();
-    transactionFilterModal.classList.remove('hidden');
-});
-
-//CLOSE MODAL
-transactionFilterClose.addEventListener('click', () => {
-    transactionFilterModal.classList.add('hidden');
-});
-
-// SYNC UI 
-function syncTransactionFilterUI() {
-
-    transactionFilterModal
-        .querySelectorAll('.filter-chip')
-        .forEach(chip =>
-            chip.classList.remove('active')
-        );
-
-
-    document
-        .querySelectorAll('[data-filter-transaction-type]')
-        .forEach(chip => {
-
-            if (
-                transactionFilters.type.includes(
-                    chip.dataset.filterTransactionType
-                )
-            ) {
-                chip.classList.add('active');
-            }
-
-        });
-
-
-    document
-        .querySelectorAll('.transaction-sort-chip')
-        .forEach(chip => {
-
-            if (
-                transactionFilters.sort ===
-                chip.dataset.sort
-            ) {
-
-                chip.classList.add('active');
-
-            }
-
-        });
-
-}
-//Registruje Transaction filter clickove.
-function setupTransactionFilterChips() {
-
-    transactionFilterModal
-        .querySelectorAll('.filter-chip')
-        .forEach(chip => {
-
-            chip.addEventListener('click', function () {
-
-                this.classList.toggle('active');
-
-            });
-
-        });
-
-}
-
-//BADGE (indikator za broj aktivinh filtera)
-function updateTransactionFilterBadge() {
-
-    if (appliedTransactionFilterCount > 0) {
-
-        transactionFilterCount.textContent =
-            appliedTransactionFilterCount;
-
-        transactionFilterCount.classList.remove('hidden');
-
-    }
-    else {
-
-        transactionFilterCount.classList.add('hidden');
-
-    }
-
-}
-
-// APPLY
-transactionFilterApply.addEventListener('click', () => {
-
-    transactionFilters.type =
-
-        [...document.querySelectorAll(
-            '[data-filter-transaction-type].active'
-        )]
-
-        .map(btn =>
-            btn.dataset.filterTransactionType
-        );
-
-        transactionFilters.dateFrom = transactionDateFrom.value;
-        transactionFilters.dateTo = transactionDateTo.value;
-        
-
-    const activeSort = document.querySelector('.transaction-sort-chip.active');
-
-    transactionFilters.sort =
-        activeSort
-            ? activeSort.dataset.sort
-            : null;
-
-
-
-    appliedTransactionFilterCount = getActiveTransactionFilterCount();
-    updateTransactionFilterBadge();
-
-    transactionPagination.currentPage = 1;
-    transactionFilterModal.classList.add('hidden');
-    
-    renderTransactionHistory()
-
-});
-
-// RESEt
-transactionFilterReset.addEventListener('click', () => {
-
-    // UI - chips
-
-    transactionFilterModal
-        .querySelectorAll('.filter-chip')
-        .forEach(chip =>
-            chip.classList.remove('active')
-        );
-
-    // UI - dates
-
-    transactionDateFrom.value = '';
-    transactionDateTo.value = '';
-
-    // State
-
-    transactionFilters.type = [];
-    transactionFilters.dateFrom = '';
-    transactionFilters.dateTo = '';
-    transactionFilters.sort = null;
-
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // -------------------------------------- PDF REPORT --------------------------------------
 
@@ -4107,7 +3359,7 @@ function generatePDF(tx, itemsList) {
 
 
 
-// ========================================================== #ARCHIVE PAGE ==========================================================
+// ========================================================== ARCHIVE PAGE ==========================================================
 
 // ==========================================================
 //  ARCHIVE
@@ -4123,9 +3375,9 @@ function generatePDF(tx, itemsList) {
 //  SELEKTORI
 const openArchiveBtn    = document.querySelector('.archive-btn');
 const archiveView       = document.getElementById('archive-view');
+const archiveBody       = document.querySelector('.archive-body');
 const archiveEmpty      = document.querySelector('.archive-empty');
 
-const archiveList       = document.querySelector('.archive-list');
 
 
 //  STATE
@@ -4186,8 +3438,10 @@ async function fetchAllItems() {
 //  RENDER ARCHIVE ITEMS
 function renderArchiveItems() {
 
-    archiveList.innerHTML = '';
+    // reset
+    archiveBody.innerHTML = '';
 
+    // Filtriramo samo arhivirane
     const archived = itemsAll.filter(function(item) {
         return item.is_active === false;
     });
@@ -4204,15 +3458,13 @@ function renderArchiveItems() {
         archivePagination.itemsPerPage
     );
 
+    // EMPTY STATE
     if (archived.length === 0) {
 
-        archiveList.innerHTML = `
-            <div class="archive-empty-state">
-                ${t('NoArchiveItems')}
-            </div>
-        `;
+        archiveBody.innerHTML =
+            `<tr><td colspan="5" data-i18n="NoArchivetems">${t('NoArchivetems')}</td></tr>`;
 
-        arPageInfo.textContent = 'Page 1 / 1';
+        arPageInfo.textContent = `Page 1 / 1`;
 
         arPrevBtn.disabled = true;
         arNextBtn.disabled = true;
@@ -4220,96 +3472,55 @@ function renderArchiveItems() {
         return;
     }
 
+    // RENDER LIST
     pageArchived.forEach(function(item) {
 
-        const card = document.createElement('div');
+        const tr = document.createElement('tr');
 
-        card.classList.add('archive-card');
-
-        card.innerHTML = `
-
-            <div class="archive-left">
-
-                <div class="archive-name">
-                    ${item.name}
-                </div>
-
-                <div class="archive-meta">
-
-                    <span class="archive-code">
-                        ${item.code || '-'}
-                    </span>
-
-                    <span class="inventory-separator">
-                        •
-                    </span>
-
-                    <span class="archive-location">
-                        ${item.location || '-'}
-                    </span>
-
-                </div>
-
-            </div>
-
-            <div class="archive-right">
-
-                <div class="archive-qty">
-                    ${item.quantity}
-                </div>
-
-                <button
-                    class="archive-restore-btn"
-                    title="${t('restore')}">
-
-                    <i class="bi bi-arrow-counterclockwise"></i>
-
+        tr.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.code || '-'}</td>
+            <td>${item.location || '-'}</td>
+            <td>${item.quantity}</td>
+            <td class="col-action">
+                <button class="ti-restore" title="${t('restore')}">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path fill="currentColor"
+                        d="M12 5V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/>
+                    </svg>
                 </button>
-
-            </div>
-
+            </td>
         `;
 
-        const restoreBtn =
-            card.querySelector('.archive-restore-btn');
+        // RESTORE BUTTON
+        const restoreBtn = tr.querySelector('.ti-restore');
 
-        restoreBtn.addEventListener(
-            'click',
-            async function(e) {
+        restoreBtn.addEventListener('click', async function() {
 
-                e.stopPropagation();
+            const { error } = await supabaseClient
+                .from('items')
+                .update({ is_active: true })
+                .eq('id', item.id);
 
-                const { error } = await supabaseClient
-                    .from('items')
-                    .update({ is_active: true })
-                    .eq('id', item.id);
-
-                if (error) {
-
-                    console.error(error);
-
-                    showNotification(
-                        `❌ ${error.message}`,
-                        'error'
-                    );
-
-                    return;
-                }
-
-                showNotification(
-                    `✔ ${item.name} ${t('itemRestored')}`,
-                    'success'
-                );
-
-                await fetchItems();
-
-                await fetchAllItems();
-
-                renderArchiveItems();
+            if (error) {
+                console.error(error);
+                showNotification(`❌ ${error.message}`, 'error');
+                return;
             }
-        );
 
-        archiveList.appendChild(card);
+            showNotification(
+                `✔ ${item.name} ${t('itemRestored')}`,
+                'success'
+            );
+
+            // refresh podataka
+            await fetchItems();
+            await fetchAllItems();
+
+            renderArchiveItems();
+        });
+
+        archiveBody.appendChild(tr);
     });
 
     arPageInfo.textContent =
@@ -4375,8 +3586,7 @@ function setupArchivePagination() {
 
 
 
-// ========================================================== #GLOBAL UI ==========================================================
-
+// ========================================================== GLOBAL UI ==========================================================
 // -------------------- FEATURE: NAVIGATION --------------------
 //1.  SELECTORS ===
 const nav               = document.querySelector('.navigation');
@@ -4427,51 +3637,13 @@ function activateTab(tabElement) {
     }
 
     if (tabName === TAB.TRANSACTION) {
-        renderTransactionHistory(); 
+        renderTransactionsTable(); 
     }
     
 
 
 
 }
-
-
-
-// -------------------- FEATURE: MODALs GLOBAL --------------------
-
-//CLOSE btn (X)
-document.querySelectorAll('.modal__close, .btn-cancel').forEach(btn => {
-
-    btn.addEventListener('click', () => {
-
-        const modal = btn.closest('.modal-sheet, .modal-dialog');
-
-        if (modal) {
-            modal.classList.add('hidden');
-        }
-
-    });
-
-});
-
-//OUTSIDE CLICK
-document.querySelectorAll('.modal-sheet, .modal-dialog').forEach(modal => {
-
-        modal.addEventListener('click', e => {
-
-            if (e.target === modal) {
-                modal.classList.add('hidden');
-            }
-
-        });
-
-    });
-
-
-    
-
-
-
 
 
 
@@ -4983,8 +4155,8 @@ const translations = {
 
         TotalItems:"Ukupno artikla",
         TotalQuantity:"Ukupna Kolicina ",
-        TotalPrice:"Vrednost Skladišta ",
-        LowStock: "Ispod Limita ",
+        TotalPrice:"Ukupno Novca ",
+        LowStock: "Male Zalihe ",
 
         LowStockItems: "Stavke sa malim zalihama",
 
@@ -5059,7 +4231,7 @@ const translations = {
         //SECTION TITLE
         itemDetails: "Detalji artikla",
         adjustQuantity: "Izmena količine",
-        lowStockItems: "Artikli sa zalihama ispod Limita",
+        lowStockItems: "Artikli sa malim zalihama",
 
         //ToggleBTN
         toggleMore: "+ Vise",
@@ -5228,9 +4400,9 @@ const translations = {
         created: "Created: ",
 
         TotalItems:"Total Items ",
-        TotalQuantity:"Stock Quantity ",
-        TotalPrice:"Inventory Value ",
-        LowStock: "Below Limit ",
+        TotalQuantity:"Total Quantity ",
+        TotalPrice:"Total Price ",
+        LowStock: "Low Stock ",
 
         LowStockItems: "Low Stock Items",
 
@@ -5306,7 +4478,7 @@ const translations = {
         //SECTION TITLE
         itemDetails: "Item Details",
         adjustQuantity: "Adjust Quantity",
-        lowStockItems: "Below Limit Items",
+        lowStockItems: "Low Stock Items",
 
         //ToggleBTN
         toggleMore: "+ More",
@@ -5458,9 +4630,9 @@ async function setLang(lang){
     populateDropdownsQuick();
     populateDropdowns();
 
-    renderTransactionHistory();
+    renderTransactionsTable();
     renderInventoryTable();
-    renderLowStockList();
+    renderLowStockTable();
 }
 // Postavlja koji jezik je aktivan (UI)
 function updateActiveLang(){
@@ -5551,7 +4723,6 @@ confirmModal.addEventListener('click', (e) => {
 
 // ========================================================== INICIALISATION ==========================================================
 
-
 // PAGINATION INIT
 setupInventoryPagination();
 setupTransactionPagination();
@@ -5563,7 +4734,3 @@ updateAuthUI();
 initUser();
 
 renderLocationSelector();
-
-// FILTERS
-setupInventoryFilterChips();
-setupTransactionFilterChips();

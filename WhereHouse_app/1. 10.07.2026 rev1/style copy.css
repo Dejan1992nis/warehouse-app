@@ -1,0 +1,2249 @@
+/* =========================================================== GENERAL TAB =========================================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    height: 100vh;
+}
+
+.app {
+    display: flex;
+    flex-direction: column;
+    
+
+    width: 100%;
+    max-width: 500px;
+    min-height: 100vh;
+
+    margin: 0 auto;
+    padding: 16px;
+    background: transparent;
+}
+/* ================= STARTING LOADING ================= */
+
+.starting-loading {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #ecf0f3, #dfe6ec);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+/* card u sredini */
+.loading-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+
+    padding: 40px 50px;
+    border-radius: 20px;
+
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+/* logo (isti stil kao app) */
+.loading-logo {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    font-size: 22px;
+}
+
+.loading-logo .logo-main {
+    color: #3498db;
+}
+
+.loading-logo .logo-divider {
+    width: 2px;
+    height: 20px;
+    background: #ccc;
+    margin: 0 6px;
+}
+
+.loading-logo .logo-sub {
+    color: #555;
+}
+
+/* spinner */
+.starting-loading .loader {
+    width: 40px;
+    height: 40px;
+
+    border: 4px solid #e0e0e0;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+
+    animation: spin 0.8s linear infinite;
+}
+.starting-loading.fade-out {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* animacija */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* text */
+.loading-text {
+    font-size: 14px;
+    color: #777;
+}
+/* ================= HEADER ================= */
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding: 0px 10px;
+    margin-bottom: 16px;
+
+    background: transparent;
+
+
+    
+}
+
+/* LEFT SIDE */
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+/* ============= LOGO =============*/
+.app-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.logo-main {
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: #e2e8f0;
+}
+
+.logo-divider {
+    width: 1px;
+    height: 14px;
+    background: rgba(255,255,255,0.2);
+}
+
+.logo-sub {
+    font-size: 12px;
+    color: #94a3b8;
+    letter-spacing: 0.5px;
+}
+
+/* RIGHT SIDE */
+.header-actions {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    gap: 10px;
+}
+
+/* ============================= LANGUAGE =========================== */
+
+
+.lang-switch {
+    gap: 10px;
+}
+
+.lang-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+}
+
+.lang-btn img {
+    width: 20px;
+    height: 14px;
+    
+
+    opacity: 0.3;
+    transition: 0.2s;
+}
+
+.lang-btn:hover img {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.lang-btn.active img { 
+    opacity: 1;
+}
+
+/* ================= USER MENU ================= */
+
+.user-menu {
+    position: relative;
+}
+
+/* BUTTON */
+.user-btn {
+    padding: 6px 10px;
+
+    border-radius: 8px;
+
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #e2e8f0;
+
+    cursor: pointer;
+
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.user-btn:hover {
+    background: #1e293b;
+}
+
+/* ================================== SIDEBAR ================================== */
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+
+    width: 240px;
+    height: 100%;
+
+    background: #1e293b;
+
+    display: flex;
+    flex-direction: column;
+
+    box-shadow: -10px 0 30px rgba(0,0,0,0.6);
+
+    z-index: 999;
+
+    animation: slideIn 0.2s ease;
+}
+
+
+/* HEADER */
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+/* CLOSE BTN */
+.sidebar-close {
+    background: transparent;
+    border: none;
+
+    color: #94a3b8;
+    font-size: 18px;
+
+    cursor: pointer;
+}
+
+.sidebar-close:hover {
+    color: #e2e8f0;
+}
+
+/* ================= CONTENT ================= */
+
+.sidebar-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    padding: 16px;
+}
+
+/* BUTTONS */
+.sidebar-content button {
+    padding: 10px;
+
+    background: transparent;
+    border: none;
+
+    color: #e2e8f0;
+
+    text-align: left;
+    border-radius: 8px;
+
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sidebar-content button:hover {
+    background: rgba(59,130,246,0.15);
+}
+
+/* LOGOUT */
+.sidebar-content .logout {
+    color: #f87171;
+}
+
+.sidebar-content .logout:hover {
+    background: rgba(239,68,68,0.15);
+}
+
+/* SEPARATOR */
+
+.sidebar-content hr {
+    border: none;
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+    margin: 14px 0;
+}
+ /*==================== SUBMENI ======================*/
+
+
+.submenu {
+    margin-left: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.submenu button {
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+.submenu button:hover {
+    opacity: 1;
+}
+
+ /*====================================== USER ======================================*/
+
+.user-info {
+    padding: 14px 0;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.user-label {
+    display: block;
+    font-size: 11px;
+    color: #7f95ab;        /* malo svetlije */
+    margin-bottom: 6px;    /* više vazduha */
+    letter-spacing: 0.5px;
+}
+
+.user-email {
+    display: block;
+    font-size: 13px;
+    color: #d6e2f0;        /* jače nego sad */
+    line-height: 1.4;
+    word-break: break-all;
+}
+
+/* ================= ANIMATION ================= */
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+/* ================= HIDDEN ================= */
+
+.hidden {
+    display: none;
+}
+
+/* ================= NAVIGATION */
+
+.navigation {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: 100%;
+    max-width: 500px;
+
+    display: flex;
+
+    background: #1e293b;
+    border-top: 1px solid #334155;
+
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+
+    z-index: 100;
+}
+
+
+.tab {
+    flex: 1;
+    padding: 12px 8px;
+
+    border: none;
+    background: none;
+
+    font-size: 12px;
+    font-weight: 500;
+    color: #94a3b8;
+
+    cursor: pointer;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    transition: all 0.2s ease;
+}
+
+.tab.active {
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+
+/* ================= VIEWS */
+.view {
+    display: none;
+
+    background: #1e293b;
+    padding: 16px;
+    border-radius: 18px;
+
+    box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+}
+
+
+.active-view {
+    display: block;
+}
+
+/* ================= TITLE */
+.title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    
+}
+/* ================= VIEW ACTIONS ================= */
+
+.view-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: left;
+    align-items: center;
+    margin-bottom: 10px;
+
+}
+
+
+/* ================= BASE BUTTON ================= */
+
+.headerBtn {
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: none;
+
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8); /* default blue */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    color: #ffffff;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+
+/* ================= ISSUE (ORANGE) ================= */
+
+#btn-issue {
+    background: linear-gradient(135deg, #d97706, #b45309);
+}
+
+/* ================= ARCHIVE (ORANGE - SAME SYSTEM) ================= */
+
+.btn-archive {
+    background: linear-gradient(135deg, #d97706, #b45309);
+}
+
+
+/* =========================================================== INPUT TAB =========================================================== */
+
+/* ================= SEARCH */
+.search {
+    position: relative;
+}
+
+.search input {
+    width: 100%;
+    padding: 14px;
+
+    border-radius: 12px;
+    border: 1px solid #334155;
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.2);
+
+    background: #0f172a;
+    color: #e2e8f0;
+}
+
+/* CLEAR BUTTON */
+.clear-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    width: 24px;
+    height: 24px;
+
+    border-radius: 50%;
+    border: none;
+
+    background-color: #ddd;
+    color: #555;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 14px;
+    cursor: pointer;
+
+    display: none;
+}
+.search input:focus {
+    border-color: #3b82f6;
+    outline: none;
+}
+.clear-btn:hover {
+    background-color: #bbb;
+}
+
+/* ================= RESULTS ================= */
+
+.results {
+    position: absolute;
+    top: 105%;
+    left: 0;
+
+    width: 100%;
+
+    background: #1e293b;
+    border-radius: 14px;
+
+    border: 1px solid rgba(255,255,255,0.08);
+
+    max-height: 220px;
+    overflow-y: auto;
+
+    box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+    z-index: 1000;
+}
+
+/* ================= NO RESULTS STATE ================= */
+
+.no-results {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    padding: 16px;
+
+    text-align: center;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+/* tekst */
+.no-results p {
+    margin: 0;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+/* dugme */
+.add-new-btn {
+    align-self: center;
+
+    padding: 8px 14px;
+
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+
+    background: rgba(59,130,246,0.15);
+    color: #60a5fa;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: all 0.2s ease;
+}
+
+/* hover */
+.add-new-btn:hover {
+    background: rgba(59,130,246,0.25);
+    border-color: rgba(96,165,250,0.4);
+    transform: translateY(-1px);
+}
+
+/* active klik */
+.add-new-btn:active {
+    transform: scale(0.97);
+}
+
+/* focus (accessibility) */
+.add-new-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(96,165,250,0.35);
+}
+
+/* hide kad nema rezultata */
+.results:empty {
+    display: none;
+}
+
+/* ================= ITEM ================= */
+
+.result-item {
+    padding: 12px 14px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    cursor: pointer;
+
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+
+    transition: all 0.15s ease;
+}
+
+/* last item bez linije */
+.result-item:last-child {
+    border-bottom: none;
+}
+
+/* hover */
+.result-item:hover {
+    background: rgba(59,130,246,0.12);
+}
+
+/* klik selektovan */
+.result-item.active {
+    background: rgba(34,197,94,0.15);
+}
+
+/* ================= TEXT ================= */
+
+.result-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+.result-sub {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+/* ================= SCROLL (PRO) ================= */
+
+.results::-webkit-scrollbar {
+    width: 6px;
+}
+
+.results::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+}
+/* ================= SECTION TITLES ================= */
+
+.section-title {
+    font-size: 13px;
+    font-weight: 600;
+
+    color: #94a3b8;
+
+    margin-top: 18px;
+    margin-bottom: 6px;
+
+    padding-left: 2px;
+
+    letter-spacing: 0.3px;
+}
+
+.section-title::after {
+    content: "";
+    display: block;
+    height: 1px;
+    margin-top: 6px;
+    background: rgba(255,255,255,0.05);
+}
+/* ================= ITEM CARD ================= */
+.item-card {
+
+    display: flex;
+    flex-direction: column;
+    
+    background: #334155;
+    border: 1px solid rgba(255,255,255,0.08);
+   
+
+    padding: 16px;
+
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    margin: 15px 0;
+
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4)
+}
+
+
+/* ROW */
+.item-card p {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 6px 0;          /* 👈 dodaje vertikalni ritam */
+    margin: 0;
+
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+/* poslednji bez linije */
+.item-card p:last-child {
+    border-bottom: none;
+}
+
+
+/* LABEL */
+.item-card strong {
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+
+/* VALUE */
+.item-card span {
+    max-width: 80%;
+    text-align: right;
+    word-break: break-word;
+
+    color: #e2e8f0;
+    font-size: 14px;
+    font-weight: 500;
+}
+/*========================== WH & P Dropdown*/
+.tx-meta {
+    display: flex;
+    gap: 10px;
+}
+
+.tx-meta .input-group {
+    flex: 1;
+}
+
+.tx-meta label {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.tx-meta select {
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 13px;
+}
+
+
+/* ================= QUANTITY */
+.quantity-control {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    gap: 20px;
+    margin: 15px 0;
+
+    background: #1e293b;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+ 
+    border-radius: 10px;
+    padding: 12px;
+
+}
+
+.btn-plus,
+.btn-minus {
+    width: 50px;
+    height: 50px;
+
+    border-radius: 10px;
+    border: none;
+
+    background: #334155;
+    color: #e2e8f0;
+
+    font-size: 22px;
+    cursor: pointer;
+
+    transition: 0.2s;
+    
+}
+
+
+
+#quantity-value {
+    font-size: 22px;
+    font-weight: 500;
+}
+
+/* ================= SAVE */
+.save-btn {
+    
+    width: 100%;
+    padding: 14px;
+
+    border-radius: 10px;
+    border: none;
+
+    background: linear-gradient(135deg, #22c55e, #15803d);
+    color: white;
+
+    font-size: 16px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* hover */
+.save-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+}
+
+.save-btn:hover {
+    background-color: #1e8f4d;
+}
+
+/* ================= FOOTER */
+.footer {
+    text-align: center;
+    font-size: 12px;
+    color: #bbb;
+
+    margin-top: auto;
+}
+
+/* ================= NOTIFICATION  */
+.notification {
+    position: fixed;
+    top: 0;
+    left: 50%;
+
+    width: 100%;
+    max-width: 500px;
+
+    padding: 15px;
+    text-align: center;
+
+    color: white;
+    font-size: 15px;
+
+    z-index: 9999;
+
+    transform: translate(-50%, -100%);
+    opacity: 0;
+
+    transition: transform 0.3s ease, opacity 0.3s ease;
+
+    pointer-events: none;
+}
+/* TYPES */
+.notification.success {
+    background-color: #2ecc71;
+    transform: translate(-50%, 0);
+    opacity: 1;
+}
+
+.notification.error {
+    background-color: #e74c3c;
+    transform: translate(-50%, 0);
+    opacity: 1;
+}
+
+.notification.info {
+    background-color: #3498db;
+    transform: translate(-50%, 0);
+    opacity: 1;
+}
+
+/* ===========================================================
+   TABLE WRAPPER
+=========================================================== */
+
+.table-wrapper {
+    max-height: 400px;
+    min-height: 400px;
+
+    overflow-y: auto;
+    overflow-x: auto;
+
+    background: #152238; /* tamniji background */
+    border-radius: 4px;
+
+    border: 1px solid rgba(255,255,255,0.05);
+    margin-top: 15px;
+
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+
+/* ===========================================================
+   TABLE BASE
+=========================================================== */
+
+.table {
+    width: max-content;   /*  KLJUČ */
+    min-width: 100%;      /*  da ne pukne layout */
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+/* ===========================================================
+   HEADER
+=========================================================== */
+
+.table th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+
+    background: #1e293b;
+    color: #cbd5f5;
+
+    padding: 14px 12px;
+
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+
+    white-space: nowrap;
+}
+
+
+/* ===========================================================
+   CELLS
+=========================================================== */
+
+.table td {
+    padding: 12px;
+    color: #e2e8f0;
+
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+
+    white-space: nowrap;
+
+
+}
+
+
+/* ===========================================================
+   COLUMN WIDTHS (ostaje isto)
+=========================================================== */
+
+.table td:nth-child(1) { max-width: 200px; }
+.table td:nth-child(2) { max-width: 120px; }
+.table td:nth-child(3) { min-width: 130px; }
+.table td:nth-child(4) { max-width: 80px; }
+.table td:nth-child(5) { max-width: 100px; }
+
+
+
+.col-action button {
+    margin: 0 auto;
+}
+
+/* ===========================================================
+   ROWS
+=========================================================== */
+
+/* zebra (mekša) */
+.table tbody tr:nth-child(even) {
+    background: rgba(255,255,255,0.02);
+}
+
+/* hover (clean) */
+.table tbody tr:hover {
+    background: rgba(59,130,246,0.08);
+    cursor: pointer;
+}
+
+
+
+/* ================= PAGINATION ================= */
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-top: 16px;
+    padding: 12px;
+
+    background: #1e293b;
+    border-radius: 14px;
+
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+/* TEXT (Page 1/1) */
+.pagination span {
+    font-size: 13px;
+    color: #cbd5f5;
+    font-weight: 500;
+}
+
+/* BUTTON BASE */
+.pagination button {
+    padding: 10px 16px;
+
+    border-radius: 10px;
+    border: none;
+
+    background: #334155;
+    color: #e2e8f0;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* hover */
+.pagination button:hover {
+    background: #3b82f6;
+    color: white;
+}
+
+/* disabled */
+.pagination button:disabled {
+    background: #475569;
+    color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* active press */
+.pagination button:active {
+    transform: scale(0.97);
+}
+
+
+/* ===================================  MODAL (Add, Edit, My Werehouse, My Partner) =================================== */
+.modal {
+
+    
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    z-index: 1000;
+
+}
+
+/* TRANSACTION */
+.transaction-modal {
+    z-index: 2000;
+}
+
+/* ADD / EDIT UVEK IZNAD */
+.add-modal,
+.edit-modal {
+    z-index: 3000;
+}
+
+
+/* ================= CONTENT ================= */
+
+.modal__content {
+    background: #1e293b;
+    color: #e2e8f0;
+
+    padding: 20px;
+    border-radius: 6px;
+
+    width: 90%;
+    max-width: 360px;
+
+    display: flex;
+    flex-direction: column;
+    
+    box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+    animation: fadeModal 0.2s ease;
+
+    
+    max-height: 90vh;     /* OGRANIČAVA VISINU */
+    overflow-y: auto;     /* UBACUJE SCROLL */
+
+}
+
+.input-group {
+    margin-top: 12px; /*  isti svuda */
+}
+
+
+/* ================= TITLE ================= */
+
+.modal__title {
+    font-size: 16px;
+    font-weight: 600;
+
+    color: #e2e8f0;
+
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+
+/* ================= MORE BUTTON ================= */
+
+.btn-more {
+    background: none;
+    border: none;
+
+    color: #60a5fa;
+    font-size: 13px;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    text-align: left;
+    padding: 4px 0;
+
+    transition: color 0.2s ease;
+}
+
+
+/* ================= INPUT ================= */
+
+.modal__content input {
+    
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 10px 12px;
+
+    border-radius: 10px;
+
+    background: #0f172a;
+    border: 1px solid #334155;
+
+    color: #e2e8f0;
+    font-size: 13px;
+
+    transition: all 0.2s ease;
+}
+
+
+/* focus */
+.modal__content input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.25);
+}
+
+/* ================= ACTIONS ================= */
+
+.modal__actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* SAVE */
+.btn-save {
+    flex: 1;
+
+    background: linear-gradient(135deg, #16a34a, #166534);
+    color: white;
+
+    border: none;
+    padding: 10px;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+/* CANCEL */
+.btn-cancel {
+    flex: 1;
+
+    padding: 10px;
+
+    background: transparent;
+    color: #e2e8f0;
+
+    border: 1px solid #334155;
+    border-radius: 10px;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+
+/* CLICK EFFECT */
+.btn-save:active,
+.btn-cancel:active {
+    transform: scale(0.97);
+}
+
+
+/* ================= HIDDEN ================= */
+
+.hidden {
+    display: none;
+}
+
+/* Option Inputi da bud odamh sakriveni */
+#optional-fields {
+    overflow: hidden;
+
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-8px);
+
+    transition: all 0.25s ease;
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Kad se kline na toggled ugem i doeli klasa ".open"  */
+#optional-fields.open {
+    max-height: 200px; /* dovoljno da stane inputi */
+    opacity: 1;
+    transform: translateY(0);
+}
+
+ /* Padjuci meni u formi za My Partner */
+.input-group select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+
+    background-color: #0f172a; /* isto kao input */
+    color: white;
+
+    font-size: 14px;
+}
+
+
+
+
+/* ======================================== HISTORY MODAL ======================================= */
+
+.history-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    z-index: 2000;
+}
+
+/* HIDDEN */
+.history-modal.hidden {
+    display: none;
+}
+
+/* ================= CONTENT ================= */
+
+.history-modal__content {
+    width: 95%;
+    max-width: 420px;
+    max-height: 85%;
+
+    background: #1e293b;
+    border-radius: 16px;
+
+    display: flex;
+    flex-direction: column;
+
+    box-shadow: 0 20px 55px rgba(0,0,0,0.7);
+    overflow: hidden;
+
+    animation: fadeModal 0.2s ease;
+}
+
+/* ================= HEADER ================= */
+
+.history-modal__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+/* TITLE WRAPPER */
+.history-modal_title {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* TITLE */
+.history-modal_title h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+/* ITEM NAME */
+.history-modal_itemLog {
+    font-size: 12px;
+    color: #3b82f6;
+    font-weight: 500;
+}
+
+/* CLOSE BUTTON */
+.history-close {
+    border: none;
+    background: transparent;
+
+    font-size: 18px;
+    cursor: pointer;
+    color: #94a3b8;
+}
+
+.history-close:hover {
+    color: #e2e8f0;
+}
+
+/* ================= BODY ================= */
+
+.history-modal__body {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+}
+
+/* ================= HISTORY ITEM ================= */
+
+.history-item {
+    display: flex;
+    flex-direction: column; /*  KLJUČ */
+
+    padding: 12px 14px;
+    margin-bottom: 10px;
+
+    border-radius: 12px;
+    background: #0f172a;
+
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+/* hover */
+.history-item:hover {
+    background: rgba(255,255,255,0.04);
+}
+
+/* ================= ROW ================= */
+
+.log-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* MAIN TEXT */
+.log-main {
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+/* DATE */
+.log-date {
+    font-size: 11px;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+/* TRANSACTION ID (ISPOD) */
+.log-tx {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+/* ================= PLUS (ADD) ================= */
+
+.history-item.plus {
+    border-left: 3px solid #22c55e;
+}
+
+.history-item.plus .log-main {
+    color: #22c55e;
+}
+
+/* ================= MINUS (REMOVE) ================= */
+
+.history-item.minus {
+    border-left: 3px solid #ef4444;
+}
+
+.history-item.minus .log-main {
+    color: #ef4444;
+}
+
+/* ================= BUTTON HISTORY ================= */
+
+.btn-history {
+    margin-top: 15px;
+    width: 100%;
+
+    border: none;
+    background: transparent;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    color: #3b82f6;
+
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+
+    cursor: pointer;
+}
+
+.btn-history::after {
+    content: "›";
+    margin-left: 6px;
+    font-size: 16px;
+}
+
+.btn-history:hover {
+    color: #60a5fa;
+}
+
+/* ================= SCROLL ================= */
+
+.history-modal__body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.history-modal__body::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+}
+/* ========================================== ARCHIVE MODAL ========================================== */
+
+.archive-modal {
+    position: fixed;
+    inset: 0;
+
+    background: rgba(0, 0, 0, 0.6);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    z-index: 2000;
+}
+
+/* hidden */
+.archive-modal.hidden {
+    display: none;
+}
+
+/* ================= CONTENT ================= */
+
+.archive-modal_content {
+    width: 95%;
+    max-width: 360px;
+
+    background: #1e293b;
+    border-radius: 16px;
+
+    padding: 18px;
+
+    box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    animation: fadeModal 0.2s ease;
+}
+
+/* ================= TITLE ================= */
+
+.archive-modal_title {
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.archive-modal_content h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+/* ================= TEXT ================= */
+
+.archive-modal_content p {
+    margin: 6px 0;
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.4;
+}
+
+/* ================= ACTIONS ================= */
+
+.archive-modal_actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+
+    margin-top: 12px;
+}
+
+/* ================= CONFIRM ARCHIVE ================= */
+
+.btn-confirm-archive {
+    padding: 10px 14px;
+
+    background: linear-gradient(135deg, #d97706, #b45309);
+    color: #fff;
+
+    border: none;
+    border-radius: 10px;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: all 0.2s ease;
+}
+/* hover */
+.btn-confirm-archive:hover {
+    filter: brightness(1.05);
+}
+
+/* ================= CANCEL ================= */
+
+.btn-cancel-archive {
+    padding: 10px 14px;
+
+    background: transparent;
+    color: #e2e8f0;
+
+    border: 1px solid #334155;
+    border-radius: 10px;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition: all 0.2s ease;
+}
+
+/* hover cancel */
+.btn-cancel-archive:hover {
+    background: #334155;
+}
+
+/* ================= CLICK EFFECT ================= */
+
+.btn-confirm-archive:active,
+.btn-cancel-archive:active {
+    transform: scale(0.97);
+}
+
+/* ================= ANIMATION ================= */
+
+@keyframes fadeModal {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* ======================================================== DASHBOARD ============================================== */
+
+/* GRID ZA KARTICE — 1 kolona kao na slici */
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+/* ================= CARD ================= */
+.dashboard-card {
+    background: #24344d;
+
+    border-radius: 10px;
+
+    padding: 16px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+
+    transition: all 0.2s ease;
+}
+
+/* hover */
+.dashboard-card:hover {
+    transform: translateY(-2px);
+}
+
+/* klik */
+.dashboard-card:active {
+    transform: scale(0.98);
+}
+
+/* ================= LEFT SIDE ================= */
+
+.card-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* IKONICA BLOCK */
+.card-icon {
+    width: 40px;
+    height: 40px;
+
+    border-radius: 12px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 16px;
+
+  
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.05);
+
+}
+
+/* TEXT BLOK */
+.card-text {
+    display: flex;
+    flex-direction: column;
+}
+
+/* LABEL */
+.card-label {
+    font-size: 14px;
+    color: #94a3b8;
+
+    white-space: nowrap;       /*  ključ */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* VALUE */
+.card-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+
+/* ================= RIGHT SIDE (PROGRESS PLACEHOLDER) ================= */
+/* TREND UMESTO KRUGA */
+.card-trend {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    min-width: 90px; /* stabilizuje layout */
+}
+
+/* STRELICA + BROJ (uvek u istom redu) */
+.trend-main {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+
+    white-space: nowrap;   /*  ključ: nema preloma */
+}
+
+/* BROJ */
+.trend-value {
+    white-space: nowrap;   /*  ključ: nema lomljenja broja */
+}
+
+/* DATUM ispod */
+.trend-date {
+    font-size: 11px;
+    color: #64748b;
+
+    text-align: right;
+}
+
+/* BOJE */
+.card-trend.up {
+    color: #22c55e;
+}
+
+.card-trend.down {
+    color: #ef4444;
+}
+
+.card-trend.neutral {
+    color: #94a3b8;
+}
+
+/* ========================================= LOW STOCK TABLE ================================== */
+
+.low-stock-wrapper {
+    max-height: 250px;
+    overflow-y: auto;
+
+    border-radius: 4px;
+    background: #152238;
+
+    box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+    margin-bottom: 50px;
+}
+
+/* wrapper */
+.dashboard-section .table-wrapper {
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* ================= HEADER ================= */
+
+.table th {
+    background: #2f456a;
+    color: #cbd5f5;
+
+    padding: 12px;
+
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+
+    border-right: 1px solid rgba(255,255,255,0.05);
+}
+
+.table th:last-child {
+    border-right: none;
+}
+
+/* ================= CELLS ================= */
+
+.table td {
+    padding: 12px;
+    color: #e2e8f0;
+
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+
+    white-space: nowrap;
+
+}
+.table td:last-child {
+    border-right: none;
+}
+
+/* ================= ROW ================= */
+
+.table tbody tr {
+    background: #152238;
+}
+
+.table tbody tr:hover {
+    background: rgba(59,130,246,0.08);
+}
+
+/* ================= CHECKBOX ================= */
+
+.table td:first-child,
+.table th:first-child {
+    width: 30px;
+    text-align: center;
+}
+
+/* ================= EMPTY ================= */
+
+.table-body-dashboard:empty::after {
+    content: "No low stock items";
+    display: block;
+
+    padding: 15px;
+    text-align: center;
+
+    color: #64748b;
+    font-size: 13px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* ============================================= LOGIN / REGISATRTION SCREEN =========================================== */
+
+.auth-screen {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at top, #1e293b, #0f172a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+/* ================= CARD ================= */
+
+.auth-card {
+    width: 340px;
+    padding: 30px;
+
+    background: rgba(20, 20, 30, 0.95);
+    backdrop-filter: blur(14px);
+
+    border-radius: 16px;
+    border: 1px solid rgb(64, 121, 155);
+
+    box-shadow: 0 12px 35px rgba(0,0,0,0.5);
+
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+
+    transition: all 0.25s ease;
+}
+
+/* ================= LOGIN MODE (GREEN) ================= */
+
+.auth-card.login-mode {
+    border-color: rgba(16, 185, 129, 0.5);
+}
+
+/* ================= HEADER ================= */
+
+.auth-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* TITLE */
+
+.auth-card h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+/* SUBTITLE */
+
+#auth-subtitle {
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+
+
+/* ================= INPUTS ================= */
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.input-group label {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.auth-card input {
+    padding: 11px 12px;
+
+    border-radius: 8px;
+    border: 1px solid #2a2a35;
+
+    background: #020617;
+    color: #ffffff;
+
+    font-size: 13px;
+
+    transition: all 0.2s ease;
+}
+
+.auth-card input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+/* ================= BUTTON ================= */
+
+#auth-main-btn {
+    margin-top: 5px;
+
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+
+    font-weight: 600;
+    font-size: 14px;
+
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#auth-main-btn:hover {
+    transform: translateY(-1px);
+    opacity: 0.95;
+}
+
+/* LOGIN DUGME DRUGAČIJE */
+
+.auth-card.login-mode #auth-main-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+/* ================= SWITCH TEXT ================= */
+
+.auth-switch-text {
+    text-align: center;
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.switch-link {
+    margin-left: 6px;
+    color: #3b82f6;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.switch-link:hover {
+    color: #60a5fa;
+}
+
+
+
+.auth-card {
+    animation: fadeIn 0.4s ease;
+}
+
+
+/* ================= ANIMATION ================= */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+
+
+
+/* ======================================================= TRANSACTION ========================================================= */
+
+.transaction-container {
+    background: #1c2433;
+    border-radius: 18px;
+    padding: 16px;
+    
+}
+
+/* HEADER */
+.transaction-header {
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+}
+
+.transaction-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* SEARCH */
+.transaction-search input {
+    margin-bottom: 10px;
+}
+
+/* SUBTITLE */
+.transaction-subtitle {
+    font-size: 12px;
+    color: #8fa1c7;
+    margin: 10px 0 6px;
+}
+
+/* LIST CONTAINER */
+.transaction-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+/* ITEM ROW */
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+
+    padding: 10px 12px;
+    border-radius: 10px;
+    margin-bottom: 6px;
+
+    background: rgba(255,255,255,0.02);
+    transition: all 0.2s ease;
+}
+.transaction-item:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+/* LEFT SIDE */
+.ti-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ti-name {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.ti-stock {
+    font-size: 11px;
+    color: #6f7fa3;
+}
+
+/* INPUT (MIDDLE) */
+.ti-middle {
+    width: 60px;
+}
+
+.ti-input {
+    width: 100%;
+    padding: 6px;
+
+    border-radius: 8px;
+    border: none;
+
+    background: #111827;
+    color: #fff;
+    text-align: center;
+
+    outline: none;
+}
+
+/* DELETE ICON */
+.ti-right {
+    display: flex;
+    align-items: center;
+}
+
+/* ACTIONS btn */
+.ti-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.ti-delete {
+    background: transparent;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #ff6b6b;
+    transition: 0.2s;
+}
+
+.ti-delete:hover {
+    color: #ff0000;
+    transform: scale(1.1);
+}
+
+
+.ti-copy {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8; /* neutral gray */
+
+    transition: 0.2s;
+}
+
+.ti-copy:hover {
+    color: #3b82f6; /* plava */
+    transform: scale(1.1);
+}
+
+
+/* PDF OPTION */
+.pdf-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #bbb;
+}
+
+.btn-pdf {
+    background: transparent;   /* ❌ skida belo */
+    border: none;              /* ❌ skida okvir */
+    color:  #94a3b8;         /* ista boja kao ostali */
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+
+
+
+
+/* SWITCH */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+}
+
+.switch input {
+    display: none;
+}
+
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    background-color: #444;
+    border-radius: 20px;
+    inset: 0;
+    transition: 0.3s;
+}
+
+.slider::before {
+    content: "";
+    position: absolute;
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    top: 2px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+input:checked + .slider {
+    background: #4caf50;
+}
+
+input:checked + .slider::before {
+    transform: translateX(16px);
+}
+
+
+
+
+/* ======================================================= ARCHIVE ========================================================= */
+/* RESTOR btn */
+.ti-restore {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
